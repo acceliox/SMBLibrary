@@ -2,13 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <AssemblyName>SMBLibrary.Adapters</AssemblyName>
-    <Version>1.4.8</Version>
+    <AssemblyName>SMBLibrary.Win32</AssemblyName>
     <NoWarn>1573;1591</NoWarn>
-    <RootNamespace>SMBLibrary.Adapters</RootNamespace>
+    <RootNamespace>SMBLibrary.Win32</RootNamespace>
     <Authors>Tal Aloni</Authors>
-    <PackageDescription>FileSystem adapters for SMBLibrary</PackageDescription>
+    <PackageDescription>Windows specific extensions for SMBLibrary</PackageDescription>
     <PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/TalAloni/SMBLibrary</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TalAloni/SMBLibrary</RepositoryUrl>
@@ -16,8 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DiskAccessLibrary.FileSystems.Abstractions\DiskAccessLibrary.FileSystems.Abstractions.csproj" />
     <ProjectReference Include="..\SMBLibrary\SMBLibrary.csproj" />
+    <ProjectReference Include="..\Utilities\Utilities.csproj" />
   </ItemGroup>
 
 </Project>
