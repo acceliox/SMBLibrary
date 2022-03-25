@@ -76,12 +76,9 @@ namespace SMBLibrary.Authentication.NTLM
 
         public static ICryptoTransform CreateWeakDesEncryptor(CipherMode mode, byte[] rgbKey, byte[] rgbIV)
         {
-            DES des = DES.Create();
+            var des = DES.Create();
             des.Mode = mode;
-            DESCryptoServiceProvider sm = des as DESCryptoServiceProvider;
-            MethodInfo mi = sm.GetType().GetMethod("_NewEncryptor", BindingFlags.NonPublic | BindingFlags.Instance);
-            object[] Par = { rgbKey, mode, rgbIV, sm.FeedbackSize, 0 };
-            ICryptoTransform trans = mi.Invoke(sm, Par) as ICryptoTransform;
+            var trans = des.CreateEncryptor(rgbKey, rgbIV);
             return trans;
         }
 
@@ -123,7 +120,7 @@ namespace SMBLibrary.Authentication.NTLM
 
         public static Encoding GetOEMEncoding()
         {
-            return Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
+            return CodePagesEncodingProvider.Instance.GetEncoding(850);
         }
 
         /// <summary>
