@@ -1,4 +1,3 @@
-
 namespace SMBLibrary
 {
     // All Win32 error codes MUST be in the range 0x0000 to 0xFFFF
@@ -26,6 +25,6 @@ namespace SMBLibrary
         ERROR_ACCOUNT_EXPIRED = 0x0701,
         ERROR_PASSWORD_MUST_CHANGE = 0x0773,
         ERROR_ACCOUNT_LOCKED_OUT = 0x0775,
-        NERR_NetNameNotFound = 0x0906,
+        NERR_NetNameNotFound = 0x0906
     }
 }

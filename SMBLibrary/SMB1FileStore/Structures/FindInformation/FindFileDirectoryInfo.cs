@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -26,15 +25,17 @@ namespace SMBLibrary.SMB1
         public DateTime? LastAttrChangeTime;
         public long EndOfFile;
         public long AllocationSize;
+
         public ExtendedFileAttributes ExtFileAttributes;
+
         //uint FileNameLength; // In bytes, MUST exclude the null termination.
         public string FileName; // OEM / Unicode character array. MUST be written as SMB_STRING, and read as fixed length string.
 
-        public FindFileDirectoryInfo() : base()
+        public FindFileDirectoryInfo()
         {
         }
 
-        public FindFileDirectoryInfo(byte[] buffer, int offset, bool isUnicode) : base()
+        public FindFileDirectoryInfo(byte[] buffer, int offset, bool isUnicode)
         {
             NextEntryOffset = LittleEndianReader.ReadUInt32(buffer, ref offset);
             FileIndex = LittleEndianReader.ReadUInt32(buffer, ref offset);
@@ -48,6 +49,8 @@ namespace SMBLibrary.SMB1
             uint fileNameLength = LittleEndianReader.ReadUInt32(buffer, ref offset);
             FileName = SMB1Helper.ReadFixedLengthString(buffer, ref offset, isUnicode, (int)fileNameLength);
         }
+
+        public override FindInformationLevel InformationLevel => FindInformationLevel.SMB_FIND_FILE_DIRECTORY_INFO;
 
         public override void WriteBytes(byte[] buffer, ref int offset, bool isUnicode)
         {
@@ -78,15 +81,8 @@ namespace SMBLibrary.SMB1
             {
                 length += FileName.Length + 1;
             }
-            return length;
-        }
 
-        public override FindInformationLevel InformationLevel
-        {
-            get
-            {
-                return FindInformationLevel.SMB_FIND_FILE_DIRECTORY_INFO;
-            }
+            return length;
         }
     }
 }

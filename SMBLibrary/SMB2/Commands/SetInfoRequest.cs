@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 32;
         public const int DeclaredSize = 33;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public InfoType InfoType;
         private byte FileInfoClass;
         public uint BufferLength;
@@ -46,60 +45,25 @@ namespace SMBLibrary.SMB2
             Buffer = ByteReader.ReadBytes(buffer, offset + BufferOffset, (int)BufferLength);
         }
 
-        public override void WriteCommandBytes(byte[] buffer, int offset)
-        {
-            BufferOffset = 0;
-            BufferLength = (uint)Buffer.Length;
-            if (Buffer.Length > 0)
-            {
-                BufferOffset = SMB2Header.Length + FixedSize;
-            }
-            LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
-            ByteWriter.WriteByte(buffer, offset + 2, (byte)InfoType);
-            ByteWriter.WriteByte(buffer, offset + 3, FileInfoClass);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 4, BufferLength);
-            LittleEndianWriter.WriteUInt16(buffer, offset + 8, BufferOffset);
-            LittleEndianWriter.WriteUInt16(buffer, offset + 10, Reserved);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 12, AdditionalInformation);
-            FileId.WriteBytes(buffer, offset + 16);
-            ByteWriter.WriteBytes(buffer, offset + FixedSize, Buffer);
-        }
-
         public FileInformationClass FileInformationClass
         {
-            get
-            {
-                return (FileInformationClass)FileInfoClass;
-            }
-            set
-            {
-                FileInfoClass = (byte)value;
-            }
+            get => (FileInformationClass)FileInfoClass;
+            set => FileInfoClass = (byte)value;
         }
 
         public FileSystemInformationClass FileSystemInformationClass
         {
-            get
-            {
-                return (FileSystemInformationClass)FileInfoClass;
-            }
-            set
-            {
-                FileInfoClass = (byte)value;
-            }
+            get => (FileSystemInformationClass)FileInfoClass;
+            set => FileInfoClass = (byte)value;
         }
 
         public SecurityInformation SecurityInformation
         {
-            get
-            {
-                return (SecurityInformation)AdditionalInformation;
-            }
-            set
-            {
-                AdditionalInformation = (uint)value;
-            }
+            get => (SecurityInformation)AdditionalInformation;
+            set => AdditionalInformation = (uint)value;
         }
+
+        public override int CommandLength => FixedSize + Buffer.Length;
 
         public void SetFileInformation(FileInformation fileInformation)
         {
@@ -116,12 +80,24 @@ namespace SMBLibrary.SMB2
             Buffer = securityDescriptor.GetBytes();
         }
 
-        public override int CommandLength
+        public override void WriteCommandBytes(byte[] buffer, int offset)
         {
-            get
+            BufferOffset = 0;
+            BufferLength = (uint)Buffer.Length;
+            if (Buffer.Length > 0)
             {
-                return FixedSize + Buffer.Length;
+                BufferOffset = SMB2Header.Length + FixedSize;
             }
+
+            LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
+            ByteWriter.WriteByte(buffer, offset + 2, (byte)InfoType);
+            ByteWriter.WriteByte(buffer, offset + 3, FileInfoClass);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 4, BufferLength);
+            LittleEndianWriter.WriteUInt16(buffer, offset + 8, BufferOffset);
+            LittleEndianWriter.WriteUInt16(buffer, offset + 10, Reserved);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 12, AdditionalInformation);
+            FileId.WriteBytes(buffer, offset + 16);
+            ByteWriter.WriteBytes(buffer, offset + FixedSize, Buffer);
         }
     }
 }

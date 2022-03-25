@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,15 +32,13 @@ namespace SMBLibrary.SMB1
                 // Windows-based SMB servers send 50 (0x32) words in the extended response although they set the WordCount field to 0x2A.
                 wordCount = NTCreateAndXResponseExtended.ParametersLength / 2;
             }
+
             SMBParameters = ByteReader.ReadBytes(buffer, ref offset, wordCount * 2);
             ushort byteCount = LittleEndianReader.ReadUInt16(buffer, ref offset);
             SMBData = ByteReader.ReadBytes(buffer, ref offset, byteCount);
         }
 
-        public abstract CommandName CommandName
-        {
-            get;
-        }
+        public abstract CommandName CommandName { get; }
 
         public virtual byte[] GetBytes(bool isUnicode)
         {
@@ -47,6 +46,7 @@ namespace SMBLibrary.SMB1
             {
                 throw new Exception("SMB_Parameters Length must be a multiple of 2");
             }
+
             int length = 1 + SMBParameters.Length + 2 + SMBData.Length;
             byte[] buffer = new byte[length];
             byte wordCount = (byte)(SMBParameters.Length / 2);
@@ -57,6 +57,7 @@ namespace SMBLibrary.SMB1
                 // WordCount SHOULD be set to 0x2A.
                 wordCount = NTCreateAndXResponseExtended.DeclaredParametersLength / 2;
             }
+
             ushort byteCount = (ushort)SMBData.Length;
 
             int offset = 0;
@@ -74,10 +75,8 @@ namespace SMBLibrary.SMB1
             {
                 return ReadCommandResponse(buffer, offset, commandName, header.UnicodeFlag);
             }
-            else
-            {
-                return ReadCommandRequest(buffer, offset, commandName, header.UnicodeFlag);
-            }
+
+            return ReadCommandRequest(buffer, offset, commandName, header.UnicodeFlag);
         }
 
         public static SMB1Command ReadCommandRequest(byte[] buffer, int offset, CommandName commandName, bool isUnicode)
@@ -135,21 +134,20 @@ namespace SMBLibrary.SMB1
                 case CommandName.SMB_COM_NEGOTIATE:
                     return new NegotiateRequest(buffer, offset);
                 case CommandName.SMB_COM_SESSION_SETUP_ANDX:
+                {
+                    byte wordCount = ByteReader.ReadByte(buffer, offset);
+                    if (wordCount * 2 == SessionSetupAndXRequest.ParametersLength)
                     {
-                        byte wordCount = ByteReader.ReadByte(buffer, offset);
-                        if (wordCount * 2 == SessionSetupAndXRequest.ParametersLength)
-                        {
-                            return new SessionSetupAndXRequest(buffer, offset, isUnicode);
-                        }
-                        else if (wordCount * 2 == SessionSetupAndXRequestExtended.ParametersLength)
-                        {
-                            return new SessionSetupAndXRequestExtended(buffer, offset, isUnicode);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new SessionSetupAndXRequest(buffer, offset, isUnicode);
                     }
+
+                    if (wordCount * 2 == SessionSetupAndXRequestExtended.ParametersLength)
+                    {
+                        return new SessionSetupAndXRequestExtended(buffer, offset, isUnicode);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_LOGOFF_ANDX:
                     return new LogoffAndXRequest(buffer, offset);
                 case CommandName.SMB_COM_TREE_CONNECT_ANDX:
@@ -185,295 +183,275 @@ namespace SMBLibrary.SMB1
                 case CommandName.SMB_COM_RENAME:
                     return new RenameResponse(buffer, offset);
                 case CommandName.SMB_COM_QUERY_INFORMATION:
+                {
+                    if (wordCount * 2 == QueryInformationResponse.ParameterLength)
                     {
-                        if (wordCount * 2 == QueryInformationResponse.ParameterLength)
-                        {
-                            return new QueryInformationResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new QueryInformationResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_SET_INFORMATION:
                     return new SetInformationResponse(buffer, offset);
                 case CommandName.SMB_COM_READ:
+                {
+                    if (wordCount * 2 == ReadResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == ReadResponse.ParametersLength)
-                        {
-                            return new ReadResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new ReadResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_WRITE:
+                {
+                    if (wordCount * 2 == WriteResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == WriteResponse.ParametersLength)
-                        {
-                            return new WriteResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new WriteResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_CHECK_DIRECTORY:
                     return new CheckDirectoryResponse(buffer, offset);
                 case CommandName.SMB_COM_WRITE_RAW:
+                {
+                    if (wordCount * 2 == WriteRawInterimResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == WriteRawInterimResponse.ParametersLength)
-                        {
-                            return new WriteRawInterimResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new WriteRawInterimResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_WRITE_COMPLETE:
+                {
+                    if (wordCount * 2 == WriteRawFinalResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == WriteRawFinalResponse.ParametersLength)
-                        {
-                            return new WriteRawFinalResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new WriteRawFinalResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_SET_INFORMATION2:
                     return new SetInformation2Response(buffer, offset);
                 case CommandName.SMB_COM_LOCKING_ANDX:
+                {
+                    if (wordCount * 2 == LockingAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == LockingAndXResponse.ParametersLength)
-                        {
-                            return new LockingAndXResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new LockingAndXResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_TRANSACTION:
+                {
+                    if (wordCount * 2 == TransactionInterimResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == TransactionInterimResponse.ParametersLength)
-                        {
-                            return new TransactionInterimResponse(buffer, offset);
-                        }
-                        else
-                        {
-                            return new TransactionResponse(buffer, offset);
-                        }
+                        return new TransactionInterimResponse(buffer, offset);
                     }
+
+                    return new TransactionResponse(buffer, offset);
+                }
                 case CommandName.SMB_COM_ECHO:
+                {
+                    if (wordCount * 2 == EchoResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == EchoResponse.ParametersLength)
-                        {
-                            return new EchoResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new EchoResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_OPEN_ANDX:
+                {
+                    if (wordCount * 2 == OpenAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == OpenAndXResponse.ParametersLength)
-                        {
-                            return new OpenAndXResponse(buffer, offset);
-                        }
-                        else if (wordCount * 2 == OpenAndXResponseExtended.ParametersLength)
-                        {
-                            return new OpenAndXResponseExtended(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new OpenAndXResponse(buffer, offset);
                     }
+
+                    if (wordCount * 2 == OpenAndXResponseExtended.ParametersLength)
+                    {
+                        return new OpenAndXResponseExtended(buffer, offset);
+                    }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_READ_ANDX:
+                {
+                    if (wordCount * 2 == ReadAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == ReadAndXResponse.ParametersLength)
-                        {
-                            return new ReadAndXResponse(buffer, offset, isUnicode);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new ReadAndXResponse(buffer, offset, isUnicode);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_WRITE_ANDX:
+                {
+                    if (wordCount * 2 == WriteAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == WriteAndXResponse.ParametersLength)
-                        {
-                            return new WriteAndXResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new WriteAndXResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_TRANSACTION2:
+                {
+                    if (wordCount * 2 == TransactionInterimResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == Transaction2InterimResponse.ParametersLength)
-                        {
-                            return new Transaction2InterimResponse(buffer, offset);
-                        }
-                        else
-                        {
-                            return new Transaction2Response(buffer, offset);
-                        }
+                        return new Transaction2InterimResponse(buffer, offset);
                     }
+
+                    return new Transaction2Response(buffer, offset);
+                }
                 case CommandName.SMB_COM_FIND_CLOSE2:
                     return new FindClose2Response(buffer, offset);
                 case CommandName.SMB_COM_TREE_DISCONNECT:
                     return new TreeDisconnectResponse(buffer, offset);
                 case CommandName.SMB_COM_NEGOTIATE:
+                {
+                    // Both NegotiateResponse and NegotiateResponseExtended have WordCount set to 17
+                    if (wordCount * 2 == NegotiateResponse.ParametersLength)
                     {
-                        // Both NegotiateResponse and NegotiateResponseExtended have WordCount set to 17
-                        if (wordCount * 2 == NegotiateResponse.ParametersLength)
+                        Capabilities capabilities = (Capabilities)LittleEndianConverter.ToUInt32(buffer, offset + 20);
+                        if ((capabilities & Capabilities.ExtendedSecurity) > 0)
                         {
-                            Capabilities capabilities = (Capabilities)LittleEndianConverter.ToUInt32(buffer, offset + 20);
-                            if ((capabilities & Capabilities.ExtendedSecurity) > 0)
-                            {
-                                return new NegotiateResponseExtended(buffer, offset);
-                            }
-                            else
-                            {
-                                return new NegotiateResponse(buffer, offset, isUnicode);
-                            }
+                            return new NegotiateResponseExtended(buffer, offset);
                         }
-                        if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+
+                        return new NegotiateResponse(buffer, offset, isUnicode);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_SESSION_SETUP_ANDX:
+                {
+                    if (wordCount * 2 == SessionSetupAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == SessionSetupAndXResponse.ParametersLength)
-                        {
-                            return new SessionSetupAndXResponse(buffer, offset, isUnicode);
-                        }
-                        else if (wordCount * 2 == SessionSetupAndXResponseExtended.ParametersLength)
-                        {
-                            return new SessionSetupAndXResponseExtended(buffer, offset, isUnicode);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new SessionSetupAndXResponse(buffer, offset, isUnicode);
                     }
+
+                    if (wordCount * 2 == SessionSetupAndXResponseExtended.ParametersLength)
+                    {
+                        return new SessionSetupAndXResponseExtended(buffer, offset, isUnicode);
+                    }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_LOGOFF_ANDX:
+                {
+                    if (wordCount * 2 == LogoffAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == LogoffAndXResponse.ParametersLength)
-                        {
-                            return new LogoffAndXResponse(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new LogoffAndXResponse(buffer, offset);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_TREE_CONNECT_ANDX:
+                {
+                    if (wordCount * 2 == TreeConnectAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == TreeConnectAndXResponse.ParametersLength)
-                        {
-                            return new TreeConnectAndXResponse(buffer, offset, isUnicode);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new TreeConnectAndXResponse(buffer, offset, isUnicode);
                     }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 case CommandName.SMB_COM_NT_TRANSACT:
+                {
+                    if (wordCount * 2 == NTTransactInterimResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == NTTransactInterimResponse.ParametersLength)
-                        {
-                            return new NTTransactInterimResponse(buffer, offset);
-                        }
-                        else
-                        {
-                            return new NTTransactResponse(buffer, offset);
-                        }
+                        return new NTTransactInterimResponse(buffer, offset);
                     }
+
+                    return new NTTransactResponse(buffer, offset);
+                }
                 case CommandName.SMB_COM_NT_CREATE_ANDX:
+                {
+                    if (wordCount * 2 == NTCreateAndXResponse.ParametersLength)
                     {
-                        if (wordCount * 2 == NTCreateAndXResponse.ParametersLength)
-                        {
-                            return new NTCreateAndXResponse(buffer, offset);
-                        }
-                        else if (wordCount * 2 == NTCreateAndXResponseExtended.ParametersLength ||
-                                 wordCount * 2 == NTCreateAndXResponseExtended.DeclaredParametersLength)
-                        {
-                            return new NTCreateAndXResponseExtended(buffer, offset);
-                        }
-                        else if (wordCount == 0)
-                        {
-                            return new ErrorResponse(commandName);
-                        }
-                        else
-                        {
-                            throw new InvalidDataException();
-                        }
+                        return new NTCreateAndXResponse(buffer, offset);
                     }
+
+                    if (wordCount * 2 == NTCreateAndXResponseExtended.ParametersLength ||
+                        wordCount * 2 == NTCreateAndXResponseExtended.DeclaredParametersLength)
+                    {
+                        return new NTCreateAndXResponseExtended(buffer, offset);
+                    }
+
+                    if (wordCount == 0)
+                    {
+                        return new ErrorResponse(commandName);
+                    }
+
+                    throw new InvalidDataException();
+                }
                 default:
                     throw new InvalidDataException("Invalid SMB command 0x" + ((byte)commandName).ToString("X2"));
             }

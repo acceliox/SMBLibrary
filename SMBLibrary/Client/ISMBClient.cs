@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.Net;
 
@@ -12,6 +12,10 @@ namespace SMBLibrary.Client
 {
     public interface ISMBClient
     {
+        uint MaxReadSize { get; }
+
+        uint MaxWriteSize { get; }
+
         bool Connect(string serverName, SMBTransportType transport);
 
         bool Connect(IPAddress serverAddress, SMBTransportType transport);
@@ -27,15 +31,5 @@ namespace SMBLibrary.Client
         List<string> ListShares(out NTStatus status);
 
         ISMBFileStore TreeConnect(string shareName, out NTStatus status);
-
-        uint MaxReadSize
-        {
-            get;
-        }
-
-        uint MaxWriteSize
-        {
-            get;
-        }
     }
 }

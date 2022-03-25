@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.Services
 {
     /// <summary>
@@ -10,6 +9,6 @@ namespace SMBLibrary.Services
         OS2 = 400, // PLATFORM_ID_OS2
         NT = 500, // PLATFORM_ID_NT
         OSF = 600, // PLATFORM_ID_OSF
-        VMS = 700, // PLATFORM_ID_VMS
+        VMS = 700 // PLATFORM_ID_VMS
     }
 }

@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using SMBLibrary.RPC;
 
 namespace SMBLibrary.Services
@@ -20,7 +20,7 @@ namespace SMBLibrary.Services
         IPC = 0x00000003, // STYPE_IPC
         ClusterShare = 0x02000000, // STYPE_CLUSTER_FS
         ScaleOutClusterShare = 0x04000000, // STYPE_CLUSTER_SOFS
-        DfsShareInCluster = 0x08000000, // STYPE_CLUSTER_DFS
+        DfsShareInCluster = 0x08000000 // STYPE_CLUSTER_DFS
     }
 
     public struct ShareTypeExtended // uint
@@ -66,10 +66,12 @@ namespace SMBLibrary.Services
             {
                 shareTypeExtended |= 0x80000000;
             }
+
             if (IsTemporary)
             {
                 shareTypeExtended |= 0x40000000;
             }
+
             return shareTypeExtended;
         }
     }

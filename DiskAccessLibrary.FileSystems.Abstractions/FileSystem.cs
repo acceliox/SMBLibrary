@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,30 +13,9 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
 {
     public abstract class FileSystem : IFileSystem
     {
-        public abstract FileSystemEntry GetEntry(string path);
-        public abstract FileSystemEntry CreateFile(string path);
-        public abstract FileSystemEntry CreateDirectory(string path);
-        public abstract void Move(string source, string destination);
-        public abstract void Delete(string path);
-        public abstract List<FileSystemEntry> ListEntriesInDirectory(string path);
-        public abstract Stream OpenFile(string path, FileMode mode, FileAccess access, FileShare share, FileOptions options);
-        public abstract void SetAttributes(string path, bool? isHidden, bool? isReadonly, bool? isArchived);
-        public abstract void SetDates(string path, DateTime? creationDT, DateTime? lastWriteDT, DateTime? lastAccessDT);
-
         public List<FileSystemEntry> ListEntriesInRootDirectory()
         {
             return ListEntriesInDirectory(@"\");
-        }
-
-        public virtual List<KeyValuePair<string, ulong>> ListDataStreams(string path)
-        {
-            FileSystemEntry entry = GetEntry(path);
-            List<KeyValuePair<string, ulong>> result = new List<KeyValuePair<string, ulong>>();
-            if (!entry.IsDirectory)
-            {
-                result.Add(new KeyValuePair<string, ulong>("::$DATA", entry.Size));
-            }
-            return result;
         }
 
         public Stream OpenFile(string path, FileMode mode, FileAccess access, FileShare share)
@@ -48,7 +28,7 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
             const int bufferLength = 1024 * 1024;
             FileSystemEntry sourceFile = GetEntry(sourcePath);
             FileSystemEntry destinationFile = GetEntry(destinationPath);
-            if (sourceFile == null | sourceFile.IsDirectory)
+            if ((sourceFile == null) | sourceFile.IsDirectory)
             {
                 throw new FileNotFoundException();
             }
@@ -62,6 +42,7 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
             {
                 destinationFile = CreateFile(destinationPath);
             }
+
             Stream sourceStream = OpenFile(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, FileOptions.SequentialScan);
             Stream destinationStream = OpenFile(destinationPath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite, FileOptions.None);
             while (sourceStream.Position < sourceStream.Length)
@@ -71,6 +52,7 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
                 sourceStream.Read(buffer, 0, buffer.Length);
                 destinationStream.Write(buffer, 0, buffer.Length);
             }
+
             sourceStream.Close();
             destinationStream.Close();
         }
@@ -93,29 +75,9 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
             return true;
         }
 
-        public abstract string Name
-        {
-            get;
-        }
-
-        public abstract long Size
-        {
-            get;
-        }
-
-        public abstract long FreeSpace
-        {
-            get;
-        }
-
-        public abstract bool SupportsNamedStreams
-        {
-            get;
-        }
-
         public static string GetParentDirectory(string path)
         {
-            if (path == String.Empty)
+            if (path == string.Empty)
             {
                 path = @"\";
             }
@@ -145,10 +107,38 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
             {
                 return path;
             }
-            else
-            {
-                return path + @"\";
-            }
+
+            return path + @"\";
         }
+
+        public abstract FileSystemEntry GetEntry(string path);
+        public abstract FileSystemEntry CreateFile(string path);
+        public abstract FileSystemEntry CreateDirectory(string path);
+        public abstract void Move(string source, string destination);
+        public abstract void Delete(string path);
+        public abstract List<FileSystemEntry> ListEntriesInDirectory(string path);
+        public abstract Stream OpenFile(string path, FileMode mode, FileAccess access, FileShare share, FileOptions options);
+        public abstract void SetAttributes(string path, bool? isHidden, bool? isReadonly, bool? isArchived);
+        public abstract void SetDates(string path, DateTime? creationDT, DateTime? lastWriteDT, DateTime? lastAccessDT);
+
+        public virtual List<KeyValuePair<string, ulong>> ListDataStreams(string path)
+        {
+            FileSystemEntry entry = GetEntry(path);
+            List<KeyValuePair<string, ulong>> result = new List<KeyValuePair<string, ulong>>();
+            if (!entry.IsDirectory)
+            {
+                result.Add(new KeyValuePair<string, ulong>("::$DATA", entry.Size));
+            }
+
+            return result;
+        }
+
+        public abstract string Name { get; }
+
+        public abstract long Size { get; }
+
+        public abstract long FreeSpace { get; }
+
+        public abstract bool SupportsNamedStreams { get; }
     }
 }

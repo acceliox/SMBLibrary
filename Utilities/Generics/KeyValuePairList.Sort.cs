@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -11,9 +12,9 @@ namespace Utilities
 {
     public partial class KeyValuePairList<TKey, TValue>
     {
-        new public void Sort()
+        public new void Sort()
         {
-            this.Sort(Comparer<TKey>.Default);
+            Sort(Comparer<TKey>.Default);
         }
 
         public void Sort(ListSortDirection sortDirection)
@@ -35,7 +36,7 @@ namespace Utilities
 
         public void Sort(IComparer<TKey> comparer)
         {
-            this.Sort(delegate(KeyValuePair<TKey, TValue> a, KeyValuePair<TKey, TValue> b)
+            Sort(delegate(KeyValuePair<TKey, TValue> a, KeyValuePair<TKey, TValue> b)
             {
                 return comparer.Compare(a.Key, b.Key);
             });

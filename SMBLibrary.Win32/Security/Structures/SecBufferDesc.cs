@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace SMBLibrary.Win32.Security
@@ -16,10 +16,10 @@ namespace SMBLibrary.Win32.Security
         public const uint SECBUFFER_VERSION = 0;
 
         public uint ulVersion;
-        public uint cBuffers;    // Indicates the number of SecBuffer structures in the pBuffers array.
+        public uint cBuffers; // Indicates the number of SecBuffer structures in the pBuffers array.
         public IntPtr pBuffers; // Pointer to an array of SecBuffer structures.
 
-        public SecBufferDesc(SecBuffer buffer) : this(new SecBuffer[] { buffer })
+        public SecBufferDesc(SecBuffer buffer) : this(new[] { buffer })
         {
         }
 

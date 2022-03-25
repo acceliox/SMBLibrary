@@ -4,9 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,6 +17,7 @@ namespace SMBLibrary.SMB1
     public class NTTransactCreateRequest : NTTransactSubcommand
     {
         public const int ParametersFixedLength = 53;
+
         // Parameters:
         public NTCreateFlags Flags;
         public uint RootDirectoryFID;
@@ -25,13 +26,17 @@ namespace SMBLibrary.SMB1
         public ExtendedFileAttributes ExtFileAttributes;
         public ShareAccess ShareAccess;
         public CreateDisposition CreateDisposition;
+
         public CreateOptions CreateOptions;
+
         // uint SecurityDescriptiorLength;
         // uint EALength;
         // uint NameLength;
         public ImpersonationLevel ImpersonationLevel;
         public SecurityFlags SecurityFlags;
+
         public string Name; // OEM / Unicode. NOT null terminated. (MUST be aligned to start on a 2-byte boundary from the start of the NT_Trans_Parameters)
+
         // Data:
         public SecurityDescriptor SecurityDescriptor;
         public List<FileFullEAEntry> ExtendedAttributes;
@@ -61,13 +66,17 @@ namespace SMBLibrary.SMB1
             {
                 parametersOffset++;
             }
+
             Name = SMB1Helper.ReadFixedLengthString(parameters, ref parametersOffset, isUnicode, (int)nameLength);
             if (securityDescriptiorLength > 0)
             {
                 SecurityDescriptor = new SecurityDescriptor(data, 0);
             }
+
             ExtendedAttributes = FileFullEAInformation.ReadList(data, (int)securityDescriptiorLength);
         }
+
+        public override NTTransactSubcommandName SubcommandName => NTTransactSubcommandName.NT_TRANSACT_CREATE;
 
         public override byte[] GetParameters(bool isUnicode)
         {
@@ -77,14 +86,6 @@ namespace SMBLibrary.SMB1
         public override byte[] GetData()
         {
             throw new NotImplementedException();
-        }
-
-        public override NTTransactSubcommandName SubcommandName
-        {
-            get
-            {
-                return NTTransactSubcommandName.NT_TRANSACT_CREATE;
-            }
         }
     }
 }

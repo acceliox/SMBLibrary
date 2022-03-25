@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Threading;
 
@@ -12,11 +13,7 @@ namespace Utilities
     public class CountdownLatch
     {
         private int m_count;
-        private EventWaitHandle m_waitHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
-
-        public CountdownLatch()
-        {
-        }
+        private readonly EventWaitHandle m_waitHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
 
         public void Increment()
         {

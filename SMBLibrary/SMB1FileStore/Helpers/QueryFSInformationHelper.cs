@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using SMBLibrary.SMB1;
-using Utilities;
 
 namespace SMBLibrary.SMB1
 {
@@ -42,7 +40,8 @@ namespace SMBLibrary.SMB1
                 result.VolumeLabel = volumeInfo.VolumeLabel;
                 return result;
             }
-            else if (fsInfo is FileFsSizeInformation)
+
+            if (fsInfo is FileFsSizeInformation)
             {
                 FileFsSizeInformation fsSizeInfo = (FileFsSizeInformation)fsInfo;
                 QueryFSSizeInfo result = new QueryFSSizeInfo();
@@ -52,7 +51,8 @@ namespace SMBLibrary.SMB1
                 result.SectorsPerAllocationUnit = fsSizeInfo.SectorsPerAllocationUnit;
                 return result;
             }
-            else if (fsInfo is FileFsDeviceInformation)
+
+            if (fsInfo is FileFsDeviceInformation)
             {
                 FileFsDeviceInformation fsDeviceInfo = (FileFsDeviceInformation)fsInfo;
                 QueryFSDeviceInfo result = new QueryFSDeviceInfo();
@@ -60,7 +60,8 @@ namespace SMBLibrary.SMB1
                 result.DeviceCharacteristics = fsDeviceInfo.Characteristics;
                 return result;
             }
-            else if (fsInfo is FileFsAttributeInformation)
+
+            if (fsInfo is FileFsAttributeInformation)
             {
                 FileFsAttributeInformation fsAttributeInfo = (FileFsAttributeInformation)fsInfo;
                 QueryFSAttibuteInfo result = new QueryFSAttibuteInfo();
@@ -69,10 +70,8 @@ namespace SMBLibrary.SMB1
                 result.FileSystemName = fsAttributeInfo.FileSystemName;
                 return result;
             }
-            else
-            {
-                throw new NotImplementedException();
-            }
+
+            throw new NotImplementedException();
         }
     }
 }

@@ -4,20 +4,18 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.Text;
-using Utilities;
 
 namespace SMBLibrary.RPC
 {
     public class NDRUnicodeString : INDRStructure
     {
-        private bool m_writeNullTerminationCharacter;
+        private readonly bool m_writeNullTerminationCharacter;
 
         public string Value;
 
-        public NDRUnicodeString() : this(String.Empty, true)
+        public NDRUnicodeString() : this(string.Empty, true)
         {
         }
 
@@ -49,12 +47,13 @@ namespace SMBLibrary.RPC
             {
                 builder.Append((char)parser.ReadUInt16());
             }
-            this.Value = builder.ToString().TrimEnd('\0');
+
+            Value = builder.ToString().TrimEnd('\0');
         }
 
         public void Write(NDRWriter writer)
         {
-            string valueToWrite = String.Empty;
+            string valueToWrite = string.Empty;
             if (Value != null)
             {
                 valueToWrite = Value;
@@ -74,7 +73,7 @@ namespace SMBLibrary.RPC
             writer.WriteUInt32(actualCount);
             for (int position = 0; position < valueToWrite.Length; position++)
             {
-                writer.WriteUInt16((ushort)valueToWrite[position]);
+                writer.WriteUInt16(valueToWrite[position]);
             }
         }
     }

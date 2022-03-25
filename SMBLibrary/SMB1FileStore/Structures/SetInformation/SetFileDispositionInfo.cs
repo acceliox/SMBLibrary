@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,6 +16,7 @@ namespace SMBLibrary.SMB1
     public class SetFileDispositionInfo : SetInformation
     {
         public const int Length = 1;
+
         /// <summary>
         /// Indicate that a file SHOULD be deleted when it is closed.
         /// </summary>
@@ -32,22 +32,16 @@ namespace SMBLibrary.SMB1
 
         public SetFileDispositionInfo(byte[] buffer, int offset)
         {
-            DeletePending = (ByteReader.ReadByte(buffer, ref offset) > 0);
+            DeletePending = ByteReader.ReadByte(buffer, ref offset) > 0;
         }
+
+        public override SetInformationLevel InformationLevel => SetInformationLevel.SMB_SET_FILE_DISPOSITION_INFO;
 
         public override byte[] GetBytes()
         {
             byte[] buffer = new byte[Length];
             ByteWriter.WriteByte(buffer, 0, Convert.ToByte(DeletePending));
             return buffer;
-        }
-
-        public override SetInformationLevel InformationLevel
-        {
-            get
-            {
-                return SetInformationLevel.SMB_SET_FILE_DISPOSITION_INFO;
-            }
         }
     }
 }

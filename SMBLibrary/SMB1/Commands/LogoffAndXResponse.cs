@@ -4,10 +4,6 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Utilities;
 
 namespace SMBLibrary.SMB1
 {
@@ -18,7 +14,7 @@ namespace SMBLibrary.SMB1
     {
         public const int ParametersLength = 4;
 
-        public LogoffAndXResponse() : base()
+        public LogoffAndXResponse()
         {
         }
 
@@ -26,18 +22,12 @@ namespace SMBLibrary.SMB1
         {
         }
 
+        public override CommandName CommandName => CommandName.SMB_COM_LOGOFF_ANDX;
+
         public override byte[] GetBytes(bool isUnicode)
         {
-            this.SMBParameters = new byte[ParametersLength];
+            SMBParameters = new byte[ParametersLength];
             return base.GetBytes(isUnicode);
-        }
-
-        public override CommandName CommandName
-        {
-            get
-            {
-                return CommandName.SMB_COM_LOGOFF_ANDX;
-            }
         }
     }
 }

@@ -4,23 +4,20 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SMBLibrary.SMB1
 {
     public enum CreateFile : byte
     {
         ReturnErrorIfNotExist = 0x00,
-        CreateIfNotExist = 0x01,
+        CreateIfNotExist = 0x01
     }
 
     public enum FileExistsOpts : byte
     {
         ReturnError = 0x00,
         Append = 0x01,
-        TruncateToZero = 0x02,
+        TruncateToZero = 0x02
     }
 
     public struct OpenMode // 2 bytes

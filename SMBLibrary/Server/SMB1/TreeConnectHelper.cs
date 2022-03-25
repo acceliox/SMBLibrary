@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using SMBLibrary.SMB1;
 using Utilities;
 
@@ -22,7 +21,7 @@ namespace SMBLibrary.Server.SMB1
             ISMBShare share;
             ServiceName serviceName;
             OptionalSupportFlags supportFlags;
-            if (String.Equals(shareName, NamedPipeShare.NamedPipeShareName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(shareName, NamedPipeShare.NamedPipeShareName, StringComparison.OrdinalIgnoreCase))
             {
                 if (request.Service != ServiceName.AnyType && request.Service != ServiceName.NamedPipe)
                 {
@@ -59,22 +58,30 @@ namespace SMBLibrary.Server.SMB1
                     return new ErrorResponse(request.CommandName);
                 }
             }
+
             ushort? treeID = session.AddConnectedTree(share);
             if (!treeID.HasValue)
             {
                 header.Status = NTStatus.STATUS_INSUFF_SERVER_RESOURCES;
                 return new ErrorResponse(request.CommandName);
             }
+
             state.LogToServer(Severity.Information, "Tree Connect: User '{0}' connected to '{1}' (UID: {2}, TID: {3})", session.UserName, share.Name, header.UID, treeID.Value);
             header.TID = treeID.Value;
             if (isExtended)
             {
                 return CreateTreeConnectResponseExtended(serviceName, supportFlags);
             }
-            else
-            {
-                return CreateTreeConnectResponse(serviceName, supportFlags);
-            }
+
+            return CreateTreeConnectResponse(serviceName, supportFlags);
+        }
+
+        internal static SMB1Command GetTreeDisconnectResponse(SMB1Header header, TreeDisconnectRequest request, ISMBShare share, SMB1ConnectionState state)
+        {
+            SMB1Session session = state.GetSession(header.UID);
+            session.DisconnectTree(header.TID);
+            state.LogToServer(Severity.Information, "Tree Disconnect: User '{0}' disconnected from '{1}' (UID: {2}, TID: {3})", session.UserName, share.Name, header.UID, header.TID);
+            return new TreeDisconnectResponse();
         }
 
         private static OptionalSupportFlags GetCachingSupportFlags(CachingPolicy cachingPolicy)
@@ -96,7 +103,7 @@ namespace SMBLibrary.Server.SMB1
         {
             TreeConnectAndXResponse response = new TreeConnectAndXResponse();
             response.OptionalSupport = supportFlags;
-            response.NativeFileSystem = String.Empty;
+            response.NativeFileSystem = string.Empty;
             response.Service = serviceName;
             return response;
         }
@@ -109,22 +116,14 @@ namespace SMBLibrary.Server.SMB1
                                                              FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                              FileAccessMask.FILE_EXECUTE |
                                                              FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                             AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
+                                                AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
             response.GuestMaximalShareAccessRights = (AccessMask)(FileAccessMask.FILE_READ_DATA | FileAccessMask.FILE_WRITE_DATA |
                                                                   FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                                   FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                                  AccessMask.READ_CONTROL | AccessMask.SYNCHRONIZE;
-            response.NativeFileSystem = String.Empty;
+                                                     AccessMask.READ_CONTROL | AccessMask.SYNCHRONIZE;
+            response.NativeFileSystem = string.Empty;
             response.Service = serviceName;
             return response;
-        }
-
-        internal static SMB1Command GetTreeDisconnectResponse(SMB1Header header, TreeDisconnectRequest request, ISMBShare share, SMB1ConnectionState state)
-        {
-            SMB1Session session = state.GetSession(header.UID);
-            session.DisconnectTree(header.TID);
-            state.LogToServer(Severity.Information, "Tree Disconnect: User '{0}' disconnected from '{1}' (UID: {2}, TID: {3})", session.UserName, share.Name, header.UID, header.TID);
-            return new TreeDisconnectResponse();
         }
     }
 }

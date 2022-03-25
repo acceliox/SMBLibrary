@@ -7,22 +7,23 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using System.Text;
 
 namespace Utilities
 {
     public class Map<T1, T2>
     {
-        private Dictionary<T1, T2> m_forward = new Dictionary<T1, T2>();
-        private Dictionary<T2, T1> m_reverse = new Dictionary<T2, T1>();
+        private readonly Dictionary<T1, T2> m_forward = new Dictionary<T1, T2>();
+        private readonly Dictionary<T2, T1> m_reverse = new Dictionary<T2, T1>();
 
         public Map()
         {
             m_forward = new Dictionary<T1, T2>();
             m_reverse = new Dictionary<T2, T1>();
         }
+
+        public T2 this[T1 key] => m_forward[key];
 
         public void Add(T1 key, T2 value)
         {
@@ -67,14 +68,6 @@ namespace Utilities
             {
                 m_forward.Remove(key);
                 m_reverse.Remove(value);
-            }
-        }
-
-        public T2 this[T1 key]
-        {
-            get
-            {
-                return m_forward[key];
             }
         }
 

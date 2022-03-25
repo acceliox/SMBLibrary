@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.Server
 {
     /// <summary>
@@ -27,6 +26,6 @@ namespace SMBLibrary.Server
         /// <summary>
         /// No offline caching is allowed for this share.
         /// </summary>
-        NoCaching,
+        NoCaching
     }
 }

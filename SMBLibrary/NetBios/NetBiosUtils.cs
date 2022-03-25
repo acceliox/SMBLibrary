@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Utilities;
@@ -125,10 +125,10 @@ namespace SMBLibrary.NetBios
                     throw new ArgumentException("Invalid NetBIOS label length");
                 }
             }
-            
+
             byte[] result = new byte[length];
             int offset = 0;
-            foreach(string label in labels)
+            foreach (string label in labels)
             {
                 result[offset] = (byte)label.Length;
                 offset++;
@@ -179,7 +179,7 @@ namespace SMBLibrary.NetBios
         {
             StringBuilder builder = new StringBuilder();
 
-            for(int index = 0; index < name.Length; index += 2)
+            for (int index = 0; index < name.Length; index += 2)
             {
                 byte c0 = (byte)name[index];
                 byte c1 = (byte)name[index + 1];

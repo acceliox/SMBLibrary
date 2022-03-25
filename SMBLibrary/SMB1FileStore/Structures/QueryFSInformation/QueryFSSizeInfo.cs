@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -35,6 +33,10 @@ namespace SMBLibrary.SMB1
             BytesPerSector = LittleEndianConverter.ToUInt32(buffer, 20);
         }
 
+        public override int Length => FixedLength;
+
+        public override QueryFSInformationLevel InformationLevel => QueryFSInformationLevel.SMB_QUERY_FS_SIZE_INFO;
+
         public override byte[] GetBytes(bool isUnicode)
         {
             byte[] buffer = new byte[Length];
@@ -43,22 +45,6 @@ namespace SMBLibrary.SMB1
             LittleEndianWriter.WriteUInt32(buffer, 16, SectorsPerAllocationUnit);
             LittleEndianWriter.WriteUInt32(buffer, 20, BytesPerSector);
             return buffer;
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength;
-            }
-        }
-
-        public override QueryFSInformationLevel InformationLevel
-        {
-            get
-            {
-                return QueryFSInformationLevel.SMB_QUERY_FS_SIZE_INFO;
-            }
         }
     }
 }

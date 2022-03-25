@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -43,8 +42,9 @@ namespace SMBLibrary.RPC
         {
             if (obj is SyntaxID)
             {
-                return this.InterfaceUUID.Equals(((SyntaxID)obj).InterfaceUUID) && this.InterfaceVersion.Equals(((SyntaxID)obj).InterfaceVersion);
+                return InterfaceUUID.Equals(((SyntaxID)obj).InterfaceUUID) && InterfaceVersion.Equals(((SyntaxID)obj).InterfaceVersion);
             }
+
             return false;
         }
 

@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +18,7 @@ namespace SMBLibrary.SMB2
         public const int FixedLength = 48;
         public const int DeclaredSize = 49;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public ushort Reserved;
         public uint CtlCode;
         public FileID FileId;
@@ -53,6 +53,15 @@ namespace SMBLibrary.SMB2
             Output = ByteReader.ReadBytes(buffer, offset + (int)OutputOffset, (int)OutputCount);
         }
 
+        public override int CommandLength
+        {
+            get
+            {
+                int paddedInputLength = (int)Math.Ceiling((double)Input.Length / 8) * 8;
+                return FixedLength + paddedInputLength + Output.Length;
+            }
+        }
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             InputOffset = 0;
@@ -63,12 +72,14 @@ namespace SMBLibrary.SMB2
             {
                 InputOffset = SMB2Header.Length + FixedLength;
             }
+
             // MS-SMB2: the output offset MUST be set to InputOffset + InputCount rounded up to a multiple of 8
             int paddedInputLength = (int)Math.Ceiling((double)Input.Length / 8) * 8;
             if (Output.Length > 0)
             {
                 OutputOffset = SMB2Header.Length + FixedLength + (uint)paddedInputLength;
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             LittleEndianWriter.WriteUInt16(buffer, offset + 2, Reserved);
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, CtlCode);
@@ -83,18 +94,10 @@ namespace SMBLibrary.SMB2
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedLength, Input);
             }
+
             if (Output.Length > 0)
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedLength + paddedInputLength, Output);
-            }
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                int paddedInputLength = (int)Math.Ceiling((double)Input.Length / 8) * 8;
-                return FixedLength + paddedInputLength + Output.Length;
             }
         }
     }

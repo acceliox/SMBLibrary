@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Utilities;
-
 namespace SMBLibrary.SMB1
 {
     public enum TransactionSubcommandName : ushort
@@ -22,6 +17,6 @@ namespace SMBLibrary.SMB1
         TRANS_READ_NMPIPE = 0x0036,
         TRANS_WRITE_NMPIPE = 0x0037,
         TRANS_WAIT_NMPIPE = 0x0053,
-        TRANS_CALL_NMPIPE = 0x0054,
+        TRANS_CALL_NMPIPE = 0x0054
     }
 }

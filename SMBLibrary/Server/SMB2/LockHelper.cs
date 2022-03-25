@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
+
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -35,7 +33,7 @@ namespace SMBLibrary.Server.SMB2
             // SMB2_LOCKFLAG_UNLOCK set, the server MUST process the lock array as a series of unlocks.
             // Otherwise, it MUST process the lock array as a series of lock requests.
             bool unlock = request.Locks[0].Unlock;
-            foreach(LockElement lockElement in request.Locks)
+            foreach (LockElement lockElement in request.Locks)
             {
                 if (unlock)
                 {
@@ -66,8 +64,8 @@ namespace SMBLibrary.Server.SMB2
                     }
                 }
             }
-            
-            for(int lockIndex = 0; lockIndex < request.Locks.Count; lockIndex++)
+
+            for (int lockIndex = 0; lockIndex < request.Locks.Count; lockIndex++)
             {
                 LockElement lockElement = request.Locks[lockIndex];
                 if (unlock)
@@ -79,6 +77,7 @@ namespace SMBLibrary.Server.SMB2
                         state.LogToServer(Severity.Information, "Lock: Unlocking '{0}{1}' failed. Offset: {2}, Length: {3}. NTStatus: {4}.", share.Name, openFile.Path, lockElement.Offset, lockElement.Length, status);
                         return new ErrorResponse(request.CommandName, status);
                     }
+
                     state.LogToServer(Severity.Information, "Lock: Unlocking '{0}{1}' succeeded. Offset: {2}, Length: {3}.", share.Name, openFile.Path, lockElement.Offset, lockElement.Length);
                 }
                 else
@@ -92,8 +91,10 @@ namespace SMBLibrary.Server.SMB2
                         {
                             share.FileStore.UnlockFile(openFile.Handle, (long)request.Locks[index].Offset, (long)request.Locks[index].Length);
                         }
+
                         return new ErrorResponse(request.CommandName, status);
                     }
+
                     state.LogToServer(Severity.Information, "Lock: Locking '{0}{1}' succeeded. Offset: {2}, Length: {3}.", share.Name, openFile.Path, lockElement.Offset, lockElement.Length);
                 }
             }

@@ -4,10 +4,10 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace SMBLibrary.Win32
 {
@@ -16,16 +16,24 @@ namespace SMBLibrary.Win32
         private static bool? m_is64BitProcess;
         private static bool? m_isWow64Process;
 
-        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool IsWow64Process(
-            [In] IntPtr hProcess,
-            [Out] out bool wow64Process
-        );
+        public static bool Is64BitProcess
+        {
+            get
+            {
+                if (!m_is64BitProcess.HasValue)
+                {
+                    m_is64BitProcess = IntPtr.Size == 8;
+                }
+
+                return m_is64BitProcess.Value;
+            }
+        }
+
+        public static bool Is64BitOperatingSystem => Is64BitProcess || IsWow64Process();
 
         public static bool IsWow64Process(Process process)
         {
-            if ((Environment.OSVersion.Version.Major == 5 && Environment.OSVersion.Version.Minor >= 1) ||
+            if (Environment.OSVersion.Version.Major == 5 && Environment.OSVersion.Version.Minor >= 1 ||
                 Environment.OSVersion.Version.Major >= 6)
             {
                 bool retVal;
@@ -33,12 +41,11 @@ namespace SMBLibrary.Win32
                 {
                     return false;
                 }
+
                 return retVal;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         public static bool IsWow64Process()
@@ -50,27 +57,15 @@ namespace SMBLibrary.Win32
                     m_isWow64Process = IsWow64Process(process);
                 }
             }
+
             return m_isWow64Process.Value;
         }
 
-        public static bool Is64BitProcess
-        {
-            get
-            {
-                if (!m_is64BitProcess.HasValue)
-                {
-                    m_is64BitProcess = (IntPtr.Size == 8);
-                }
-                return m_is64BitProcess.Value;
-            }
-        }
-
-        public static bool Is64BitOperatingSystem
-        {
-            get
-            {
-                return Is64BitProcess || IsWow64Process();
-            }
-        }
+        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWow64Process(
+            [In] IntPtr hProcess,
+            [Out] out bool wow64Process
+        );
     }
 }

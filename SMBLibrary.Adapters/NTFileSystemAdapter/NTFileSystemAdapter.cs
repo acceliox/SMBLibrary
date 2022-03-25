@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.IO;
 using DiskAccessLibrary.FileSystems.Abstractions;
@@ -16,13 +17,36 @@ namespace SMBLibrary.Adapters
         private const int BytesPerSector = 512;
         private const int ClusterSize = 4096;
 
-        private IFileSystem m_fileSystem;
-
-        public event EventHandler<LogEntry> LogEntryAdded;
+        private readonly IFileSystem m_fileSystem;
 
         public NTFileSystemAdapter(IFileSystem fileSystem)
         {
             m_fileSystem = fileSystem;
+        }
+
+        public event EventHandler<LogEntry> LogEntryAdded;
+
+        public void Log(Severity severity, string message)
+        {
+            // To be thread-safe we must capture the delegate reference first
+            EventHandler<LogEntry> handler = LogEntryAdded;
+            if (handler != null)
+            {
+                handler(this, new LogEntry(DateTime.Now, severity, "NT FileSystem Adapter", message));
+            }
+        }
+
+        public void Log(Severity severity, string message, params object[] args)
+        {
+            Log(severity, string.Format(message, args));
+        }
+
+        /// <summary>
+        /// Will return a virtual allocation size, assuming 4096 bytes per cluster
+        /// </summary>
+        public static ulong GetAllocationSize(ulong size)
+        {
+            return (ulong)Math.Ceiling((double)size / ClusterSize) * ClusterSize;
         }
 
         public NTStatus CreateFile(out object handle, out FileStatus fileStatus, string path, AccessMask desiredAccess, FileAttributes fileAttributes, ShareAccess shareAccess, CreateDisposition createDisposition, CreateOptions createOptions, SecurityContext securityContext)
@@ -69,10 +93,8 @@ namespace SMBLibrary.Adapters
                     Log(Severity.Verbose, "CreateFile: Error retrieving '{0}'. {1}.", path, status);
                     return status;
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
             if (createDisposition == CreateDisposition.FILE_OPEN)
@@ -129,11 +151,10 @@ namespace SMBLibrary.Adapters
                         Log(Severity.Verbose, "CreateFile: Error creating '{0}'. {1}.", path, status);
                         return status;
                     }
-                    else
-                    {
-                        throw;
-                    }
+
+                    throw;
                 }
+
                 fileStatus = FileStatus.FILE_CREATED;
             }
             else if (createDisposition == CreateDisposition.FILE_OPEN_IF ||
@@ -174,11 +195,10 @@ namespace SMBLibrary.Adapters
                             Log(Severity.Verbose, "CreateFile: Error creating '{0}'. {1}.", path, status);
                             return status;
                         }
-                        else
-                        {
-                            throw;
-                        }
+
+                        throw;
                     }
+
                     fileStatus = FileStatus.FILE_CREATED;
                 }
                 else
@@ -220,11 +240,10 @@ namespace SMBLibrary.Adapters
                                     Log(Severity.Verbose, "CreateFile: Error truncating '{0}'. {1}.", path, status);
                                     return status;
                                 }
-                                else
-                                {
-                                    throw;
-                                }
+
+                                throw;
                             }
+
                             fileStatus = FileStatus.FILE_OVERWRITTEN;
                         }
                         else if (createDisposition == CreateDisposition.FILE_SUPERSEDE)
@@ -242,10 +261,8 @@ namespace SMBLibrary.Adapters
                                     Log(Severity.Verbose, "CreateFile: Error deleting '{0}'. {1}.", path, status);
                                     return status;
                                 }
-                                else
-                                {
-                                    throw;
-                                }
+
+                                throw;
                             }
 
                             try
@@ -269,11 +286,10 @@ namespace SMBLibrary.Adapters
                                     Log(Severity.Verbose, "CreateFile: Error creating '{0}'. {1}.", path, status);
                                     return status;
                                 }
-                                else
-                                {
-                                    throw;
-                                }
+
+                                throw;
                             }
+
                             fileStatus = FileStatus.FILE_SUPERSEDED;
                         }
                     }
@@ -286,7 +302,7 @@ namespace SMBLibrary.Adapters
 
             FileAccess fileAccess = NTFileStoreHelper.ToFileAccess(desiredAccess);
             Stream stream;
-            if (fileAccess == (FileAccess)0 || entry.IsDirectory)
+            if (fileAccess == 0 || entry.IsDirectory)
             {
                 stream = null;
             }
@@ -308,35 +324,7 @@ namespace SMBLibrary.Adapters
             {
                 fileStatus = FileStatus.FILE_OPENED;
             }
-            return NTStatus.STATUS_SUCCESS;
-        }
 
-        private NTStatus OpenFileStream(out Stream stream, string path, FileAccess fileAccess, ShareAccess shareAccess, CreateOptions openOptions)
-        {
-            stream = null;
-            FileShare fileShare = NTFileStoreHelper.ToFileShare(shareAccess);
-            FileOptions fileOptions = ToFileOptions(openOptions);
-            string fileShareString = fileShare.ToString().Replace(", ", "|");
-            string fileOptionsString = ToFileOptionsString(fileOptions);
-            try
-            {
-                stream = m_fileSystem.OpenFile(path, FileMode.Open, fileAccess, fileShare, fileOptions);
-            }
-            catch (Exception ex)
-            {
-                if (ex is IOException || ex is UnauthorizedAccessException)
-                {
-                    NTStatus status = ToNTStatus(ex);
-                    Log(Severity.Verbose, "OpenFile: Cannot open '{0}', Access={1}, Share={2}. NTStatus: {3}.", path, fileAccess, fileShareString, status);
-                    return status;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            Log(Severity.Information, "OpenFileStream: Opened '{0}', Access={1}, Share={2}, FileOptions={3}", path, fileAccess, fileShareString, fileOptionsString);
             return NTStatus.STATUS_SUCCESS;
         }
 
@@ -399,10 +387,8 @@ namespace SMBLibrary.Adapters
                     Log(Severity.Verbose, "ReadFile: Cannot read '{0}'. {1}.", path, status);
                     return status;
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
             if (bytesRead < maxCount)
@@ -412,6 +398,7 @@ namespace SMBLibrary.Adapters
                 Array.Copy(data, temp, bytesRead);
                 data = temp;
             }
+
             return NTStatus.STATUS_SUCCESS;
         }
 
@@ -440,11 +427,10 @@ namespace SMBLibrary.Adapters
                     Log(Severity.Verbose, "WriteFile: Cannot write '{0}'. {1}.", path, status);
                     return status;
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
+
             numberOfBytesWritten = data.Length;
             return NTStatus.STATUS_SUCCESS;
         }
@@ -456,6 +442,7 @@ namespace SMBLibrary.Adapters
             {
                 fileHandle.Stream.Flush();
             }
+
             return NTStatus.STATUS_SUCCESS;
         }
 
@@ -497,19 +484,31 @@ namespace SMBLibrary.Adapters
             return NTStatus.STATUS_NOT_SUPPORTED;
         }
 
-        public void Log(Severity severity, string message)
+        private NTStatus OpenFileStream(out Stream stream, string path, FileAccess fileAccess, ShareAccess shareAccess, CreateOptions openOptions)
         {
-            // To be thread-safe we must capture the delegate reference first
-            EventHandler<LogEntry> handler = LogEntryAdded;
-            if (handler != null)
+            stream = null;
+            FileShare fileShare = NTFileStoreHelper.ToFileShare(shareAccess);
+            FileOptions fileOptions = ToFileOptions(openOptions);
+            string fileShareString = fileShare.ToString().Replace(", ", "|");
+            string fileOptionsString = ToFileOptionsString(fileOptions);
+            try
             {
-                handler(this, new LogEntry(DateTime.Now, severity, "NT FileSystem Adapter", message));
+                stream = m_fileSystem.OpenFile(path, FileMode.Open, fileAccess, fileShare, fileOptions);
             }
-        }
+            catch (Exception ex)
+            {
+                if (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    NTStatus status = ToNTStatus(ex);
+                    Log(Severity.Verbose, "OpenFile: Cannot open '{0}', Access={1}, Share={2}. NTStatus: {3}.", path, fileAccess, fileShareString, status);
+                    return status;
+                }
 
-        public void Log(Severity severity, string message, params object[] args)
-        {
-            Log(severity, String.Format(message, args));
+                throw;
+            }
+
+            Log(Severity.Information, "OpenFileStream: Opened '{0}', Access={1}, Share={2}, FileOptions={3}", path, fileAccess, fileShareString, fileOptionsString);
+            return NTStatus.STATUS_SUCCESS;
         }
 
         /// <param name="exception">IFileSystem exception</param>
@@ -519,53 +518,57 @@ namespace SMBLibrary.Adapters
             {
                 return NTStatus.STATUS_OBJECT_PATH_NOT_FOUND;
             }
-            else if (exception is FileNotFoundException)
+
+            if (exception is FileNotFoundException)
             {
                 return NTStatus.STATUS_OBJECT_PATH_NOT_FOUND;
             }
-            else if (exception is IOException)
+
+            if (exception is IOException)
             {
                 ushort errorCode = IOExceptionHelper.GetWin32ErrorCode((IOException)exception);
                 if (errorCode == (ushort)Win32Error.ERROR_SHARING_VIOLATION)
                 {
                     return NTStatus.STATUS_SHARING_VIOLATION;
                 }
-                else if (errorCode == (ushort)Win32Error.ERROR_DISK_FULL)
+
+                if (errorCode == (ushort)Win32Error.ERROR_DISK_FULL)
                 {
                     return NTStatus.STATUS_DISK_FULL;
                 }
-                else if (errorCode == (ushort)Win32Error.ERROR_INVALID_NAME)
+
+                if (errorCode == (ushort)Win32Error.ERROR_INVALID_NAME)
                 {
                     return NTStatus.STATUS_OBJECT_NAME_INVALID;
                 }
-                else if (errorCode == (ushort)Win32Error.ERROR_DIR_NOT_EMPTY)
+
+                if (errorCode == (ushort)Win32Error.ERROR_DIR_NOT_EMPTY)
                 {
                     // If a user tries to rename folder1 to folder2 when folder2 already exists, Windows 7 will offer to merge folder1 into folder2.
                     // In such case, Windows 7 will delete folder 1 and will expect STATUS_DIRECTORY_NOT_EMPTY if there are files to merge.
                     return NTStatus.STATUS_DIRECTORY_NOT_EMPTY;
                 }
-                else if (errorCode == (ushort)Win32Error.ERROR_BAD_PATHNAME)
+
+                if (errorCode == (ushort)Win32Error.ERROR_BAD_PATHNAME)
                 {
                     return NTStatus.STATUS_OBJECT_PATH_INVALID;
                 }
-                else if (errorCode == (ushort)Win32Error.ERROR_ALREADY_EXISTS)
+
+                if (errorCode == (ushort)Win32Error.ERROR_ALREADY_EXISTS)
                 {
                     // According to [MS-FSCC], FileRenameInformation MUST return STATUS_OBJECT_NAME_COLLISION when the specified name already exists and ReplaceIfExists is zero.
                     return NTStatus.STATUS_OBJECT_NAME_COLLISION;
                 }
-                else
-                {
-                    return NTStatus.STATUS_DATA_ERROR;
-                }
+
+                return NTStatus.STATUS_DATA_ERROR;
             }
-            else if (exception is UnauthorizedAccessException)
+
+            if (exception is UnauthorizedAccessException)
             {
                 return NTStatus.STATUS_ACCESS_DENIED;
             }
-            else
-            {
-                return NTStatus.STATUS_DATA_ERROR;
-            }
+
+            return NTStatus.STATUS_DATA_ERROR;
         }
 
         private static FileOptions ToFileOptions(CreateOptions createOptions)
@@ -577,22 +580,27 @@ namespace SMBLibrary.Adapters
             {
                 result |= FILE_FLAG_OPEN_REPARSE_POINT;
             }
+
             if ((createOptions & CreateOptions.FILE_NO_INTERMEDIATE_BUFFERING) > 0)
             {
                 result |= FILE_FLAG_NO_BUFFERING;
             }
+
             if ((createOptions & CreateOptions.FILE_RANDOM_ACCESS) > 0)
             {
                 result |= FileOptions.RandomAccess;
             }
+
             if ((createOptions & CreateOptions.FILE_SEQUENTIAL_ONLY) > 0)
             {
                 result |= FileOptions.SequentialScan;
             }
+
             if ((createOptions & CreateOptions.FILE_WRITE_THROUGH) > 0)
             {
                 result |= FileOptions.WriteThrough;
             }
+
             if ((createOptions & CreateOptions.FILE_DELETE_ON_CLOSE) > 0)
             {
                 result |= FileOptions.DeleteOnClose;
@@ -603,7 +611,7 @@ namespace SMBLibrary.Adapters
 
         private static string ToFileOptionsString(FileOptions options)
         {
-            string result = String.Empty;
+            string result = string.Empty;
             const FileOptions FILE_FLAG_OPEN_REPARSE_POINT = (FileOptions)0x00200000;
             const FileOptions FILE_FLAG_NO_BUFFERING = (FileOptions)0x20000000;
             if ((options & FILE_FLAG_OPEN_REPARSE_POINT) > 0)
@@ -611,26 +619,20 @@ namespace SMBLibrary.Adapters
                 result += "ReparsePoint|";
                 options &= ~FILE_FLAG_OPEN_REPARSE_POINT;
             }
+
             if ((options & FILE_FLAG_NO_BUFFERING) > 0)
             {
                 result += "NoBuffering|";
                 options &= ~FILE_FLAG_NO_BUFFERING;
             }
 
-            if (result == String.Empty || options != FileOptions.None)
+            if (result == string.Empty || options != FileOptions.None)
             {
                 result += options.ToString().Replace(", ", "|");
             }
-            result = result.TrimEnd(new char[] { '|' });
-            return result;
-        }
 
-        /// <summary>
-        /// Will return a virtual allocation size, assuming 4096 bytes per cluster
-        /// </summary>
-        public static ulong GetAllocationSize(ulong size)
-        {
-            return (ulong)Math.Ceiling((double)size / ClusterSize) * ClusterSize;
+            result = result.TrimEnd('|');
+            return result;
         }
     }
 }

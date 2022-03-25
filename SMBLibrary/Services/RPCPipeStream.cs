@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,14 +14,46 @@ namespace SMBLibrary.Services
 {
     public class RPCPipeStream : Stream
     {
-        private RemoteService m_service;
-        private List<MemoryStream> m_outputStreams; // A stream for each message in order to support message mode named pipe
+        private readonly RemoteService m_service;
+        private readonly List<MemoryStream> m_outputStreams; // A stream for each message in order to support message mode named pipe
         private int? m_maxTransmitFragmentSize;
 
         public RPCPipeStream(RemoteService service)
         {
             m_service = service;
             m_outputStreams = new List<MemoryStream>();
+        }
+
+        public override bool CanSeek => false;
+
+        public override bool CanRead => true;
+
+        public override bool CanWrite => true;
+
+        public override long Length => throw
+            // Stream.Length only works on Stream implementations where seeking is available.
+            new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// The length of the first message available in the pipe
+        /// </summary>
+        public int MessageLength
+        {
+            get
+            {
+                if (m_outputStreams.Count > 0)
+                {
+                    return (int)m_outputStreams[0].Length;
+                }
+
+                return 0;
+            }
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -32,12 +65,11 @@ namespace SMBLibrary.Services
                 {
                     m_outputStreams.RemoveAt(0);
                 }
+
                 return result;
             }
-            else
-            {
-                return 0;
-            }
+
+            return 0;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -45,6 +77,24 @@ namespace SMBLibrary.Services
             // [MC-CIFS] In message mode, the system treats the bytes read or written in each I/O operation to the pipe as a message unit.
             RPCPDU rpcRequest = RPCPDU.GetPDU(buffer, offset);
             ProcessRPCRequest(rpcRequest);
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override void Close()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
         }
 
         private void ProcessRPCRequest(RPCPDU rpcRequest)
@@ -79,87 +129,6 @@ namespace SMBLibrary.Services
         {
             MemoryStream stream = new MemoryStream(buffer);
             m_outputStreams.Add(stream);
-        }
-
-        public override void Flush()
-        {
-        }
-
-        public override void Close()
-        {
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotSupportedException();
-        }
-
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
-
-        public override bool CanSeek
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool CanRead
-        {
-            get
-            {
-                return true;
-            }
-        }
-
-        public override bool CanWrite
-        {
-            get
-            {
-                return true;
-            }
-        }
-
-        public override long Length
-        {
-            get
-            {
-                // Stream.Length only works on Stream implementations where seeking is available.
-                throw new NotSupportedException();
-            }
-        }
-
-        public override long Position
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        /// <summary>
-        /// The length of the first message available in the pipe
-        /// </summary>
-        public int MessageLength
-        {
-            get
-            {
-                if (m_outputStreams.Count > 0)
-                {
-                    return (int)m_outputStreams[0].Length;
-                }
-                else
-                {
-                    return 0;
-                }
-            }
         }
     }
 }

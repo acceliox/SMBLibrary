@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 namespace SMBLibrary.NetBios
 {
     /// <summary>
@@ -16,6 +17,6 @@ namespace SMBLibrary.NetBios
         PositiveSessionResponse = 0x82,
         NegativeSessionResponse = 0x83,
         RetargetSessionResponse = 0x84,
-        SessionKeepAlive = 0x85,
+        SessionKeepAlive = 0x85
     }
 }

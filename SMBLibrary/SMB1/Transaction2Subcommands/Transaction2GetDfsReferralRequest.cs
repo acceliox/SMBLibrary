@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -18,14 +17,16 @@ namespace SMBLibrary.SMB1
         // Parameters:
         public RequestGetDfsReferral ReferralRequest;
 
-        public Transaction2GetDfsReferralRequest() : base()
+        public Transaction2GetDfsReferralRequest()
         {
         }
 
-        public Transaction2GetDfsReferralRequest(byte[] parameters, byte[] data) : base()
+        public Transaction2GetDfsReferralRequest(byte[] parameters, byte[] data)
         {
             ReferralRequest = new RequestGetDfsReferral(parameters);
         }
+
+        public override Transaction2SubcommandName SubcommandName => Transaction2SubcommandName.TRANS2_GET_DFS_REFERRAL;
 
         public override byte[] GetSetup()
         {
@@ -35,14 +36,6 @@ namespace SMBLibrary.SMB1
         public override byte[] GetParameters(bool isUnicode)
         {
             return ReferralRequest.GetBytes();
-        }
-
-        public override Transaction2SubcommandName SubcommandName
-        {
-            get
-            {
-                return Transaction2SubcommandName.TRANS2_GET_DFS_REFERRAL;
-            }
         }
     }
 }

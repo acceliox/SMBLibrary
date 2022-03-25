@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using Utilities;
 
@@ -18,7 +18,9 @@ namespace SMBLibrary
         public const int FixedLength = 8;
 
         public byte AclRevision;
+
         public byte Sbz1;
+
         // ushort AclSize;
         // ushort AceCount;
         public ushort Sbz2;
@@ -40,8 +42,22 @@ namespace SMBLibrary
             for (int index = 0; index < aceCount; index++)
             {
                 ACE ace = ACE.GetAce(buffer, offset);
-                this.Add(ace);
+                Add(ace);
                 offset += ace.Length;
+            }
+        }
+
+        public int Length
+        {
+            get
+            {
+                int length = FixedLength;
+                foreach (ACE ace in this)
+                {
+                    length += ace.Length;
+                }
+
+                return length;
             }
         }
 
@@ -55,19 +71,6 @@ namespace SMBLibrary
             foreach (ACE ace in this)
             {
                 ace.WriteBytes(buffer, ref offset);
-            }
-        }
-
-        public int Length
-        {
-            get
-            {
-                int length = FixedLength;
-                foreach (ACE ace in this)
-                {
-                    length += ace.Length;
-                }
-                return length;
             }
         }
     }

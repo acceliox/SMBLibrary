@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -14,10 +14,10 @@ namespace SMBLibrary.SMB2
         public const int Length = 64;
         public const int SignatureOffset = 48;
 
-        public static readonly byte[] ProtocolSignature = new byte[] { 0xFE, 0x53, 0x4D, 0x42 };
+        public static readonly byte[] ProtocolSignature = { 0xFE, 0x53, 0x4D, 0x42 };
 
-        private byte[] ProtocolId; // 4 bytes, 0xFE followed by "SMB"
-        private ushort StructureSize;
+        private readonly byte[] ProtocolId; // 4 bytes, 0xFE followed by "SMB"
+        private readonly ushort StructureSize;
         public ushort CreditCharge;
         public NTStatus Status;
         public SMB2CommandName Command;
@@ -26,7 +26,7 @@ namespace SMBLibrary.SMB2
         public uint NextCommand; // offset in bytes
         public ulong MessageID;
         public uint Reserved; // Sync
-        public uint TreeID;   // Sync
+        public uint TreeID; // Sync
         public ulong AsyncID; // Async
         public ulong SessionID;
         public byte[] Signature; // 16 bytes (present if SMB2_FLAGS_SIGNED is set)
@@ -59,10 +59,75 @@ namespace SMBLibrary.SMB2
                 Reserved = LittleEndianConverter.ToUInt32(buffer, offset + 32);
                 TreeID = LittleEndianConverter.ToUInt32(buffer, offset + 36);
             }
+
             SessionID = LittleEndianConverter.ToUInt64(buffer, offset + 40);
             if ((Flags & SMB2PacketHeaderFlags.Signed) > 0)
             {
                 Signature = ByteReader.ReadBytes(buffer, offset + 48, 16);
+            }
+        }
+
+        public bool IsResponse
+        {
+            get => (Flags & SMB2PacketHeaderFlags.ServerToRedir) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags |= SMB2PacketHeaderFlags.ServerToRedir;
+                }
+                else
+                {
+                    Flags &= ~SMB2PacketHeaderFlags.ServerToRedir;
+                }
+            }
+        }
+
+        public bool IsAsync
+        {
+            get => (Flags & SMB2PacketHeaderFlags.AsyncCommand) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags |= SMB2PacketHeaderFlags.AsyncCommand;
+                }
+                else
+                {
+                    Flags &= ~SMB2PacketHeaderFlags.AsyncCommand;
+                }
+            }
+        }
+
+        public bool IsRelatedOperations
+        {
+            get => (Flags & SMB2PacketHeaderFlags.RelatedOperations) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags |= SMB2PacketHeaderFlags.RelatedOperations;
+                }
+                else
+                {
+                    Flags &= ~SMB2PacketHeaderFlags.RelatedOperations;
+                }
+            }
+        }
+
+        public bool IsSigned
+        {
+            get => (Flags & SMB2PacketHeaderFlags.Signed) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags |= SMB2PacketHeaderFlags.Signed;
+                }
+                else
+                {
+                    Flags &= ~SMB2PacketHeaderFlags.Signed;
+                }
             }
         }
 
@@ -86,86 +151,11 @@ namespace SMBLibrary.SMB2
                 LittleEndianWriter.WriteUInt32(buffer, offset + 32, Reserved);
                 LittleEndianWriter.WriteUInt32(buffer, offset + 36, TreeID);
             }
+
             LittleEndianWriter.WriteUInt64(buffer, offset + 40, SessionID);
             if ((Flags & SMB2PacketHeaderFlags.Signed) > 0)
             {
                 ByteWriter.WriteBytes(buffer, offset + 48, Signature);
-            }
-        }
-
-        public bool IsResponse
-        {
-            get
-            {
-                return (Flags & SMB2PacketHeaderFlags.ServerToRedir) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    Flags |= SMB2PacketHeaderFlags.ServerToRedir;
-                }
-                else
-                {
-                    Flags &= ~SMB2PacketHeaderFlags.ServerToRedir;
-                }
-            }
-        }
-        
-        public bool IsAsync
-        {
-            get
-            {
-                return (Flags & SMB2PacketHeaderFlags.AsyncCommand) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    Flags |= SMB2PacketHeaderFlags.AsyncCommand;
-                }
-                else
-                {
-                    Flags &= ~SMB2PacketHeaderFlags.AsyncCommand;
-                }
-            }
-        }
-
-        public bool IsRelatedOperations
-        {
-            get
-            {
-                return (Flags & SMB2PacketHeaderFlags.RelatedOperations) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    Flags |= SMB2PacketHeaderFlags.RelatedOperations;
-                }
-                else
-                {
-                    Flags &= ~SMB2PacketHeaderFlags.RelatedOperations;
-                }
-            }
-        }
-        
-        public bool IsSigned
-        {
-            get
-            {
-                return (Flags & SMB2PacketHeaderFlags.Signed) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    Flags |= SMB2PacketHeaderFlags.Signed;
-                }
-                else
-                {
-                    Flags &= ~SMB2PacketHeaderFlags.Signed;
-                }
             }
         }
 
@@ -176,6 +166,7 @@ namespace SMBLibrary.SMB2
                 byte[] protocol = ByteReader.ReadBytes(buffer, 0, 4);
                 return ByteUtils.AreByteArraysEqual(protocol, ProtocolSignature);
             }
+
             return false;
         }
     }

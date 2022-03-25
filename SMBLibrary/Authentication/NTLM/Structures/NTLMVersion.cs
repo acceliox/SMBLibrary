@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.Authentication.NTLM
@@ -21,7 +19,9 @@ namespace SMBLibrary.Authentication.NTLM
 
         public byte ProductMajorVersion;
         public byte ProductMinorVersion;
+
         public ushort ProductBuild;
+
         // Reserved - 3 bytes
         public byte NTLMRevisionCurrent;
 
@@ -41,6 +41,10 @@ namespace SMBLibrary.Authentication.NTLM
             NTLMRevisionCurrent = ByteReader.ReadByte(buffer, offset + 7);
         }
 
+        public static NTLMVersion WindowsXP => new NTLMVersion(5, 1, 2600, NTLMSSP_REVISION_W2K3);
+
+        public static NTLMVersion Server2003 => new NTLMVersion(5, 2, 3790, NTLMSSP_REVISION_W2K3);
+
         public void WriteBytes(byte[] buffer, int offset)
         {
             ByteWriter.WriteByte(buffer, offset + 0, ProductMajorVersion);
@@ -51,23 +55,7 @@ namespace SMBLibrary.Authentication.NTLM
 
         public override string ToString()
         {
-            return String.Format("{0}.{1}.{2}", ProductMajorVersion, ProductMinorVersion, ProductBuild);
-        }
-
-        public static NTLMVersion WindowsXP
-        {
-            get
-            {
-                return new NTLMVersion(5, 1, 2600, NTLMSSP_REVISION_W2K3);
-            }
-        }
-
-        public static NTLMVersion Server2003
-        {
-            get
-            {
-                return new NTLMVersion(5, 2, 3790, NTLMSSP_REVISION_W2K3);
-            }
+            return string.Format("{0}.{1}.{2}", ProductMajorVersion, ProductMinorVersion, ProductBuild);
         }
     }
 }

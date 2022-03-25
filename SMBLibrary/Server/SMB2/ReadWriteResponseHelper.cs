@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using SMBLibrary.Authentication;
+
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -40,6 +38,7 @@ namespace SMBLibrary.Server.SMB2
                 state.LogToServer(Severity.Verbose, "Read from '{0}{1}' failed. NTStatus: {2}. (FileId: {3})", share.Name, openFile.Path, readStatus, request.FileId.Volatile);
                 return new ErrorResponse(request.CommandName, readStatus);
             }
+
             ReadResponse response = new ReadResponse();
             response.Data = data;
             return response;
@@ -71,6 +70,7 @@ namespace SMBLibrary.Server.SMB2
                 state.LogToServer(Severity.Verbose, "Write to '{0}{1}' failed. NTStatus: {2}. (FileId: {3})", share.Name, openFile.Path, writeStatus, request.FileId.Volatile);
                 return new ErrorResponse(request.CommandName, writeStatus);
             }
+
             WriteResponse response = new WriteResponse();
             response.Count = (uint)numberOfBytesWritten;
             return response;
@@ -85,12 +85,14 @@ namespace SMBLibrary.Server.SMB2
                 state.LogToServer(Severity.Verbose, "Flush failed. Invalid FileId. (SessionID: {0}, TreeID: {1}, FileId: {2})", request.Header.SessionID, request.Header.TreeID, request.FileId.Volatile);
                 return new ErrorResponse(request.CommandName, NTStatus.STATUS_FILE_CLOSED);
             }
+
             NTStatus status = share.FileStore.FlushFileBuffers(openFile.Handle);
             if (status != NTStatus.STATUS_SUCCESS)
             {
                 state.LogToServer(Severity.Verbose, "Flush '{0}{1}' failed. NTStatus: {2}. (FileId: {3})", share.Name, openFile.Path, status, request.FileId.Volatile);
                 return new ErrorResponse(request.CommandName, status);
             }
+
             return new FlushResponse();
         }
     }

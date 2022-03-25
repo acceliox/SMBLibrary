@@ -4,10 +4,10 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Utilities;
 
 namespace SMBLibrary.Server
 {
@@ -15,30 +15,38 @@ namespace SMBLibrary.Server
     {
         private const int MaxSearches = 2048; // Windows servers initialize Server.MaxSearches to 2048.
 
-        private SMB1ConnectionState m_connection;
-        private ushort m_userID;
+        private readonly SMB1ConnectionState m_connection;
         private byte[] m_sessionKey;
-        private SecurityContext m_securityContext;
-        private DateTime m_creationDT;
+        private readonly SecurityContext m_securityContext;
 
         // Key is TID
-        private Dictionary<ushort, ISMBShare> m_connectedTrees = new Dictionary<ushort, ISMBShare>();
+        private readonly Dictionary<ushort, ISMBShare> m_connectedTrees = new Dictionary<ushort, ISMBShare>();
 
         // Key is FID
-        private Dictionary<ushort, OpenFileObject> m_openFiles = new Dictionary<ushort, OpenFileObject>();
+        private readonly Dictionary<ushort, OpenFileObject> m_openFiles = new Dictionary<ushort, OpenFileObject>();
 
         // Key is search handle a.k.a. Search ID
-        private Dictionary<ushort, OpenSearch> m_openSearches = new Dictionary<ushort, OpenSearch>();
+        private readonly Dictionary<ushort, OpenSearch> m_openSearches = new Dictionary<ushort, OpenSearch>();
         private ushort m_nextSearchHandle = 1;
 
         public SMB1Session(SMB1ConnectionState connection, ushort userID, string userName, string machineName, byte[] sessionKey, object accessToken)
         {
             m_connection = connection;
-            m_userID = userID;
+            UserID = userID;
             m_sessionKey = sessionKey;
             m_securityContext = new SecurityContext(userName, machineName, connection.ClientEndPoint, connection.AuthenticationContext, accessToken);
-            m_creationDT = DateTime.UtcNow;
+            CreationDT = DateTime.UtcNow;
         }
+
+        public ushort UserID { get; }
+
+        public SecurityContext SecurityContext => m_securityContext;
+
+        public string UserName => m_securityContext.UserName;
+
+        public string MachineName => m_securityContext.MachineName;
+
+        public DateTime CreationDT { get; }
 
         public ushort? AddConnectedTree(ISMBShare share)
         {
@@ -49,6 +57,7 @@ namespace SMBLibrary.Server
                 {
                     m_connectedTrees.Add(treeID.Value, share);
                 }
+
                 return treeID;
             }
         }
@@ -78,6 +87,7 @@ namespace SMBLibrary.Server
                             m_openFiles.Remove(fileID);
                         }
                     }
+
                     m_connectedTrees.Remove(treeID);
                 }
             }
@@ -99,6 +109,7 @@ namespace SMBLibrary.Server
                 {
                     m_openFiles.Add(fileID.Value, new OpenFileObject(treeID, shareName, relativePath, handle, fileAccess));
                 }
+
                 return fileID;
             }
         }
@@ -128,25 +139,8 @@ namespace SMBLibrary.Server
                     result.Add(new OpenFileInformation(openFile.ShareName, openFile.Path, openFile.FileAccess, openFile.OpenedDT));
                 }
             }
-            return result;
-        }
 
-        private ushort? AllocateSearchHandle()
-        {
-            for (ushort offset = 0; offset < UInt16.MaxValue; offset++)
-            {
-                ushort searchHandle = (ushort)(m_nextSearchHandle + offset);
-                if (searchHandle == 0 || searchHandle == 0xFFFF)
-                {
-                    continue;
-                }
-                if (!m_openSearches.ContainsKey(searchHandle))
-                {
-                    m_nextSearchHandle = (ushort)(searchHandle + 1);
-                    return searchHandle;
-                }
-            }
-            return null;
+            return result;
         }
 
         public ushort? AddOpenSearch(List<QueryDirectoryFileInformation> entries, int enumerationLocation)
@@ -157,6 +151,7 @@ namespace SMBLibrary.Server
                 OpenSearch openSearch = new OpenSearch(entries, enumerationLocation);
                 m_openSearches.Add(searchHandle.Value, openSearch);
             }
+
             return searchHandle;
         }
 
@@ -184,44 +179,24 @@ namespace SMBLibrary.Server
             }
         }
 
-        public ushort UserID
+        private ushort? AllocateSearchHandle()
         {
-            get
+            for (ushort offset = 0; offset < ushort.MaxValue; offset++)
             {
-                return m_userID;
-            }
-        }
+                ushort searchHandle = (ushort)(m_nextSearchHandle + offset);
+                if (searchHandle == 0 || searchHandle == 0xFFFF)
+                {
+                    continue;
+                }
 
-        public SecurityContext SecurityContext
-        {
-            get
-            {
-                return m_securityContext;
+                if (!m_openSearches.ContainsKey(searchHandle))
+                {
+                    m_nextSearchHandle = (ushort)(searchHandle + 1);
+                    return searchHandle;
+                }
             }
-        }
 
-        public string UserName
-        {
-            get
-            {
-                return m_securityContext.UserName;
-            }
-        }
-
-        public string MachineName
-        {
-            get
-            {
-                return m_securityContext.MachineName;
-            }
-        }
-
-        public DateTime CreationDT
-        {
-            get
-            {
-                return m_creationDT;
-            }
+            return null;
         }
     }
 }

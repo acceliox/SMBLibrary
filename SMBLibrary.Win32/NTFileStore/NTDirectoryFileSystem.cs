@@ -4,12 +4,12 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Microsoft.Win32.SafeHandles;
 using Utilities;
 
 namespace SMBLibrary.Win32
@@ -54,7 +54,7 @@ namespace SMBLibrary.Win32
     [StructLayoutAttribute(LayoutKind.Sequential)]
     public struct IO_STATUS_BLOCK
     {
-        public UInt32 Status;
+        public uint Status;
         public IntPtr Information;
     }
 
@@ -68,67 +68,12 @@ namespace SMBLibrary.Win32
 
     public class NTDirectoryFileSystem : INTFileStore
     {
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtCreateFile(out IntPtr handle, uint desiredAccess, ref OBJECT_ATTRIBUTES objectAttributes, out IO_STATUS_BLOCK ioStatusBlock, ref long allocationSize, FileAttributes fileAttributes, ShareAccess shareAccess, CreateDisposition createDisposition, CreateOptions createOptions, IntPtr eaBuffer, uint eaLength);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtClose(IntPtr handle);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtReadFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] buffer, uint length, ref long byteOffset, IntPtr key);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtWriteFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] buffer, uint length, ref long byteOffset, IntPtr key);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtFlushBuffersFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtLockFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, ref long byteOffset, ref long length, uint key, bool failImmediately, bool exclusiveLock);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtUnlockFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, ref long byteOffset, ref long length, uint key);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtQueryDirectoryFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] fileInformation, uint length, uint fileInformationClass, bool returnSingleEntry, ref UNICODE_STRING fileName, bool restartScan);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtQueryInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fileInformation, uint length, uint fileInformationClass);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtSetInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fileInformation, uint length, uint fileInformationClass);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtQueryVolumeInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fsInformation, uint length, uint fsInformationClass);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtSetVolumeInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fsInformation, uint length, uint fsInformationClass);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtQuerySecurityObject(IntPtr handle, SecurityInformation securityInformation, byte[] securityDescriptor, uint length, out uint lengthNeeded);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtSetSecurityObject(IntPtr handle, SecurityInformation securityInformation, byte[] securityDescriptor);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtNotifyChangeDirectoryFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] buffer, uint bufferSize, NotifyChangeFilter completionFilter, bool watchTree);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtFsControlFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, uint ioControlCode, byte[] inputBuffer, uint inputBufferLength, byte[] outputBuffer, uint outputBufferLength);
-
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtAlertThread(IntPtr threadHandle);
-
-        // Available starting from Windows Vista.
-        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
-        private static extern NTStatus NtCancelSynchronousIoFile(IntPtr threadHandle, IntPtr ioRequestToCancel, out IO_STATUS_BLOCK ioStatusBlock);
-
         private static readonly int QueryDirectoryBufferSize = 4096;
         private static readonly int FileInformationBufferSize = 8192;
         private static readonly int FileSystemInformationBufferSize = 4096;
 
-        private DirectoryInfo m_directory;
-        private PendingRequestCollection m_pendingRequests = new PendingRequestCollection();
+        private readonly DirectoryInfo m_directory;
+        private readonly PendingRequestCollection m_pendingRequests = new PendingRequestCollection();
 
         public NTDirectoryFileSystem(string path) : this(new DirectoryInfo(path))
         {
@@ -137,38 +82,6 @@ namespace SMBLibrary.Win32
         public NTDirectoryFileSystem(DirectoryInfo directory)
         {
             m_directory = directory;
-        }
-
-        private OBJECT_ATTRIBUTES InitializeObjectAttributes(UNICODE_STRING objectName)
-        {
-            OBJECT_ATTRIBUTES objectAttributes = new OBJECT_ATTRIBUTES();
-            objectAttributes.RootDirectory = IntPtr.Zero;
-            objectAttributes.ObjectName = Marshal.AllocHGlobal(Marshal.SizeOf(objectName));
-            Marshal.StructureToPtr(objectName, objectAttributes.ObjectName, false);
-            objectAttributes.SecurityDescriptor = IntPtr.Zero;
-            objectAttributes.SecurityQualityOfService = IntPtr.Zero;
-
-            objectAttributes.Length = Marshal.SizeOf(objectAttributes);
-            return objectAttributes;
-        }
-
-        private NTStatus CreateFile(out IntPtr handle, out FileStatus fileStatus, string nativePath, AccessMask desiredAccess, long allocationSize, FileAttributes fileAttributes, ShareAccess shareAccess, CreateDisposition createDisposition, CreateOptions createOptions)
-        {
-            UNICODE_STRING objectName = new UNICODE_STRING(nativePath);
-            OBJECT_ATTRIBUTES objectAttributes = InitializeObjectAttributes(objectName);
-            IO_STATUS_BLOCK ioStatusBlock;
-            NTStatus status = NtCreateFile(out handle, (uint)desiredAccess, ref objectAttributes, out ioStatusBlock, ref allocationSize, fileAttributes, shareAccess, createDisposition, createOptions, IntPtr.Zero, 0);
-            fileStatus = (FileStatus)ioStatusBlock.Information;
-            return status;
-        }
-
-        private string ToNativePath(string path)
-        {
-            if (!path.StartsWith(@"\"))
-            {
-                path = @"\" + path;
-            }
-            return @"\??\" + m_directory.FullName + path;
         }
 
         public NTStatus CreateFile(out object handle, out FileStatus fileStatus, string path, AccessMask desiredAccess, FileAttributes fileAttributes, ShareAccess shareAccess, CreateDisposition createDisposition, CreateOptions createOptions, SecurityContext securityContext)
@@ -207,6 +120,7 @@ namespace SMBLibrary.Win32
                 request.Cleanup = true;
                 Cancel(request);
             }
+
             return NtClose((IntPtr)handle);
         }
 
@@ -223,6 +137,7 @@ namespace SMBLibrary.Win32
                     data = ByteReader.ReadBytes(data, 0, bytesRead);
                 }
             }
+
             return status;
         }
 
@@ -238,6 +153,7 @@ namespace SMBLibrary.Win32
             {
                 numberOfBytesWritten = 0;
             }
+
             return status;
         }
 
@@ -273,15 +189,18 @@ namespace SMBLibrary.Win32
                 {
                     break;
                 }
-                else if (status != NTStatus.STATUS_SUCCESS)
+
+                if (status != NTStatus.STATUS_SUCCESS)
                 {
                     return status;
                 }
+
                 int numberOfBytesWritten = (int)ioStatusBlock.Information;
                 List<QueryDirectoryFileInformation> page = QueryDirectoryFileInformation.ReadFileInformationList(buffer, 0, informationClass);
                 result.AddRange(page);
                 restartScan = false;
             }
+
             fileNameStructure.Dispose();
             return NTStatus.STATUS_SUCCESS;
         }
@@ -301,6 +220,7 @@ namespace SMBLibrary.Win32
             {
                 result = null;
             }
+
             return status;
         }
 
@@ -346,6 +266,7 @@ namespace SMBLibrary.Win32
                     information = fileLinkInformationRemote;
                 }
             }
+
             byte[] buffer = information.GetBytes();
             return NtSetInformationFile((IntPtr)handle, out ioStatusBlock, buffer, (uint)buffer.Length, (uint)information.FileInformationClass);
         }
@@ -357,13 +278,14 @@ namespace SMBLibrary.Win32
             IntPtr volumeHandle;
             FileStatus fileStatus;
             string nativePath = @"\??\" + m_directory.FullName.Substring(0, 3);
-            NTStatus status = CreateFile(out volumeHandle, out fileStatus, nativePath, AccessMask.GENERIC_READ, 0, (FileAttributes)0, ShareAccess.Read, CreateDisposition.FILE_OPEN, (CreateOptions)0);
+            NTStatus status = CreateFile(out volumeHandle, out fileStatus, nativePath, AccessMask.GENERIC_READ, 0, 0, ShareAccess.Read, CreateDisposition.FILE_OPEN, 0);
             result = null;
             if (status != NTStatus.STATUS_SUCCESS)
             {
                 return status;
             }
-            status = NtQueryVolumeInformationFile((IntPtr)volumeHandle, out ioStatusBlock, buffer, (uint)buffer.Length, (uint)informationClass);
+
+            status = NtQueryVolumeInformationFile(volumeHandle, out ioStatusBlock, buffer, (uint)buffer.Length, (uint)informationClass);
             CloseFile(volumeHandle);
             if (status == NTStatus.STATUS_SUCCESS)
             {
@@ -371,6 +293,7 @@ namespace SMBLibrary.Win32
                 buffer = ByteReader.ReadBytes(buffer, 0, numberOfBytesWritten);
                 result = FileSystemInformation.GetFileSystemInformation(buffer, 0, informationClass);
             }
+
             return status;
         }
 
@@ -432,6 +355,7 @@ namespace SMBLibrary.Win32
                         status = NTStatus.STATUS_NOTIFY_CLEANUP;
                     }
                 }
+
                 onNotifyChangeCompleted(status, buffer, context);
                 m_pendingRequests.Remove((IntPtr)handle, request.ThreadID);
             });
@@ -457,10 +381,8 @@ namespace SMBLibrary.Win32
                 {
                     return NTStatus.STATUS_INVALID_HANDLE;
                 }
-                else
-                {
-                    throw new Exception("OpenThread failed, Win32 error: " + error.ToString("D"));
-                }
+
+                throw new Exception("OpenThread failed, Win32 error: " + error.ToString("D"));
             }
 
             NTStatus status;
@@ -504,23 +426,112 @@ namespace SMBLibrary.Win32
                 case IoControlCode.FSCTL_QUERY_FILE_REGIONS:
                 case IoControlCode.FSCTL_QUERY_ALLOCATED_RANGES:
                 case IoControlCode.FSCTL_SET_ZERO_DATA:
+                {
+                    IO_STATUS_BLOCK ioStatusBlock;
+                    output = new byte[maxOutputLength];
+                    NTStatus status = NtFsControlFile((IntPtr)handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out ioStatusBlock, ctlCode, input, (uint)input.Length, output, (uint)maxOutputLength);
+                    if (status == NTStatus.STATUS_SUCCESS)
                     {
-                        IO_STATUS_BLOCK ioStatusBlock;
-                        output = new byte[maxOutputLength];
-                        NTStatus status = NtFsControlFile((IntPtr)handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out ioStatusBlock, ctlCode, input, (uint)input.Length, output, (uint)maxOutputLength);
-                        if (status == NTStatus.STATUS_SUCCESS)
-                        {
-                            int numberOfBytesWritten = (int)ioStatusBlock.Information;
-                            output = ByteReader.ReadBytes(output, 0, numberOfBytesWritten);
-                        }
-                        return status;
+                        int numberOfBytesWritten = (int)ioStatusBlock.Information;
+                        output = ByteReader.ReadBytes(output, 0, numberOfBytesWritten);
                     }
+
+                    return status;
+                }
                 default:
-                    {
-                        output = null;
-                        return NTStatus.STATUS_NOT_SUPPORTED;
-                    }
+                {
+                    output = null;
+                    return NTStatus.STATUS_NOT_SUPPORTED;
+                }
             }
+        }
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtCreateFile(out IntPtr handle, uint desiredAccess, ref OBJECT_ATTRIBUTES objectAttributes, out IO_STATUS_BLOCK ioStatusBlock, ref long allocationSize, FileAttributes fileAttributes, ShareAccess shareAccess, CreateDisposition createDisposition, CreateOptions createOptions, IntPtr eaBuffer, uint eaLength);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtClose(IntPtr handle);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtReadFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] buffer, uint length, ref long byteOffset, IntPtr key);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtWriteFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] buffer, uint length, ref long byteOffset, IntPtr key);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtFlushBuffersFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtLockFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, ref long byteOffset, ref long length, uint key, bool failImmediately, bool exclusiveLock);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtUnlockFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, ref long byteOffset, ref long length, uint key);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtQueryDirectoryFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] fileInformation, uint length, uint fileInformationClass, bool returnSingleEntry, ref UNICODE_STRING fileName, bool restartScan);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtQueryInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fileInformation, uint length, uint fileInformationClass);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtSetInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fileInformation, uint length, uint fileInformationClass);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtQueryVolumeInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fsInformation, uint length, uint fsInformationClass);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtSetVolumeInformationFile(IntPtr handle, out IO_STATUS_BLOCK ioStatusBlock, byte[] fsInformation, uint length, uint fsInformationClass);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtQuerySecurityObject(IntPtr handle, SecurityInformation securityInformation, byte[] securityDescriptor, uint length, out uint lengthNeeded);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtSetSecurityObject(IntPtr handle, SecurityInformation securityInformation, byte[] securityDescriptor);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtNotifyChangeDirectoryFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, byte[] buffer, uint bufferSize, NotifyChangeFilter completionFilter, bool watchTree);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtFsControlFile(IntPtr handle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext, out IO_STATUS_BLOCK ioStatusBlock, uint ioControlCode, byte[] inputBuffer, uint inputBufferLength, byte[] outputBuffer, uint outputBufferLength);
+
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtAlertThread(IntPtr threadHandle);
+
+        // Available starting from Windows Vista.
+        [DllImport("ntdll.dll", ExactSpelling = true, SetLastError = false)]
+        private static extern NTStatus NtCancelSynchronousIoFile(IntPtr threadHandle, IntPtr ioRequestToCancel, out IO_STATUS_BLOCK ioStatusBlock);
+
+        private OBJECT_ATTRIBUTES InitializeObjectAttributes(UNICODE_STRING objectName)
+        {
+            OBJECT_ATTRIBUTES objectAttributes = new OBJECT_ATTRIBUTES();
+            objectAttributes.RootDirectory = IntPtr.Zero;
+            objectAttributes.ObjectName = Marshal.AllocHGlobal(Marshal.SizeOf(objectName));
+            Marshal.StructureToPtr(objectName, objectAttributes.ObjectName, false);
+            objectAttributes.SecurityDescriptor = IntPtr.Zero;
+            objectAttributes.SecurityQualityOfService = IntPtr.Zero;
+
+            objectAttributes.Length = Marshal.SizeOf(objectAttributes);
+            return objectAttributes;
+        }
+
+        private NTStatus CreateFile(out IntPtr handle, out FileStatus fileStatus, string nativePath, AccessMask desiredAccess, long allocationSize, FileAttributes fileAttributes, ShareAccess shareAccess, CreateDisposition createDisposition, CreateOptions createOptions)
+        {
+            UNICODE_STRING objectName = new UNICODE_STRING(nativePath);
+            OBJECT_ATTRIBUTES objectAttributes = InitializeObjectAttributes(objectName);
+            IO_STATUS_BLOCK ioStatusBlock;
+            NTStatus status = NtCreateFile(out handle, (uint)desiredAccess, ref objectAttributes, out ioStatusBlock, ref allocationSize, fileAttributes, shareAccess, createDisposition, createOptions, IntPtr.Zero, 0);
+            fileStatus = (FileStatus)ioStatusBlock.Information;
+            return status;
+        }
+
+        private string ToNativePath(string path)
+        {
+            if (!path.StartsWith(@"\"))
+            {
+                path = @"\" + path;
+            }
+
+            return @"\??\" + m_directory.FullName + path;
         }
     }
 }

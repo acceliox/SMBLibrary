@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,23 +16,26 @@ namespace SMBLibrary.SMB1
     public class NTTransactNotifyChangeRequest : NTTransactSubcommand
     {
         public const int SetupLength = 8;
+
         // Setup:
         public NotifyChangeFilter CompletionFilter;
         public ushort FID;
         public bool WatchTree;
         public byte Reserved;
 
-        public NTTransactNotifyChangeRequest() : base()
+        public NTTransactNotifyChangeRequest()
         {
         }
 
-        public NTTransactNotifyChangeRequest(byte[] setup) : base()
+        public NTTransactNotifyChangeRequest(byte[] setup)
         {
             CompletionFilter = (NotifyChangeFilter)LittleEndianConverter.ToUInt32(setup, 0);
             FID = LittleEndianConverter.ToUInt16(setup, 4);
-            WatchTree = (ByteReader.ReadByte(setup, 6) != 0);
+            WatchTree = ByteReader.ReadByte(setup, 6) != 0;
             Reserved = ByteReader.ReadByte(setup, 7);
         }
+
+        public override NTTransactSubcommandName SubcommandName => NTTransactSubcommandName.NT_TRANSACT_NOTIFY_CHANGE;
 
         public override byte[] GetSetup()
         {
@@ -43,14 +45,6 @@ namespace SMBLibrary.SMB1
             ByteWriter.WriteByte(setup, 6, Convert.ToByte(WatchTree));
             ByteWriter.WriteByte(setup, 7, Reserved);
             return setup;
-        }
-
-        public override NTTransactSubcommandName SubcommandName
-        {
-            get
-            {
-                return NTTransactSubcommandName.NT_TRANSACT_NOTIFY_CHANGE;
-            }
         }
     }
 }

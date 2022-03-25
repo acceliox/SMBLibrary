@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.NetBios
@@ -18,7 +17,9 @@ namespace SMBLibrary.NetBios
     public class NodeStatusResponse
     {
         public NameServicePacketHeader Header;
+
         public ResourceRecord Resource;
+
         // Resource Data:
         // byte NumberOfNames;
         public KeyValuePairList<string, NameFlags> Names = new KeyValuePairList<string, NameFlags>();
@@ -47,6 +48,7 @@ namespace SMBLibrary.NetBios
                 NameFlags nameFlags = (NameFlags)BigEndianReader.ReadUInt16(Resource.Data, ref position);
                 Names.Add(name, nameFlags);
             }
+
             Statistics = new NodeStatistics(Resource.Data, ref position);
         }
 

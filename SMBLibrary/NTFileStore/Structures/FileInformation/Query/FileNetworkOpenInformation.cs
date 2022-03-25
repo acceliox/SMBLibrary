@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary
@@ -42,24 +42,9 @@ namespace SMBLibrary
             Reserved = LittleEndianConverter.ToUInt32(buffer, offset + 52);
         }
 
-        public override void WriteBytes(byte[] buffer, int offset)
-        {
-            FileTimeHelper.WriteFileTime(buffer, offset + 0, CreationTime);
-            FileTimeHelper.WriteFileTime(buffer, offset + 8, LastAccessTime);
-            FileTimeHelper.WriteFileTime(buffer, offset + 16, LastWriteTime);
-            FileTimeHelper.WriteFileTime(buffer, offset + 24, ChangeTime);
-            LittleEndianWriter.WriteInt64(buffer, offset + 32, AllocationSize);
-            LittleEndianWriter.WriteInt64(buffer, offset + 40, EndOfFile);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 48, (uint)FileAttributes);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 52, Reserved);
-        }
-
         public bool IsDirectory
         {
-            get
-            {
-                return ((FileAttributes & FileAttributes.Directory) > 0);
-            }
+            get => (FileAttributes & FileAttributes.Directory) > 0;
             set
             {
                 if (value)
@@ -73,20 +58,20 @@ namespace SMBLibrary
             }
         }
 
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileNetworkOpenInformation;
-            }
-        }
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileNetworkOpenInformation;
 
-        public override int Length
+        public override int Length => FixedLength;
+
+        public override void WriteBytes(byte[] buffer, int offset)
         {
-            get
-            {
-                return FixedLength;
-            }
+            FileTimeHelper.WriteFileTime(buffer, offset + 0, CreationTime);
+            FileTimeHelper.WriteFileTime(buffer, offset + 8, LastAccessTime);
+            FileTimeHelper.WriteFileTime(buffer, offset + 16, LastWriteTime);
+            FileTimeHelper.WriteFileTime(buffer, offset + 24, ChangeTime);
+            LittleEndianWriter.WriteInt64(buffer, offset + 32, AllocationSize);
+            LittleEndianWriter.WriteInt64(buffer, offset + 40, EndOfFile);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 48, (uint)FileAttributes);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 52, Reserved);
         }
     }
 }

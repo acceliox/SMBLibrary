@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -25,12 +24,57 @@ namespace SMBServer
     public partial class ServerUI : Form
     {
         private SMBLibrary.Server.SMBServer m_server;
-        private SMBLibrary.Server.NameServer m_nameServer;
+        private NameServer m_nameServer;
         private LogWriter m_logWriter;
 
         public ServerUI()
         {
             InitializeComponent();
+        }
+
+        public static FileSystemShare InitializeShare(ShareSettings shareSettings)
+        {
+            string shareName = shareSettings.ShareName;
+            string sharePath = shareSettings.SharePath;
+            List<string> readAccess = shareSettings.ReadAccess;
+            List<string> writeAccess = shareSettings.WriteAccess;
+            FileSystemShare share = new FileSystemShare(shareName, new NTDirectoryFileSystem(sharePath));
+            share.AccessRequested += delegate(object sender, AccessRequestArgs args)
+            {
+                bool hasReadAccess = Contains(readAccess, "Users") || Contains(readAccess, args.UserName);
+                bool hasWriteAccess = Contains(writeAccess, "Users") || Contains(writeAccess, args.UserName);
+                if (args.RequestedAccess == FileAccess.Read)
+                {
+                    args.Allow = hasReadAccess;
+                }
+                else if (args.RequestedAccess == FileAccess.Write)
+                {
+                    args.Allow = hasWriteAccess;
+                }
+                else // FileAccess.ReadWrite
+                {
+                    args.Allow = hasReadAccess && hasWriteAccess;
+                }
+            };
+            return share;
+        }
+
+        public static bool Contains(List<string> list, string value)
+        {
+            return IndexOf(list, value) >= 0;
+        }
+
+        public static int IndexOf(List<string> list, string value)
+        {
+            for (int index = 0; index < list.Count; index++)
+            {
+                if (string.Equals(list[index], value, StringComparison.OrdinalIgnoreCase))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
         }
 
         private void ServerUI_Load(object sender, EventArgs e)
@@ -42,6 +86,7 @@ namespace SMBServer
             {
                 list.Add(address.ToString(), address);
             }
+
             comboIPAddress.DataSource = list;
             comboIPAddress.DisplayMember = "Key";
             comboIPAddress.ValueMember = "Value";
@@ -104,14 +149,14 @@ namespace SMBServer
             m_logWriter = new LogWriter();
             // The provided logging mechanism will synchronously write to the disk during server activity.
             // To maximize server performance, you can disable logging by commenting out the following line.
-            m_server.LogEntryAdded += new EventHandler<LogEntry>(m_logWriter.OnLogEntryAdded);
+            m_server.LogEntryAdded += m_logWriter.OnLogEntryAdded;
 
             try
             {
                 m_server.Start(serverAddress, transportType, chkSMB1.Checked, chkSMB2.Checked);
                 if (transportType == SMBTransportType.NetBiosOverTCP)
                 {
-                    if (serverAddress.AddressFamily == AddressFamily.InterNetwork && !IPAddress.Equals(serverAddress, IPAddress.Any))
+                    if (serverAddress.AddressFamily == AddressFamily.InterNetwork && !Equals(serverAddress, IPAddress.Any))
                     {
                         IPAddress subnetMask = NetworkInterfaceHelper.GetSubnetMask(serverAddress);
                         m_nameServer = new NameServer(serverAddress, subnetMask);
@@ -168,50 +213,6 @@ namespace SMBServer
             {
                 chkSMB1.Checked = true;
             }
-        }
-
-        public static FileSystemShare InitializeShare(ShareSettings shareSettings)
-        {
-            string shareName = shareSettings.ShareName;
-            string sharePath = shareSettings.SharePath;
-            List<string> readAccess = shareSettings.ReadAccess;
-            List<string> writeAccess = shareSettings.WriteAccess;
-            FileSystemShare share = new FileSystemShare(shareName, new NTDirectoryFileSystem(sharePath));
-            share.AccessRequested += delegate(object sender, AccessRequestArgs args)
-            {
-                bool hasReadAccess = Contains(readAccess, "Users") || Contains(readAccess, args.UserName);
-                bool hasWriteAccess = Contains(writeAccess, "Users") || Contains(writeAccess, args.UserName);
-                if (args.RequestedAccess == FileAccess.Read)
-                {
-                    args.Allow = hasReadAccess;
-                }
-                else if (args.RequestedAccess == FileAccess.Write)
-                {
-                    args.Allow = hasWriteAccess;
-                }
-                else // FileAccess.ReadWrite
-                {
-                    args.Allow = hasReadAccess && hasWriteAccess;
-                }
-            };
-            return share;
-        }
-
-        public static bool Contains(List<string> list, string value)
-        {
-            return (IndexOf(list, value) >= 0);
-        }
-
-        public static int IndexOf(List<string> list, string value)
-        {
-            for (int index = 0; index < list.Count; index++)
-            {
-                if (string.Equals(list[index], value, StringComparison.OrdinalIgnoreCase))
-                {
-                    return index;
-                }
-            }
-            return -1;
         }
     }
 }

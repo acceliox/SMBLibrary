@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -18,11 +16,11 @@ namespace SMBLibrary.RPC
     /// </summary>
     public class NDRParser
     {
-        private byte[] m_buffer;
+        private readonly byte[] m_buffer;
         private int m_offset;
         private int m_depth;
-        private List<INDRStructure> m_deferredStructures = new List<INDRStructure>();
-        private Dictionary<uint, INDRStructure> m_referentToInstance = new Dictionary<uint, INDRStructure>();
+        private readonly List<INDRStructure> m_deferredStructures = new List<INDRStructure>();
+        private readonly Dictionary<uint, INDRStructure> m_referentToInstance = new Dictionary<uint, INDRStructure>();
 
         public NDRParser(byte[] buffer)
         {
@@ -34,14 +32,6 @@ namespace SMBLibrary.RPC
         public void BeginStructure()
         {
             m_depth++;
-        }
-
-        /// <summary>
-        /// Add embedded pointer deferred structure (referent) parser
-        /// </summary>
-        private void AddDeferredStructure(INDRStructure structure)
-        {
-            m_deferredStructures.Add(structure);
         }
 
         public void EndStructure()
@@ -105,7 +95,7 @@ namespace SMBLibrary.RPC
             ReadEmbeddedStructureFullPointer<NDRUnicodeString>(ref structure);
         }
 
-        public void ReadEmbeddedStructureFullPointer<T>(ref T structure) where T : INDRStructure, new ()
+        public void ReadEmbeddedStructureFullPointer<T>(ref T structure) where T : INDRStructure, new()
         {
             uint referentID = ReadUInt32();
             if (referentID != 0) // not null
@@ -114,31 +104,40 @@ namespace SMBLibrary.RPC
                 {
                     structure = new T();
                 }
+
                 AddDeferredStructure(structure);
             }
             else
             {
-                structure = default(T);
+                structure = default;
             }
         }
 
         // 14.2.2 - Alignment of Primitive Types
         public uint ReadUInt16()
         {
-            m_offset += (2 - (m_offset % 2)) % 2;
+            m_offset += (2 - m_offset % 2) % 2;
             return LittleEndianReader.ReadUInt16(m_buffer, ref m_offset);
         }
 
         // 14.2.2 - Alignment of Primitive Types
         public uint ReadUInt32()
         {
-            m_offset += (4 - (m_offset % 4)) % 4;
+            m_offset += (4 - m_offset % 4) % 4;
             return LittleEndianReader.ReadUInt32(m_buffer, ref m_offset);
         }
 
         public byte[] ReadBytes(int count)
         {
             return ByteReader.ReadBytes(m_buffer, ref m_offset, count);
+        }
+
+        /// <summary>
+        /// Add embedded pointer deferred structure (referent) parser
+        /// </summary>
+        private void AddDeferredStructure(INDRStructure structure)
+        {
+            m_deferredStructures.Add(structure);
         }
     }
 }

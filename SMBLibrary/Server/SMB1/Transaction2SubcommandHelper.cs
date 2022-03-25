@@ -4,9 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.IO;
 using SMBLibrary.SMB1;
 using Utilities;
 
@@ -43,6 +43,7 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = searchStatus;
                 return null;
             }
+
             // We ignore SearchAttributes
             state.LogToServer(Severity.Information, "FindFirst2: Searched for '{0}{1}', found {2} matching entries", share.Name, fileNamePattern, entries.Count);
 
@@ -68,15 +69,16 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_OS2_INVALID_LEVEL;
                 return null;
             }
+
             int returnCount = findInformationList.Count;
             Transaction2FindFirst2Response response = new Transaction2FindFirst2Response();
             response.SetFindInformationList(findInformationList, header.UnicodeFlag);
-            response.EndOfSearch = (returnCount == entries.Count);
+            response.EndOfSearch = returnCount == entries.Count;
             // If [..] the search fit within a single response and SMB_FIND_CLOSE_AT_EOS is set in the Flags field,
             // or if SMB_FIND_CLOSE_AFTER_REQUEST is set in the request,
             // the server SHOULD return a SID field value of zero.
             // This indicates that the search has been closed and is no longer active on the server.
-            if ((response.EndOfSearch && subcommand.CloseAtEndOfSearch) || subcommand.CloseAfterRequest)
+            if (response.EndOfSearch && subcommand.CloseAtEndOfSearch || subcommand.CloseAfterRequest)
             {
                 response.SID = 0;
             }
@@ -88,8 +90,10 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = NTStatus.STATUS_OS2_NO_MORE_SIDS;
                     return null;
                 }
+
                 response.SID = searchHandle.Value;
             }
+
             return response;
         }
 
@@ -119,15 +123,17 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_OS2_INVALID_LEVEL;
                 return null;
             }
+
             int returnCount = findInformationList.Count;
             Transaction2FindNext2Response response = new Transaction2FindNext2Response();
             response.SetFindInformationList(findInformationList, header.UnicodeFlag);
             openSearch.EnumerationLocation += returnCount;
-            response.EndOfSearch = (openSearch.EnumerationLocation == openSearch.Entries.Count);
+            response.EndOfSearch = openSearch.EnumerationLocation == openSearch.Entries.Count;
             if (response.EndOfSearch)
             {
                 session.RemoveOpenSearch(subcommand.SID);
             }
+
             return response;
         }
 
@@ -155,6 +161,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "GetFileSystemInformation on '{0}' succeeded. Information class: {1}", share.Name, subcommand.FileSystemInformationClass);
                 response.SetFileSystemInformation(fileSystemInfo);
             }
@@ -168,6 +175,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "GetFileSystemInformation on '{0}' succeeded. Information level: {1}", share.Name, subcommand.QueryFSInformationLevel);
                 response.SetQueryFSInformation(queryFSInformation, header.UnicodeFlag);
             }
@@ -177,6 +185,7 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_BUFFER_OVERFLOW;
                 response.InformationBytes = ByteReader.ReadBytes(response.InformationBytes, 0, (int)maxDataCount);
             }
+
             return response;
         }
 
@@ -260,6 +269,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "GetFileInformation on '{0}{1}' succeeded. Information class: {2}", share.Name, path, subcommand.FileInformationClass);
                 response.SetFileInformation(fileInfo);
             }
@@ -270,6 +280,7 @@ namespace SMBLibrary.Server.SMB1
                 {
                     subcommand.QueryInformationLevel = QueryInformationLevel.SMB_QUERY_FILE_ALL_INFO;
                 }
+
                 QueryInformation queryInformation;
                 NTStatus status = SMB1FileStoreHelper.GetFileInformation(out queryInformation, share.FileStore, path, subcommand.QueryInformationLevel, session.SecurityContext);
                 if (status != NTStatus.STATUS_SUCCESS)
@@ -278,6 +289,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "GetFileInformation on '{0}{1}' succeeded. Information level: {2}", share.Name, path, subcommand.QueryInformationLevel);
                 response.SetQueryInformation(queryInformation);
             }
@@ -287,6 +299,7 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_BUFFER_OVERFLOW;
                 response.InformationBytes = ByteReader.ReadBytes(response.InformationBytes, 0, (int)maxDataCount);
             }
+
             return response;
         }
 
@@ -322,6 +335,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "GetFileInformation on '{0}{1}' succeeded. Information class: {2}. (FID: {3})", share.Name, openFile.Path, subcommand.FileInformationClass, subcommand.FID);
                 response.SetFileInformation(fileInfo);
             }
@@ -332,6 +346,7 @@ namespace SMBLibrary.Server.SMB1
                 {
                     subcommand.QueryInformationLevel = QueryInformationLevel.SMB_QUERY_FILE_ALL_INFO;
                 }
+
                 QueryInformation queryInformation;
                 NTStatus status = SMB1FileStoreHelper.GetFileInformation(out queryInformation, share.FileStore, openFile.Handle, subcommand.QueryInformationLevel);
                 if (status != NTStatus.STATUS_SUCCESS)
@@ -340,6 +355,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "GetFileInformation on '{0}{1}' succeeded. Information level: {2}. (FID: {3})", share.Name, openFile.Path, subcommand.QueryInformationLevel, subcommand.FID);
                 response.SetQueryInformation(queryInformation);
             }
@@ -349,6 +365,7 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_BUFFER_OVERFLOW;
                 response.InformationBytes = ByteReader.ReadBytes(response.InformationBytes, 0, (int)maxDataCount);
             }
+
             return response;
         }
 
@@ -400,6 +417,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "SetFileInformation on '{0}{1}' succeeded. Information class: {2}. (FID: {3})", share.Name, openFile.Path, subcommand.FileInformationClass, subcommand.FID);
             }
             else
@@ -429,8 +447,10 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = status;
                     return null;
                 }
+
                 state.LogToServer(Severity.Information, "SetFileInformation on '{0}{1}' succeeded. Information level: {2}. (FID: {3})", share.Name, openFile.Path, subcommand.SetInformationLevel, subcommand.FID);
             }
+
             Transaction2SetFileInformationResponse response = new Transaction2SetFileInformationResponse();
             return response;
         }

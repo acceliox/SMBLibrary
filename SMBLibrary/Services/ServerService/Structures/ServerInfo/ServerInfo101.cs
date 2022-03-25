@@ -4,11 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using SMBLibrary.RPC;
-using Utilities;
 
 namespace SMBLibrary.Services
 {
@@ -35,6 +32,17 @@ namespace SMBLibrary.Services
             Read(parser);
         }
 
+        /*
+        public static ServerInfo101 ReadServerInfo101Pointer(NDRParser parser)
+        {
+            uint referentID = parser.ReadUInt32(); // ServerInfoLevel pointer
+            ServerInfo101 info = new ServerInfo101(parser);
+            parser.AddReferentInstance(referentID, info);
+            return info;
+        }*/
+
+        public override uint Level => 101;
+
         public override void Read(NDRParser parser)
         {
             // If an array, structure, or union embeds a pointer, the representation of the referent of the
@@ -60,23 +68,6 @@ namespace SMBLibrary.Services
             writer.WriteUInt32((uint)Type);
             writer.WriteEmbeddedStructureFullPointer(Comment);
             writer.EndStructure();
-        }
-
-        /*
-        public static ServerInfo101 ReadServerInfo101Pointer(NDRParser parser)
-        {
-            uint referentID = parser.ReadUInt32(); // ServerInfoLevel pointer
-            ServerInfo101 info = new ServerInfo101(parser);
-            parser.AddReferentInstance(referentID, info);
-            return info;
-        }*/
-
-        public override uint Level
-        {
-            get
-            {
-                return 101;
-            }
         }
     }
 }

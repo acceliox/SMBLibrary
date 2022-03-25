@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Utilities;
 
@@ -40,8 +40,8 @@ namespace SMBLibrary.Authentication.NTLM
             TimeStamp = timeStamp;
             ClientChallenge = clientChallenge;
             AVPairs = new KeyValuePairList<AVPairKey, byte[]>();
-            AVPairs.Add(AVPairKey.NbDomainName, UnicodeEncoding.Unicode.GetBytes(domainName));
-            AVPairs.Add(AVPairKey.NbComputerName, UnicodeEncoding.Unicode.GetBytes(computerName));
+            AVPairs.Add(AVPairKey.NbDomainName, Encoding.Unicode.GetBytes(domainName));
+            AVPairs.Add(AVPairKey.NbComputerName, Encoding.Unicode.GetBytes(computerName));
         }
 
         public NTLMv2ClientChallenge(DateTime timeStamp, byte[] clientChallenge, KeyValuePairList<AVPairKey, byte[]> targetInfo)
@@ -72,7 +72,7 @@ namespace SMBLibrary.Authentication.NTLM
         public byte[] GetBytes()
         {
             byte[] sequenceBytes = AVPairUtils.GetAVPairSequenceBytes(AVPairs);
-            
+
             byte[] buffer = new byte[28 + sequenceBytes.Length];
             ByteWriter.WriteByte(buffer, 0, CurrentVersion);
             ByteWriter.WriteByte(buffer, 1, MaximumSupportedVersion);

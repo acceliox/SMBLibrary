@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -18,7 +19,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 64;
         public const int DeclaredSize = 65;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public SecurityMode SecurityMode;
         public SMB2Dialect DialectRevision;
         private ushort NegotiateContextCount;
@@ -61,6 +62,20 @@ namespace SMBLibrary.SMB2
             NegotiateContextList = NegotiateContext.ReadNegotiateContextList(buffer, (int)NegotiateContextOffset, NegotiateContextCount);
         }
 
+        public override int CommandLength
+        {
+            get
+            {
+                if (NegotiateContextList.Count == 0)
+                {
+                    return FixedSize + SecurityBuffer.Length;
+                }
+
+                int paddedSecurityBufferLength = (int)Math.Ceiling((double)SecurityBufferLength / 8) * 8;
+                return FixedSize + paddedSecurityBufferLength + NegotiateContext.GetNegotiateContextListLength(NegotiateContextList);
+            }
+        }
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             SecurityBufferOffset = 0;
@@ -70,6 +85,7 @@ namespace SMBLibrary.SMB2
             {
                 SecurityBufferOffset = SMB2Header.Length + FixedSize;
             }
+
             NegotiateContextOffset = 0;
             NegotiateContextCount = (ushort)NegotiateContextList.Count;
             if (NegotiateContextList.Count > 0)
@@ -77,6 +93,7 @@ namespace SMBLibrary.SMB2
                 // NegotiateContextList must be 8-byte aligned
                 NegotiateContextOffset = (uint)(SMB2Header.Length + FixedSize + paddedSecurityBufferLength);
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             LittleEndianWriter.WriteUInt16(buffer, offset + 2, (ushort)SecurityMode);
             LittleEndianWriter.WriteUInt16(buffer, offset + 4, (ushort)DialectRevision);
@@ -93,22 +110,6 @@ namespace SMBLibrary.SMB2
             LittleEndianWriter.WriteUInt32(buffer, offset + 60, NegotiateContextOffset);
             ByteWriter.WriteBytes(buffer, offset + FixedSize, SecurityBuffer);
             NegotiateContext.WriteNegotiateContextList(buffer, offset + FixedSize + paddedSecurityBufferLength, NegotiateContextList);
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                if (NegotiateContextList.Count == 0)
-                {
-                    return FixedSize + SecurityBuffer.Length;
-                }
-                else
-                {
-                    int paddedSecurityBufferLength = (int)Math.Ceiling((double)SecurityBufferLength / 8) * 8;
-                    return FixedSize + paddedSecurityBufferLength + NegotiateContext.GetNegotiateContextListLength(NegotiateContextList);
-                }
-            }
         }
     }
 }

@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -20,15 +19,14 @@ namespace SMBLibrary.SMB1
             {
                 return DateTime.FromFileTimeUtc(span);
             }
-            else if (span == 0)
+
+            if (span == 0)
             {
                 return null;
             }
-            else
-            {
-                // Tick = 100ns
-                return DateTime.UtcNow.Subtract(TimeSpan.FromTicks(span));
-            }
+
+            // Tick = 100ns
+            return DateTime.UtcNow.Subtract(TimeSpan.FromTicks(span));
         }
 
         public static DateTime? ReadNullableFileTime(byte[] buffer, ref int offset)
@@ -44,8 +42,8 @@ namespace SMBLibrary.SMB1
         {
             ushort value = LittleEndianConverter.ToUInt16(buffer, offset);
             int year = ((value & 0xFE00) >> 9) + 1980;
-            int month = ((value & 0x01E0) >> 5);
-            int day = (value & 0x001F);
+            int month = (value & 0x01E0) >> 5;
+            int day = value & 0x001F;
             // SMB_DATE & SMB_TIME are represented in the local time zone of the server
             return new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Local);
         }
@@ -55,7 +53,7 @@ namespace SMBLibrary.SMB1
             int year = date.Year - 1980;
             int month = date.Month;
             int day = date.Day;
-            ushort value = (ushort)(year << 9 | month << 5 | day);
+            ushort value = (ushort)((year << 9) | (month << 5) | day);
             LittleEndianWriter.WriteUInt16(buffer, offset, value);
         }
 
@@ -65,15 +63,15 @@ namespace SMBLibrary.SMB1
         public static TimeSpan ReadSMBTime(byte[] buffer, int offset)
         {
             ushort value = LittleEndianConverter.ToUInt16(buffer, offset);
-            int hours = ((value & 0xF800) >> 11);
-            int minutes = ((value & 0x07E0) >> 5);
-            int seconds = (value & 0x001F);
+            int hours = (value & 0xF800) >> 11;
+            int minutes = (value & 0x07E0) >> 5;
+            int seconds = value & 0x001F;
             return new TimeSpan(hours, minutes, seconds);
         }
 
         public static void WriteSMBTime(byte[] buffer, int offset, TimeSpan time)
         {
-            ushort value = (ushort)(time.Hours << 11 | time.Minutes << 5 | time.Seconds);
+            ushort value = (ushort)((time.Hours << 11) | (time.Minutes << 5) | time.Seconds);
             LittleEndianWriter.WriteUInt16(buffer, offset, value);
         }
 
@@ -97,6 +95,7 @@ namespace SMBLibrary.SMB1
             {
                 return ReadSMBDateTime(buffer, offset);
             }
+
             return null;
         }
 
@@ -118,10 +117,8 @@ namespace SMBLibrary.SMB1
             {
                 return ByteReader.ReadNullTerminatedUTF16String(buffer, offset);
             }
-            else
-            {
-                return ByteReader.ReadNullTerminatedAnsiString(buffer, offset);
-            }
+
+            return ByteReader.ReadNullTerminatedAnsiString(buffer, offset);
         }
 
         public static string ReadSMBString(byte[] buffer, ref int offset, bool isUnicode)
@@ -130,10 +127,8 @@ namespace SMBLibrary.SMB1
             {
                 return ByteReader.ReadNullTerminatedUTF16String(buffer, ref offset);
             }
-            else
-            {
-                return ByteReader.ReadNullTerminatedAnsiString(buffer, ref offset);
-            }
+
+            return ByteReader.ReadNullTerminatedAnsiString(buffer, ref offset);
         }
 
         public static void WriteSMBString(byte[] buffer, int offset, bool isUnicode, string value)
@@ -166,10 +161,8 @@ namespace SMBLibrary.SMB1
             {
                 return ByteReader.ReadUTF16String(buffer, ref offset, byteCount / 2);
             }
-            else
-            {
-                return ByteReader.ReadAnsiString(buffer, ref offset, byteCount);
-            }
+
+            return ByteReader.ReadAnsiString(buffer, ref offset, byteCount);
         }
 
         public static void WriteFixedLengthString(byte[] buffer, ref int offset, bool isUnicode, string value)

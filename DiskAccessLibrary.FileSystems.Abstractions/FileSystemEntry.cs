@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 
 namespace DiskAccessLibrary.FileSystems.Abstractions
@@ -14,6 +15,7 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
         /// Full Path. Directory path should end with a trailing slash.
         /// </summary>
         public string FullName;
+
         public string Name;
         public bool IsDirectory;
         public ulong Size;

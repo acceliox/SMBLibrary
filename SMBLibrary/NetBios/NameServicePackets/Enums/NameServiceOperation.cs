@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.NetBios
 {
     public enum NameServiceOperation : byte
@@ -12,6 +11,6 @@ namespace SMBLibrary.NetBios
         RegistrationResponse = 0x15,
         ReleaseResponse = 0x16,
         WackResponse = 0x17,
-        RefreshResponse = 0x18,
+        RefreshResponse = 0x18
     }
 }

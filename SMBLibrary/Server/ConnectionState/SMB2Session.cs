@@ -4,11 +4,11 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using SMBLibrary.SMB2;
-using Utilities;
 
 namespace SMBLibrary.Server
 {
@@ -16,51 +16,43 @@ namespace SMBLibrary.Server
     {
         private SMB2ConnectionState m_connection;
         private ulong m_sessionID;
-        private byte[] m_sessionKey;
-        private SecurityContext m_securityContext;
-        private DateTime m_creationDT;
-        private bool m_signingRequired;
-        private byte[] m_signingKey;
+        private readonly SecurityContext m_securityContext;
 
         // Key is TreeID
-        private Dictionary<uint, ISMBShare> m_connectedTrees = new Dictionary<uint, ISMBShare>();
+        private readonly Dictionary<uint, ISMBShare> m_connectedTrees = new Dictionary<uint, ISMBShare>();
         private uint m_nextTreeID = 1; // TreeID uniquely identifies a tree connect within the scope of the session
 
         // Key is the volatile portion of the FileID
-        private Dictionary<ulong, OpenFileObject> m_openFiles = new Dictionary<ulong, OpenFileObject>();
+        private readonly Dictionary<ulong, OpenFileObject> m_openFiles = new Dictionary<ulong, OpenFileObject>();
         private ulong m_nextVolatileFileID = 1;
 
         // Key is the volatile portion of the FileID
-        private Dictionary<ulong, OpenSearch> m_openSearches = new Dictionary<ulong, OpenSearch>();
+        private readonly Dictionary<ulong, OpenSearch> m_openSearches = new Dictionary<ulong, OpenSearch>();
 
         public SMB2Session(SMB2ConnectionState connection, ulong sessionID, string userName, string machineName, byte[] sessionKey, object accessToken, bool signingRequired, byte[] signingKey)
         {
             m_connection = connection;
             m_sessionID = sessionID;
-            m_sessionKey = sessionKey;
+            SessionKey = sessionKey;
             m_securityContext = new SecurityContext(userName, machineName, connection.ClientEndPoint, connection.AuthenticationContext, accessToken);
-            m_creationDT = DateTime.UtcNow;
-            m_signingRequired = signingRequired;
-            m_signingKey = signingKey;
+            CreationDT = DateTime.UtcNow;
+            SigningRequired = signingRequired;
+            SigningKey = signingKey;
         }
 
-        private uint? AllocateTreeID()
-        {
-            for (uint offset = 0; offset < UInt32.MaxValue; offset++)
-            {
-                uint treeID = (uint)(m_nextTreeID + offset);
-                if (treeID == 0 || treeID == 0xFFFFFFFF)
-                {
-                    continue;
-                }
-                if (!m_connectedTrees.ContainsKey(treeID))
-                {
-                    m_nextTreeID = (uint)(treeID + 1);
-                    return treeID;
-                }
-            }
-            return null;
-        }
+        public byte[] SessionKey { get; }
+
+        public SecurityContext SecurityContext => m_securityContext;
+
+        public string UserName => m_securityContext.UserName;
+
+        public string MachineName => m_securityContext.MachineName;
+
+        public DateTime CreationDT { get; }
+
+        public bool SigningRequired { get; }
+
+        public byte[] SigningKey { get; }
 
         public uint? AddConnectedTree(ISMBShare share)
         {
@@ -71,6 +63,7 @@ namespace SMBLibrary.Server
                 {
                     m_connectedTrees.Add(treeID.Value, share);
                 }
+
                 return treeID;
             }
         }
@@ -101,6 +94,7 @@ namespace SMBLibrary.Server
                         }
                     }
                 }
+
                 lock (m_connectedTrees)
                 {
                     m_connectedTrees.Remove(treeID);
@@ -111,25 +105,6 @@ namespace SMBLibrary.Server
         public bool IsTreeConnected(uint treeID)
         {
             return m_connectedTrees.ContainsKey(treeID);
-        }
-
-        // VolatileFileID MUST be unique for all volatile handles within the scope of a session
-        private ulong? AllocateVolatileFileID()
-        {
-            for (ulong offset = 0; offset < UInt64.MaxValue; offset++)
-            {
-                ulong volatileFileID = (ulong)(m_nextVolatileFileID + offset);
-                if (volatileFileID == 0 || volatileFileID == 0xFFFFFFFFFFFFFFFF)
-                {
-                    continue;
-                }
-                if (!m_openFiles.ContainsKey(volatileFileID))
-                {
-                    m_nextVolatileFileID = (ulong)(volatileFileID + 1);
-                    return volatileFileID;
-                }
-            }
-            return null;
         }
 
         public FileID? AddOpenFile(uint treeID, string shareName, string relativePath, object handle, FileAccess fileAccess)
@@ -148,6 +123,7 @@ namespace SMBLibrary.Server
                     return fileID;
                 }
             }
+
             return null;
         }
 
@@ -164,6 +140,7 @@ namespace SMBLibrary.Server
             {
                 m_openFiles.Remove(fileID.Volatile);
             }
+
             m_openSearches.Remove(fileID.Volatile);
         }
 
@@ -177,6 +154,7 @@ namespace SMBLibrary.Server
                     result.Add(new OpenFileInformation(openFile.ShareName, openFile.Path, openFile.FileAccess, openFile.OpenedDT));
                 }
             }
+
             return result;
         }
 
@@ -211,60 +189,45 @@ namespace SMBLibrary.Server
             }
         }
 
-        public byte[] SessionKey
+        private uint? AllocateTreeID()
         {
-            get
+            for (uint offset = 0; offset < uint.MaxValue; offset++)
             {
-                return m_sessionKey;
+                uint treeID = m_nextTreeID + offset;
+                if (treeID == 0 || treeID == 0xFFFFFFFF)
+                {
+                    continue;
+                }
+
+                if (!m_connectedTrees.ContainsKey(treeID))
+                {
+                    m_nextTreeID = treeID + 1;
+                    return treeID;
+                }
             }
+
+            return null;
         }
 
-        public SecurityContext SecurityContext
+        // VolatileFileID MUST be unique for all volatile handles within the scope of a session
+        private ulong? AllocateVolatileFileID()
         {
-            get
+            for (ulong offset = 0; offset < ulong.MaxValue; offset++)
             {
-                return m_securityContext;
-            }
-        }
+                ulong volatileFileID = m_nextVolatileFileID + offset;
+                if (volatileFileID == 0 || volatileFileID == 0xFFFFFFFFFFFFFFFF)
+                {
+                    continue;
+                }
 
-        public string UserName
-        {
-            get
-            {
-                return m_securityContext.UserName;
+                if (!m_openFiles.ContainsKey(volatileFileID))
+                {
+                    m_nextVolatileFileID = volatileFileID + 1;
+                    return volatileFileID;
+                }
             }
-        }
 
-        public string MachineName
-        {
-            get
-            {
-                return m_securityContext.MachineName;
-            }
-        }
-
-        public DateTime CreationDT
-        {
-            get
-            {
-                return m_creationDT;
-            }
-        }
-
-        public bool SigningRequired
-        {
-            get
-            {
-                return m_signingRequired;
-            }
-        }
-
-        public byte[] SigningKey
-        {
-            get
-            {
-                return m_signingKey;
-            }
+            return null;
         }
     }
 }

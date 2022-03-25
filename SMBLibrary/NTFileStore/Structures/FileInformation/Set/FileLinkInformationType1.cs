@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary
@@ -24,10 +23,11 @@ namespace SMBLibrary
         public const int FixedLength = 12;
 
         public bool ReplaceIfExists;
+
         // 3 reserved bytes
         public uint RootDirectory;
         private uint FileNameLength;
-        public string FileName = String.Empty;
+        public string FileName = string.Empty;
 
         public FileLinkInformationType1()
         {
@@ -41,6 +41,10 @@ namespace SMBLibrary
             FileName = ByteReader.ReadUTF16String(buffer, offset + 12, (int)FileNameLength / 2);
         }
 
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileLinkInformation;
+
+        public override int Length => FixedLength + FileName.Length * 2;
+
         public override void WriteBytes(byte[] buffer, int offset)
         {
             FileNameLength = (uint)(FileName.Length * 2);
@@ -48,22 +52,6 @@ namespace SMBLibrary
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, RootDirectory);
             LittleEndianWriter.WriteUInt32(buffer, offset + 8, FileNameLength);
             ByteWriter.WriteUTF16String(buffer, offset + 12, FileName);
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileLinkInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength + FileName.Length * 2;
-            }
         }
     }
 }

@@ -4,18 +4,14 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.IO;
-using Utilities;
 
 namespace SMBLibrary.SMB1
 {
     public abstract class NTTransactSubcommand
     {
-        public NTTransactSubcommand()
-        {
-        }
+        public abstract NTTransactSubcommandName SubcommandName { get; }
 
         public virtual byte[] GetSetup()
         {
@@ -30,11 +26,6 @@ namespace SMBLibrary.SMB1
         public virtual byte[] GetData()
         {
             return new byte[0];
-        }
-
-        public abstract NTTransactSubcommandName SubcommandName
-        {
-            get;
         }
 
         public static NTTransactSubcommand GetSubcommandRequest(NTTransactSubcommandName subcommandName, byte[] setup, byte[] parameters, byte[] data, bool isUnicode)
@@ -52,6 +43,7 @@ namespace SMBLibrary.SMB1
                 case NTTransactSubcommandName.NT_TRANSACT_QUERY_SECURITY_DESC:
                     return new NTTransactQuerySecurityDescriptorRequest(parameters);
             }
+
             throw new InvalidDataException();
         }
     }

@@ -4,11 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using SMBLibrary.RPC;
-using Utilities;
 
 namespace SMBLibrary.Services
 {
@@ -30,6 +27,8 @@ namespace SMBLibrary.Services
             Read(parser);
         }
 
+        public override uint Level => 100;
+
         public override void Read(NDRParser parser)
         {
             // If an array, structure, or union embeds a pointer, the representation of the referent of the
@@ -47,14 +46,6 @@ namespace SMBLibrary.Services
             writer.WriteUInt32((uint)PlatformID);
             writer.WriteEmbeddedStructureFullPointer(ServerName);
             writer.EndStructure();
-        }
-
-        public override uint Level
-        {
-            get
-            {
-                return 100;
-            }
         }
     }
 }

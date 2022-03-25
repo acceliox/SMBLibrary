@@ -20,6 +20,6 @@ namespace SMBLibrary.SMB1
         /// If not set, a read or a raw read request will wait (block) until sufficient data to satisfy the read request becomes available,
         /// or until the request is canceled. A write request blocks until its data is consumed, if the write request length is greater than zero.
         /// </summary>
-        Nonblocking = 0x8000,
+        Nonblocking = 0x8000
     }
 }

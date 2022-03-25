@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -14,17 +12,21 @@ namespace SMBLibrary.SMB1
     public class SMB1Header
     {
         public const int Length = 32;
-        public static readonly byte[] ProtocolSignature = new byte[] { 0xFF, 0x53, 0x4D, 0x42 };
+        public static readonly byte[] ProtocolSignature = { 0xFF, 0x53, 0x4D, 0x42 };
 
-        private byte[] Protocol; // byte[4], 0xFF followed by "SMB"
+        private readonly byte[] Protocol; // byte[4], 0xFF followed by "SMB"
         public CommandName Command;
         public NTStatus Status;
         public HeaderFlags Flags;
+
         public HeaderFlags2 Flags2;
+
         //ushort PIDHigh
         public ulong SecurityFeatures;
+
         // public ushort Reserved;
         public ushort TID; // Tree ID
+
         //ushort PIDLow;
         public ushort UID; // User ID
         public ushort MID; // Multiplex ID
@@ -53,6 +55,43 @@ namespace SMBLibrary.SMB1
             PID = (uint)((PIDHigh << 16) | PIDLow);
         }
 
+        public bool ReplyFlag => (Flags & HeaderFlags.Reply) > 0;
+
+        /// <summary>
+        /// SMB_FLAGS2_EXTENDED_SECURITY
+        /// </summary>
+        public bool ExtendedSecurityFlag
+        {
+            get => (Flags2 & HeaderFlags2.ExtendedSecurity) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags2 |= HeaderFlags2.ExtendedSecurity;
+                }
+                else
+                {
+                    Flags2 &= ~HeaderFlags2.ExtendedSecurity;
+                }
+            }
+        }
+
+        public bool UnicodeFlag
+        {
+            get => (Flags2 & HeaderFlags2.Unicode) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags2 |= HeaderFlags2.Unicode;
+                }
+                else
+                {
+                    Flags2 &= ~HeaderFlags2.Unicode;
+                }
+            }
+        }
+
         public void WriteBytes(byte[] buffer, int offset)
         {
             ushort PIDHigh = (ushort)(PID >> 16);
@@ -78,55 +117,6 @@ namespace SMBLibrary.SMB1
             return buffer;
         }
 
-        public bool ReplyFlag
-        {
-            get
-            {
-                return (Flags & HeaderFlags.Reply) > 0;
-            }
-        }
-
-        /// <summary>
-        /// SMB_FLAGS2_EXTENDED_SECURITY
-        /// </summary>
-        public bool ExtendedSecurityFlag
-        {
-            get
-            {
-                return (this.Flags2 & HeaderFlags2.ExtendedSecurity) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    this.Flags2 |= HeaderFlags2.ExtendedSecurity;
-                }
-                else
-                {
-                    this.Flags2 &= ~HeaderFlags2.ExtendedSecurity;
-                }
-            }
-        }
-
-        public bool UnicodeFlag
-        {
-            get
-            {
-                return (Flags2 & HeaderFlags2.Unicode) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    this.Flags2 |= HeaderFlags2.Unicode;
-                }
-                else
-                {
-                    this.Flags2 &= ~HeaderFlags2.Unicode;
-                }
-            }
-        }
-
         public static bool IsValidSMB1Header(byte[] buffer)
         {
             if (buffer.Length >= 4)
@@ -134,6 +124,7 @@ namespace SMBLibrary.SMB1
                 byte[] protocol = ByteReader.ReadBytes(buffer, 0, 4);
                 return ByteUtils.AreByteArraysEqual(protocol, ProtocolSignature);
             }
+
             return false;
         }
     }

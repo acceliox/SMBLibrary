@@ -4,11 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using SMBLibrary.SMB1;
-using Utilities;
 
 namespace SMBLibrary.Server.SMB1
 {
@@ -23,6 +21,7 @@ namespace SMBLibrary.Server.SMB1
             {
                 return createStatus;
             }
+
             fileStore.CloseFile(handle);
             return createStatus;
         }
@@ -47,6 +46,7 @@ namespace SMBLibrary.Server.SMB1
             {
                 return status;
             }
+
             FileDispositionInformation fileDispositionInfo = new FileDispositionInformation();
             fileDispositionInfo.DeletePending = true;
             status = fileStore.SetFileInformation(handle, fileDispositionInfo);
@@ -65,12 +65,14 @@ namespace SMBLibrary.Server.SMB1
             {
                 createOptions = CreateOptions.FILE_NON_DIRECTORY_FILE;
             }
+
             ShareAccess shareAccess = ShareAccess.Read | ShareAccess.Write | ShareAccess.Delete;
             NTStatus status = fileStore.CreateFile(out handle, out fileStatus, oldName, AccessMask.DELETE, 0, shareAccess, CreateDisposition.FILE_OPEN, createOptions, securityContext);
             if (status != NTStatus.STATUS_SUCCESS)
             {
                 return status;
             }
+
             FileRenameInformationType2 renameInfo = new FileRenameInformationType2();
             renameInfo.ReplaceIfExists = false;
             renameInfo.FileName = newName;
@@ -83,7 +85,7 @@ namespace SMBLibrary.Server.SMB1
         {
             object handle;
             FileStatus fileStatus;
-            NTStatus openStatus = fileStore.CreateFile(out handle, out fileStatus, path, (AccessMask)0, 0, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, securityContext);
+            NTStatus openStatus = fileStore.CreateFile(out handle, out fileStatus, path, 0, 0, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, securityContext);
             if (openStatus != NTStatus.STATUS_SUCCESS)
             {
                 return openStatus;
@@ -113,7 +115,7 @@ namespace SMBLibrary.Server.SMB1
         {
             object handle;
             FileStatus fileStatus;
-            NTStatus status = fileStore.CreateFile(out handle, out fileStatus, path, (AccessMask)FileAccessMask.FILE_WRITE_ATTRIBUTES, (FileAttributes)0, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, 0, securityContext);
+            NTStatus status = fileStore.CreateFile(out handle, out fileStatus, path, (AccessMask)FileAccessMask.FILE_WRITE_ATTRIBUTES, 0, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, 0, securityContext);
             if (status != NTStatus.STATUS_SUCCESS)
             {
                 return status;
@@ -160,14 +162,17 @@ namespace SMBLibrary.Server.SMB1
             {
                 result |= SMBFileAttributes.Hidden;
             }
+
             if ((attributes & FileAttributes.ReadOnly) > 0)
             {
                 result |= SMBFileAttributes.ReadOnly;
             }
+
             if ((attributes & FileAttributes.Archive) > 0)
             {
                 result |= SMBFileAttributes.Archive;
             }
+
             if ((attributes & FileAttributes.Directory) > 0)
             {
                 result |= SMBFileAttributes.Directory;

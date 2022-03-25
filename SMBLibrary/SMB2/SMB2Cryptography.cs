@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Security.Cryptography;
 using Utilities;
@@ -20,10 +21,8 @@ namespace SMBLibrary.SMB2
             {
                 return new HMACSHA256(signingKey).ComputeHash(buffer, offset, paddedLength);
             }
-            else
-            {
-                return AesCmac.CalculateAesCmac(signingKey, buffer, offset, paddedLength);
-            }
+
+            return AesCmac.CalculateAesCmac(signingKey, buffer, offset, paddedLength);
         }
 
         public static byte[] GenerateSigningKey(byte[] sessionKey, SMB2Dialect dialect, byte[] preauthIntegrityHashValue)
@@ -38,9 +37,9 @@ namespace SMBLibrary.SMB2
                 throw new ArgumentNullException("preauthIntegrityHashValue");
             }
 
-            string labelString = (dialect == SMB2Dialect.SMB311) ? "SMBSigningKey" : "SMB2AESCMAC";
+            string labelString = dialect == SMB2Dialect.SMB311 ? "SMBSigningKey" : "SMB2AESCMAC";
             byte[] label = GetNullTerminatedAnsiString(labelString);
-            byte[] context = (dialect == SMB2Dialect.SMB311) ? preauthIntegrityHashValue : GetNullTerminatedAnsiString("SmbSign");
+            byte[] context = dialect == SMB2Dialect.SMB311 ? preauthIntegrityHashValue : GetNullTerminatedAnsiString("SmbSign");
 
             HMACSHA256 hmac = new HMACSHA256(sessionKey);
             return SP800_1008.DeriveKey(hmac, label, context, 128);
@@ -53,9 +52,9 @@ namespace SMBLibrary.SMB2
                 throw new ArgumentNullException("preauthIntegrityHashValue");
             }
 
-            string labelString = (dialect == SMB2Dialect.SMB311) ? "SMBC2SCipherKey" : "SMB2AESCCM";
+            string labelString = dialect == SMB2Dialect.SMB311 ? "SMBC2SCipherKey" : "SMB2AESCCM";
             byte[] label = GetNullTerminatedAnsiString(labelString);
-            byte[] context = (dialect == SMB2Dialect.SMB311) ? preauthIntegrityHashValue : GetNullTerminatedAnsiString("ServerIn ");
+            byte[] context = dialect == SMB2Dialect.SMB311 ? preauthIntegrityHashValue : GetNullTerminatedAnsiString("ServerIn ");
 
             HMACSHA256 hmac = new HMACSHA256(sessionKey);
             return SP800_1008.DeriveKey(hmac, label, context, 128);
@@ -68,9 +67,9 @@ namespace SMBLibrary.SMB2
                 throw new ArgumentNullException("preauthIntegrityHashValue");
             }
 
-            string labelString = (dialect == SMB2Dialect.SMB311) ? "SMBS2CCipherKey" : "SMB2AESCCM";
+            string labelString = dialect == SMB2Dialect.SMB311 ? "SMBS2CCipherKey" : "SMB2AESCCM";
             byte[] label = GetNullTerminatedAnsiString(labelString);
-            byte[] context = (dialect == SMB2Dialect.SMB311) ? preauthIntegrityHashValue : GetNullTerminatedAnsiString("ServerOut");
+            byte[] context = dialect == SMB2Dialect.SMB311 ? preauthIntegrityHashValue : GetNullTerminatedAnsiString("ServerOut");
 
             HMACSHA256 hmac = new HMACSHA256(sessionKey);
             return SP800_1008.DeriveKey(hmac, label, context, 128);
@@ -92,7 +91,7 @@ namespace SMBLibrary.SMB2
             ByteWriter.WriteBytes(buffer, SMB2TransformHeader.Length, encryptedMessage);
             return buffer;
         }
-        
+
         public static byte[] EncryptMessage(byte[] key, byte[] nonce, byte[] message, ulong sessionID, out byte[] signature)
         {
             SMB2TransformHeader transformHeader = CreateTransformHeader(nonce, message.Length, sessionID);

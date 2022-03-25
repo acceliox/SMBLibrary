@@ -4,9 +4,6 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using Utilities;
 
 namespace SMBLibrary
 {
@@ -51,6 +48,10 @@ namespace SMBLibrary
             NameInformation = new FileNameInformation(buffer, offset + 96);
         }
 
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileAllInformation;
+
+        public override int Length => 96 + NameInformation.Length;
+
         public override void WriteBytes(byte[] buffer, int offset)
         {
             BasicInformation.WriteBytes(buffer, offset + 0);
@@ -62,22 +63,6 @@ namespace SMBLibrary
             ModeInformation.WriteBytes(buffer, offset + 88);
             AlignmentInformation.WriteBytes(buffer, offset + 92);
             NameInformation.WriteBytes(buffer, offset + 96);
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileAllInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return 96 + NameInformation.Length;
-            }
         }
     }
 }

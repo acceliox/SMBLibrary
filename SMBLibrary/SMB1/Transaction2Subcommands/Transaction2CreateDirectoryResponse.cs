@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,32 +15,26 @@ namespace SMBLibrary.SMB1
     public class Transaction2CreateDirectoryResponse : Transaction2Subcommand
     {
         public const int ParametersLength = 2;
+
         // Parameters:
         public ushort EaErrorOffset;
 
-        public Transaction2CreateDirectoryResponse() : base()
+        public Transaction2CreateDirectoryResponse()
         {
-
         }
 
-        public Transaction2CreateDirectoryResponse(byte[] parameters, byte[] data, bool isUnicode) : base()
+        public Transaction2CreateDirectoryResponse(byte[] parameters, byte[] data, bool isUnicode)
         {
             EaErrorOffset = LittleEndianConverter.ToUInt16(parameters, 0);
         }
+
+        public override Transaction2SubcommandName SubcommandName => Transaction2SubcommandName.TRANS2_CREATE_DIRECTORY;
 
         public override byte[] GetParameters(bool isUnicode)
         {
             byte[] parameters = new byte[2];
             LittleEndianWriter.WriteUInt16(parameters, 0, EaErrorOffset);
             return parameters;
-        }
-
-        public override Transaction2SubcommandName SubcommandName
-        {
-            get
-            {
-                return Transaction2SubcommandName.TRANS2_CREATE_DIRECTORY;
-            }
         }
     }
 }

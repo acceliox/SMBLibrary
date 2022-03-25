@@ -4,13 +4,13 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
 
 namespace SMBLibrary.Authentication.GSSAPI
 {
     public interface IGSSMechanism
     {
+        byte[] Identifier { get; }
+
         /// <summary>
         /// Equivalent to GSS_Accept_sec_context
         /// </summary>
@@ -26,10 +26,5 @@ namespace SMBLibrary.Authentication.GSSAPI
         /// Obtains information about a given security context (even an incomplete one)
         /// </summary>
         object GetContextAttribute(object context, GSSAttributeName attributeName);
-
-        byte[] Identifier
-        {
-            get;
-        }
     }
 }

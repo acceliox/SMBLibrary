@@ -4,18 +4,18 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.IO;
+using System.Reflection;
 using Utilities;
 
 namespace SMBServer
 {
     public class LogWriter
     {
-        private string m_logsDirectoryPath;
-        private object m_syncLock = new object();
+        private readonly string m_logsDirectoryPath;
+        private readonly object m_syncLock = new();
         private FileStream m_logFile;
         private DateTime? m_logFileDate;
 
@@ -28,35 +28,6 @@ namespace SMBServer
         public LogWriter(string logsDirectoryPath)
         {
             m_logsDirectoryPath = logsDirectoryPath;
-        }
-
-        /// <exception cref="System.IO.IOException"></exception>
-        /// <exception cref="System.UnauthorizedAccessException"></exception>
-        private void OpenLogFile()
-        {
-            if (m_logFileDate.HasValue && m_logFileDate.Value != DateTime.Today && m_logFile != null)
-            {
-                m_logFile.Close();
-                m_logFile = null;
-                m_logFileDate = null;
-            }
-
-            if (m_logFileDate == null)
-            {
-                m_logFileDate = DateTime.Today;
-                string logFilePath = String.Format("{0}{1}-{2}-{3}.log", m_logsDirectoryPath, DateTime.Now.Year, DateTime.Now.Month.ToString("00"), DateTime.Now.Day.ToString("00"));
-                try
-                {
-                    if (!Directory.Exists(m_logsDirectoryPath))
-                    {
-                        Directory.CreateDirectory(m_logsDirectoryPath);
-                    }
-                    m_logFile = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read, 0x1000, FileOptions.WriteThrough);
-                }
-                catch
-                {
-                }
-            }
         }
 
         public void CloseLogFile()
@@ -73,7 +44,7 @@ namespace SMBServer
 
         public void WriteLine(string value, params object[] args)
         {
-            WriteLine(String.Format(value, args));
+            WriteLine(string.Format(value, args));
         }
 
         public void WriteLine(string value)
@@ -106,12 +77,44 @@ namespace SMBServer
             {
                 assembly = Assembly.GetExecutingAssembly();
             }
+
             string assemblyDirectory = Path.GetDirectoryName(assembly.Location);
             if (!assemblyDirectory.EndsWith(@"\"))
             {
                 assemblyDirectory += @"\";
             }
+
             return assemblyDirectory;
+        }
+
+        /// <exception cref="System.IO.IOException"></exception>
+        /// <exception cref="System.UnauthorizedAccessException"></exception>
+        private void OpenLogFile()
+        {
+            if (m_logFileDate.HasValue && m_logFileDate.Value != DateTime.Today && m_logFile != null)
+            {
+                m_logFile.Close();
+                m_logFile = null;
+                m_logFileDate = null;
+            }
+
+            if (m_logFileDate == null)
+            {
+                m_logFileDate = DateTime.Today;
+                string logFilePath = string.Format("{0}{1}-{2}-{3}.log", m_logsDirectoryPath, DateTime.Now.Year, DateTime.Now.Month.ToString("00"), DateTime.Now.Day.ToString("00"));
+                try
+                {
+                    if (!Directory.Exists(m_logsDirectoryPath))
+                    {
+                        Directory.CreateDirectory(m_logsDirectoryPath);
+                    }
+
+                    m_logFile = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read, 0x1000, FileOptions.WriteThrough);
+                }
+                catch
+                {
+                }
+            }
         }
     }
 }

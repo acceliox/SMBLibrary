@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Utilities;
-
 namespace SMBLibrary.SMB1
 {
     /// <summary>
@@ -10,7 +5,7 @@ namespace SMBLibrary.SMB1
     /// </summary>
     public class FindClose2Response : SMB1Command
     {
-        public FindClose2Response() : base()
+        public FindClose2Response()
         {
         }
 
@@ -18,12 +13,6 @@ namespace SMBLibrary.SMB1
         {
         }
 
-        public override CommandName CommandName
-        {
-            get
-            {
-                return CommandName.SMB_COM_FIND_CLOSE2;
-            }
-        }
+        public override CommandName CommandName => CommandName.SMB_COM_FIND_CLOSE2;
     }
 }

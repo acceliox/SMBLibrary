@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -25,7 +24,7 @@ namespace SMBLibrary.RPC
         public byte[] Data;
         public byte[] AuthVerifier;
 
-        public RequestPDU() : base()
+        public RequestPDU()
         {
             PacketType = PacketTypeName.Request;
             AuthVerifier = new byte[0];
@@ -41,9 +40,24 @@ namespace SMBLibrary.RPC
             {
                 ObjectGuid = LittleEndianReader.ReadGuid(buffer, ref offset);
             }
+
             int dataLength = FragmentLength - AuthLength - offset;
             Data = ByteReader.ReadBytes(buffer, ref offset, dataLength);
             AuthVerifier = ByteReader.ReadBytes(buffer, offset, AuthLength);
+        }
+
+        public override int Length
+        {
+            get
+            {
+                int length = CommonFieldsLength + RequestFieldsFixedLength + Data.Length + AuthVerifier.Length;
+                if ((Flags & PacketFlags.ObjectUUID) > 0)
+                {
+                    length += 16;
+                }
+
+                return length;
+            }
         }
 
         public override byte[] GetBytes()
@@ -59,22 +73,10 @@ namespace SMBLibrary.RPC
             {
                 LittleEndianWriter.WriteGuid(buffer, ref offset, ObjectGuid);
             }
+
             ByteWriter.WriteBytes(buffer, ref offset, Data);
             ByteWriter.WriteBytes(buffer, ref offset, AuthVerifier);
             return buffer;
-        }
-
-        public override int Length
-        {
-            get
-            {
-                int length = CommonFieldsLength + RequestFieldsFixedLength + Data.Length + AuthVerifier.Length;
-                if ((Flags & PacketFlags.ObjectUUID) > 0)
-                {
-                    length += 16;
-                }
-                return length;
-            }
         }
     }
 }

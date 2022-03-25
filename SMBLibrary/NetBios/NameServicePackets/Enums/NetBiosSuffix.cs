@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace SMBLibrary.NetBios
 {
     /// <summary>
@@ -15,6 +11,6 @@ namespace SMBLibrary.NetBios
         DomainMasterBrowser = 0x1B,
         MasterBrowser = 0x1D,
         BrowserServiceElections = 0x1E,
-        FileServiceService = 0x20,
+        FileServiceService = 0x20
     }
 }

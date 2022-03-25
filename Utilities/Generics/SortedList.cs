@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,8 +13,8 @@ namespace Utilities
 {
     public class SortedList<T> : ICollection<T>
     {
-        private List<T> m_innerList;
-        private Comparer<T> m_comparer;
+        private readonly List<T> m_innerList;
+        private readonly Comparer<T> m_comparer;
 
         public SortedList() : this(Comparer<T>.Default)
         {
@@ -25,16 +26,7 @@ namespace Utilities
             m_comparer = comparer;
         }
 
-        public void Add(T item)
-        {
-            int insertIndex = FindIndexForSortedInsert(m_innerList, m_comparer, item);
-            m_innerList.Insert(insertIndex, item);
-        }
-
-        public bool Contains(T item)
-        {
-            return IndexOf(item) != -1;
-        }
+        public T this[int index] => m_innerList[index];
 
         /// <summary>
         /// Searches for the specified object and returns the zero-based index of the first occurrence within the entire SortedList<T>
@@ -42,17 +34,6 @@ namespace Utilities
         public int IndexOf(T item)
         {
             return FirstIndexOf(m_innerList, m_comparer, item);
-        }
-
-        public bool Remove(T item)
-        {
-            int index = IndexOf(item);
-            if (index >= 0)
-            {
-                m_innerList.RemoveAt(index);
-                return true;
-            }
-            return false;
         }
 
         public void RemoveAt(int index)
@@ -63,50 +44,6 @@ namespace Utilities
         public void CopyTo(T[] array)
         {
             m_innerList.CopyTo(array);
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            m_innerList.CopyTo(array, arrayIndex);
-        }
-
-        public void Clear()
-        {
-            m_innerList.Clear();
-        }
-
-        public T this[int index]
-        {
-            get
-            {
-                return m_innerList[index];
-            }
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return m_innerList.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return m_innerList.GetEnumerator();
-        }
-
-        public int Count
-        {
-            get
-            {
-                return m_innerList.Count;
-            }
-        }
-
-        public bool IsReadOnly
-        {
-            get
-            {
-                return false;
-            }
         }
 
         public static int FirstIndexOf(List<T> list, Comparer<T> comparer, T item)
@@ -126,6 +63,7 @@ namespace Utilities
             {
                 return -1;
             }
+
             if (compare(item, list[insertIndex]) == 0)
             {
                 int index = insertIndex;
@@ -133,8 +71,10 @@ namespace Utilities
                 {
                     index--;
                 }
+
                 return index;
             }
+
             return -1;
         }
 
@@ -157,7 +97,8 @@ namespace Utilities
                 {
                     return middleIndex;
                 }
-                else if (comparisonResult > 0) // middle > item
+
+                if (comparisonResult > 0) // middle > item
                 {
                     upperIndex = middleIndex - 1;
                 }
@@ -175,10 +116,55 @@ namespace Utilities
             {
                 return lowerIndex + 1;
             }
-            else
-            {
-                return lowerIndex;
-            }
+
+            return lowerIndex;
         }
+
+        public void Add(T item)
+        {
+            int insertIndex = FindIndexForSortedInsert(m_innerList, m_comparer, item);
+            m_innerList.Insert(insertIndex, item);
+        }
+
+        public bool Contains(T item)
+        {
+            return IndexOf(item) != -1;
+        }
+
+        public bool Remove(T item)
+        {
+            int index = IndexOf(item);
+            if (index >= 0)
+            {
+                m_innerList.RemoveAt(index);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            m_innerList.CopyTo(array, arrayIndex);
+        }
+
+        public void Clear()
+        {
+            m_innerList.Clear();
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return m_innerList.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return m_innerList.GetEnumerator();
+        }
+
+        public int Count => m_innerList.Count;
+
+        public bool IsReadOnly => false;
     }
 }

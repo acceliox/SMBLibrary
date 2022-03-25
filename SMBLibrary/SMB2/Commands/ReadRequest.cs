@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +18,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 48;
         public const int DeclaredSize = 49;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public byte Padding;
         public ReadFlags Flags;
         public uint ReadLength;
@@ -55,6 +55,10 @@ namespace SMBLibrary.SMB2
             }
         }
 
+        public override int CommandLength =>
+            // The client MUST set one byte of [the buffer] field to 0
+            Math.Max(FixedSize + ReadChannelInfo.Length, DeclaredSize);
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             ReadChannelInfoOffset = 0;
@@ -63,6 +67,7 @@ namespace SMBLibrary.SMB2
             {
                 ReadChannelInfoOffset = SMB2Header.Length + FixedSize;
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             ByteWriter.WriteByte(buffer, offset + 2, Padding);
             ByteWriter.WriteByte(buffer, offset + 3, (byte)Flags);
@@ -82,15 +87,6 @@ namespace SMBLibrary.SMB2
             {
                 // The client MUST set one byte of [the buffer] field to 0
                 ByteWriter.WriteBytes(buffer, offset + FixedSize, new byte[1]);
-            }
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                // The client MUST set one byte of [the buffer] field to 0
-                return Math.Max(FixedSize + ReadChannelInfo.Length, DeclaredSize);
             }
         }
     }

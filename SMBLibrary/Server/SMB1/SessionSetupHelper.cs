@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using SMBLibrary.Authentication.GSSAPI;
 using SMBLibrary.Authentication.NTLM;
 using SMBLibrary.SMB1;
@@ -62,12 +60,14 @@ namespace SMBLibrary.Server.SMB1
             {
                 state.LargeRead = true;
             }
+
             if ((request.Capabilities & Capabilities.LargeWrite) > 0)
             {
                 state.LargeWrite = true;
             }
-            response.NativeOS = String.Empty; // "Windows Server 2003 3790 Service Pack 2"
-            response.NativeLanMan = String.Empty; // "Windows Server 2003 5.2"
+
+            response.NativeOS = string.Empty; // "Windows Server 2003 3790 Service Pack 2"
+            response.NativeLanMan = string.Empty; // "Windows Server 2003 5.2"
 
             return response;
         }
@@ -104,6 +104,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = NTStatus.STATUS_TOO_MANY_SESSIONS;
                     return new ErrorResponse(request.CommandName);
                 }
+
                 header.UID = userID.Value;
             }
 
@@ -132,8 +133,9 @@ namespace SMBLibrary.Server.SMB1
                     response.Action = SessionSetupAction.SetupGuest;
                 }
             }
-            response.NativeOS = String.Empty; // "Windows Server 2003 3790 Service Pack 2"
-            response.NativeLanMan = String.Empty; // "Windows Server 2003 5.2"
+
+            response.NativeOS = string.Empty; // "Windows Server 2003 3790 Service Pack 2"
+            response.NativeLanMan = string.Empty; // "Windows Server 2003 5.2"
 
             return response;
         }
@@ -158,6 +160,7 @@ namespace SMBLibrary.Server.SMB1
             {
                 authenticateMessage.NegotiateFlags |= NegotiateFlags.LanManagerSessionKey;
             }
+
             authenticateMessage.UserName = accountNameToAuth;
             authenticateMessage.LmChallengeResponse = lmChallengeResponse;
             authenticateMessage.NtChallengeResponse = ntChallengeResponse;

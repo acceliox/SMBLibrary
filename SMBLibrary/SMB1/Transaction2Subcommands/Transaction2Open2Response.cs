@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,6 +16,7 @@ namespace SMBLibrary.SMB1
     public class Transaction2Open2Response : Transaction2Subcommand
     {
         public const int ParametersLength = 30;
+
         // Parameters
         public ushort FID;
         public SMBFileAttributes FileAttributes;
@@ -30,11 +30,11 @@ namespace SMBLibrary.SMB1
         public ushort ExtendedAttributeErrorOffset;
         public uint ExtendedAttributeLength;
 
-        public Transaction2Open2Response() : base()
+        public Transaction2Open2Response()
         {
         }
 
-        public Transaction2Open2Response(byte[] parameters, byte[] data, bool isUnicode) : base()
+        public Transaction2Open2Response(byte[] parameters, byte[] data, bool isUnicode)
         {
             FID = LittleEndianConverter.ToUInt16(parameters, 0);
             FileAttributes = (SMBFileAttributes)LittleEndianConverter.ToUInt16(parameters, 2);
@@ -48,6 +48,8 @@ namespace SMBLibrary.SMB1
             ExtendedAttributeErrorOffset = LittleEndianConverter.ToUInt16(parameters, 24);
             ExtendedAttributeLength = LittleEndianConverter.ToUInt32(parameters, 26);
         }
+
+        public override Transaction2SubcommandName SubcommandName => Transaction2SubcommandName.TRANS2_OPEN2;
 
         public override byte[] GetParameters(bool isUnicode)
         {
@@ -64,14 +66,6 @@ namespace SMBLibrary.SMB1
             LittleEndianWriter.WriteUInt16(parameters, 24, ExtendedAttributeErrorOffset);
             LittleEndianWriter.WriteUInt32(parameters, 26, ExtendedAttributeLength);
             return parameters;
-        }
-
-        public override Transaction2SubcommandName SubcommandName
-        {
-            get
-            {
-                return Transaction2SubcommandName.TRANS2_OPEN2;
-            }
         }
     }
 }

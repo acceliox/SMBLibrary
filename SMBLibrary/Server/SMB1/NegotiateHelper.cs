@@ -4,13 +4,11 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using SMBLibrary.Authentication.GSSAPI;
 using SMBLibrary.Authentication.NTLM;
 using SMBLibrary.SMB1;
-using Utilities;
 
 namespace SMBLibrary.Server.SMB1
 {
@@ -52,8 +50,9 @@ namespace SMBLibrary.Server.SMB1
             {
                 response.Challenge = challengeMessage.ServerChallenge;
             }
-            response.DomainName = String.Empty;
-            response.ServerName = String.Empty;
+
+            response.DomainName = string.Empty;
+            response.ServerName = string.Empty;
 
             return response;
         }

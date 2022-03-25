@@ -4,7 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
+using System.IO;
 
 namespace SMBLibrary
 {
@@ -28,22 +30,6 @@ namespace SMBLibrary
             m_time = time;
         }
 
-        public long ToFileTimeUtc()
-        {
-            if (MustNotChange)
-            {
-                return -1;
-            }
-            else if (!m_time.HasValue)
-            {
-                return 0;
-            }
-            else
-            {
-                return Time.Value.ToFileTimeUtc();
-            }
-        }
-
         public DateTime? Time
         {
             get
@@ -52,16 +38,29 @@ namespace SMBLibrary
                 {
                     return null;
                 }
-                else
-                {
-                    return m_time;
-                }
+
+                return m_time;
             }
             set
             {
                 MustNotChange = false;
                 m_time = value;
             }
+        }
+
+        public long ToFileTimeUtc()
+        {
+            if (MustNotChange)
+            {
+                return -1;
+            }
+
+            if (!m_time.HasValue)
+            {
+                return 0;
+            }
+
+            return Time.Value.ToFileTimeUtc();
         }
 
         public static SetFileTime FromFileTimeUtc(long span)
@@ -71,18 +70,18 @@ namespace SMBLibrary
                 DateTime value = DateTime.FromFileTimeUtc(span);
                 return new SetFileTime(value);
             }
-            else if (span == 0)
+
+            if (span == 0)
             {
                 return new SetFileTime(false);
             }
-            else if (span == -1)
+
+            if (span == -1)
             {
                 return new SetFileTime(true);
             }
-            else
-            {
-                throw new System.IO.InvalidDataException("Set FILETIME cannot be less than -1");
-            }
+
+            throw new InvalidDataException("Set FILETIME cannot be less than -1");
         }
 
         public static implicit operator DateTime?(SetFileTime setTime)

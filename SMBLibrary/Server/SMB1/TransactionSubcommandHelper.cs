@@ -4,12 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
-using SMBLibrary.RPC;
 using SMBLibrary.SMB1;
-using SMBLibrary.Services;
 using Utilities;
 
 namespace SMBLibrary.Server.SMB1
@@ -35,6 +32,7 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "TransactNamedPipe failed. NTStatus: {0}.", header.Status);
                 return null;
             }
+
             TransactionTransactNamedPipeResponse response = new TransactionTransactNamedPipeResponse();
             response.ReadData = output;
             return response;

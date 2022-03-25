@@ -4,9 +4,6 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using Utilities;
 
 namespace SMBLibrary.NetBios
 {
@@ -15,27 +12,21 @@ namespace SMBLibrary.NetBios
     /// </summary>
     public class PositiveSessionResponsePacket : SessionPacket
     {
-        public PositiveSessionResponsePacket() : base()
+        public PositiveSessionResponsePacket()
         {
-            this.Type = SessionPacketTypeName.PositiveSessionResponse;
+            Type = SessionPacketTypeName.PositiveSessionResponse;
         }
 
         public PositiveSessionResponsePacket(byte[] buffer, int offset) : base(buffer, offset)
         {
         }
 
+        public override int Length => HeaderLength;
+
         public override byte[] GetBytes()
         {
-            this.Trailer = new byte[0];
+            Trailer = new byte[0];
             return base.GetBytes();
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return HeaderLength;
-            }
         }
     }
 }

@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using SMBLibrary.SMB1;
 using Utilities;
 
@@ -25,6 +24,7 @@ namespace SMBLibrary.Server.SMB1
                 {
                     state.LogToServer(Severity.Information, "Cancel: Requested cancel on '{0}{1}', NTStatus: {2}. PID: {3}. MID: {4}.", share.Name, openFile.Path, status, context.PID, context.MID);
                 }
+
                 if (status == NTStatus.STATUS_SUCCESS || status == NTStatus.STATUS_CANCELLED)
                 {
                     state.RemoveAsyncContext(context);

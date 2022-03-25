@@ -1,4 +1,3 @@
-
 namespace SMBLibrary
 {
     public enum AceType : byte
@@ -22,6 +21,6 @@ namespace SMBLibrary
         SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE = 0x10,
         SYSTEM_MANDATORY_LABEL_ACE_TYPE = 0x11,
         SYSTEM_RESOURCE_ATTRIBUTE_ACE_TYPE = 0x12,
-        SYSTEM_SCOPED_POLICY_ID_ACE_TYPE = 0x13,
+        SYSTEM_SCOPED_POLICY_ID_ACE_TYPE = 0x13
     }
 }

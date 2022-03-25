@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using SMBLibrary.SMB1;
 
@@ -22,6 +22,7 @@ namespace SMBLibrary.Server.SMB1
                 echo.Data = request.Data;
                 response.Add(echo);
             }
+
             return response;
         }
 

@@ -26,6 +26,6 @@ namespace SMBLibrary.SMB1
         /// SMB 1.0 Addition.
         /// If set, the client is requesting the extended format of the response.
         /// </summary>
-        SMB_OPEN_EXTENDED_RESPONSE = 0x0010,
+        SMB_OPEN_EXTENDED_RESPONSE = 0x0010
     }
 }

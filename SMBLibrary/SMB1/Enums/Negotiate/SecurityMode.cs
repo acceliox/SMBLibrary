@@ -18,6 +18,6 @@ namespace SMBLibrary.SMB1
         /// </summary>
         EncryptPasswords = 0x02, // NEGOTIATE_ENCRYPT_PASSWORDS
         SecuritySignaturesEnabled = 0x04, // NEGOTIATE_SECURITY_SIGNATURES_ENABLED
-        SecuritySignaturesRequired = 0x08, // NEGOTIATE_SECURITY_SIGNATURES_REQUIRED
+        SecuritySignaturesRequired = 0x08 // NEGOTIATE_SECURITY_SIGNATURES_REQUIRED
     }
 }

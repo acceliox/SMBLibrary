@@ -25,6 +25,6 @@ namespace SMBLibrary.SMB1
         /// Return total length of Extended Attributes (EAs);
         /// populate the ExtendedAttributeLength field in the response.
         /// </summary>
-        REQ_EASIZE = 0x0008,
+        REQ_EASIZE = 0x0008
     }
 }

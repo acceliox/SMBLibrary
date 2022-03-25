@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.Authentication.NTLM
@@ -34,9 +32,9 @@ namespace SMBLibrary.Authentication.NTLM
         {
             Signature = ValidSignature;
             MessageType = MessageTypeName.Authenticate;
-            DomainName = String.Empty;
-            UserName = String.Empty;
-            WorkStation = String.Empty;
+            DomainName = string.Empty;
+            UserName = string.Empty;
+            WorkStation = string.Empty;
             EncryptedRandomSessionKey = new byte[0];
         }
 
@@ -57,6 +55,7 @@ namespace SMBLibrary.Authentication.NTLM
                 Version = new NTLMVersion(buffer, offset);
                 offset += NTLMVersion.Length;
             }
+
             if (HasMicField())
             {
                 MIC = ByteReader.ReadBytes(buffer, offset, 16);
@@ -106,10 +105,12 @@ namespace SMBLibrary.Authentication.NTLM
             {
                 fixedLength += NTLMVersion.Length;
             }
+
             if (MIC != null)
             {
                 fixedLength += MIC.Length;
             }
+
             int payloadLength = LmChallengeResponse.Length + NtChallengeResponse.Length + DomainName.Length * 2 + UserName.Length * 2 + WorkStation.Length * 2 + EncryptedRandomSessionKey.Length;
             byte[] buffer = new byte[fixedLength + payloadLength];
             ByteWriter.WriteAnsiString(buffer, 0, ValidSignature, 8);
@@ -121,12 +122,13 @@ namespace SMBLibrary.Authentication.NTLM
                 Version.WriteBytes(buffer, offset);
                 offset += NTLMVersion.Length;
             }
+
             if (MIC != null)
             {
                 ByteWriter.WriteBytes(buffer, offset, MIC);
                 offset += MIC.Length;
             }
-            
+
             AuthenticationMessageUtils.WriteBufferPointer(buffer, 28, (ushort)(DomainName.Length * 2), (uint)offset);
             ByteWriter.WriteUTF16String(buffer, ref offset, DomainName);
             AuthenticationMessageUtils.WriteBufferPointer(buffer, 36, (ushort)(UserName.Length * 2), (uint)offset);

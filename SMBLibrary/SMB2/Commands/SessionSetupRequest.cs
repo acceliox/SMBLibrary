@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 24;
         public const int DeclaredSize = 25;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public SessionSetupFlags Flags;
         public SecurityMode SecurityMode;
         public Capabilities Capabilities; // Values other than SMB2_GLOBAL_CAP_DFS should be treated as reserved.
@@ -49,6 +48,8 @@ namespace SMBLibrary.SMB2
             }
         }
 
+        public override int CommandLength => FixedSize + SecurityBuffer.Length;
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             SecurityBufferOffset = 0;
@@ -57,6 +58,7 @@ namespace SMBLibrary.SMB2
             {
                 SecurityBufferOffset = SMB2Header.Length + FixedSize;
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             ByteWriter.WriteByte(buffer, offset + 2, (byte)Flags);
             ByteWriter.WriteByte(buffer, offset + 3, (byte)SecurityMode);
@@ -66,14 +68,6 @@ namespace SMBLibrary.SMB2
             LittleEndianWriter.WriteUInt16(buffer, offset + 14, SecurityBufferLength);
             LittleEndianWriter.WriteUInt64(buffer, offset + 16, PreviousSessionId);
             ByteWriter.WriteBytes(buffer, offset + FixedSize, SecurityBuffer);
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                return FixedSize + SecurityBuffer.Length;
-            }
         }
     }
 }

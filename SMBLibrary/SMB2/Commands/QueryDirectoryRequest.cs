@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedLength = 32;
         public const int DeclaredSize = 33;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public FileInformationClass FileInformationClass;
         public QueryDirectoryFlags Flags;
         public uint FileIndex;
@@ -26,7 +25,7 @@ namespace SMBLibrary.SMB2
         private ushort FileNameOffset;
         private ushort FileNameLength;
         public uint OutputBufferLength;
-        public string FileName = String.Empty;
+        public string FileName = string.Empty;
 
         public QueryDirectoryRequest() : base(SMB2CommandName.QueryDirectory)
         {
@@ -46,31 +45,9 @@ namespace SMBLibrary.SMB2
             FileName = ByteReader.ReadUTF16String(buffer, offset + FileNameOffset, FileNameLength / 2);
         }
 
-        public override void WriteCommandBytes(byte[] buffer, int offset)
-        {
-            FileNameOffset = 0;
-            FileNameLength = (ushort)(FileName.Length * 2);
-            if (FileName.Length > 0)
-            {
-                FileNameOffset = SMB2Header.Length + FixedLength;
-            }
-            LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
-            ByteWriter.WriteByte(buffer, offset + 2, (byte)FileInformationClass);
-            ByteWriter.WriteByte(buffer, offset + 3, (byte)Flags);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 4, FileIndex);
-            FileId.WriteBytes(buffer, offset + 8);
-            LittleEndianWriter.WriteUInt16(buffer, offset + 24, FileNameOffset);
-            LittleEndianWriter.WriteUInt16(buffer, offset + 26, FileNameLength);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 28, OutputBufferLength);
-            ByteWriter.WriteUTF16String(buffer, offset + 32, FileName);
-        }
-
         public bool Restart
         {
-            get
-            {
-                return ((this.Flags & QueryDirectoryFlags.SMB2_RESTART_SCANS) > 0);
-            }
+            get => (Flags & QueryDirectoryFlags.SMB2_RESTART_SCANS) > 0;
             set
             {
                 if (value)
@@ -86,10 +63,7 @@ namespace SMBLibrary.SMB2
 
         public bool ReturnSingleEntry
         {
-            get
-            {
-                return ((this.Flags & QueryDirectoryFlags.SMB2_RETURN_SINGLE_ENTRY) > 0);
-            }
+            get => (Flags & QueryDirectoryFlags.SMB2_RETURN_SINGLE_ENTRY) > 0;
             set
             {
                 if (value)
@@ -105,10 +79,7 @@ namespace SMBLibrary.SMB2
 
         public bool Reopen
         {
-            get
-            {
-                return ((this.Flags & QueryDirectoryFlags.SMB2_REOPEN) > 0);
-            }
+            get => (Flags & QueryDirectoryFlags.SMB2_REOPEN) > 0;
             set
             {
                 if (value)
@@ -122,12 +93,26 @@ namespace SMBLibrary.SMB2
             }
         }
 
-        public override int CommandLength
+        public override int CommandLength => FixedLength + FileName.Length * 2;
+
+        public override void WriteCommandBytes(byte[] buffer, int offset)
         {
-            get
+            FileNameOffset = 0;
+            FileNameLength = (ushort)(FileName.Length * 2);
+            if (FileName.Length > 0)
             {
-                return FixedLength + FileName.Length * 2;
+                FileNameOffset = SMB2Header.Length + FixedLength;
             }
+
+            LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
+            ByteWriter.WriteByte(buffer, offset + 2, (byte)FileInformationClass);
+            ByteWriter.WriteByte(buffer, offset + 3, (byte)Flags);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 4, FileIndex);
+            FileId.WriteBytes(buffer, offset + 8);
+            LittleEndianWriter.WriteUInt16(buffer, offset + 24, FileNameOffset);
+            LittleEndianWriter.WriteUInt16(buffer, offset + 26, FileNameLength);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 28, OutputBufferLength);
+            ByteWriter.WriteUTF16String(buffer, offset + 32, FileName);
         }
     }
 }

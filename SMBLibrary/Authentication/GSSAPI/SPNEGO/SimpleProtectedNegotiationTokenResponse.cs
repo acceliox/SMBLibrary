@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.IO;
 using Utilities;
 
@@ -16,7 +15,7 @@ namespace SMBLibrary.Authentication.GSSAPI
         AcceptCompleted = 0x00,
         AcceptIncomplete = 0x01,
         Reject = 0x02,
-        RequestMic = 0x03,
+        RequestMic = 0x03
     }
 
     /// <summary>
@@ -49,6 +48,7 @@ namespace SMBLibrary.Authentication.GSSAPI
             {
                 throw new InvalidDataException();
             }
+
             int sequenceLength = DerEncodingHelper.ReadLength(buffer, ref offset);
             int sequenceEndOffset = offset + sequenceLength;
             while (offset < sequenceEndOffset)
@@ -94,18 +94,22 @@ namespace SMBLibrary.Authentication.GSSAPI
             {
                 WriteNegState(buffer, ref offset, NegState.Value);
             }
+
             if (SupportedMechanism != null)
             {
                 WriteSupportedMechanism(buffer, ref offset, SupportedMechanism);
             }
+
             if (ResponseToken != null)
             {
                 WriteResponseToken(buffer, ref offset, ResponseToken);
             }
+
             if (MechanismListMIC != null)
             {
                 WriteMechanismListMIC(buffer, ref offset, MechanismListMIC);
             }
+
             return buffer;
         }
 
@@ -117,6 +121,7 @@ namespace SMBLibrary.Authentication.GSSAPI
                 int negStateLength = 5;
                 result += negStateLength;
             }
+
             if (SupportedMechanism != null)
             {
                 int supportedMechanismBytesLengthFieldSize = DerEncodingHelper.GetLengthFieldSize(SupportedMechanism.Length);
@@ -125,6 +130,7 @@ namespace SMBLibrary.Authentication.GSSAPI
                 int supportedMechanismLength = 1 + supportedMechanismConstructionLengthFieldSize + 1 + supportedMechanismBytesLengthFieldSize + SupportedMechanism.Length;
                 result += supportedMechanismLength;
             }
+
             if (ResponseToken != null)
             {
                 int responseTokenBytesLengthFieldSize = DerEncodingHelper.GetLengthFieldSize(ResponseToken.Length);
@@ -133,6 +139,7 @@ namespace SMBLibrary.Authentication.GSSAPI
                 int responseTokenLength = 1 + responseTokenConstructionLengthFieldSize + 1 + responseTokenBytesLengthFieldSize + ResponseToken.Length;
                 result += responseTokenLength;
             }
+
             if (MechanismListMIC != null)
             {
                 int mechanismListMICBytesLengthFieldSize = DerEncodingHelper.GetLengthFieldSize(MechanismListMIC.Length);
@@ -141,6 +148,7 @@ namespace SMBLibrary.Authentication.GSSAPI
                 int responseTokenLength = 1 + mechanismListMICConstructionLengthFieldSize + 1 + mechanismListMICBytesLengthFieldSize + MechanismListMIC.Length;
                 result += responseTokenLength;
             }
+
             return result;
         }
 
@@ -152,6 +160,7 @@ namespace SMBLibrary.Authentication.GSSAPI
             {
                 throw new InvalidDataException();
             }
+
             length = DerEncodingHelper.ReadLength(buffer, ref offset);
             return (NegState)ByteReader.ReadByte(buffer, ref offset);
         }
@@ -164,6 +173,7 @@ namespace SMBLibrary.Authentication.GSSAPI
             {
                 throw new InvalidDataException();
             }
+
             int length = DerEncodingHelper.ReadLength(buffer, ref offset);
             return ByteReader.ReadBytes(buffer, ref offset, length);
         }
@@ -176,6 +186,7 @@ namespace SMBLibrary.Authentication.GSSAPI
             {
                 throw new InvalidDataException();
             }
+
             int length = DerEncodingHelper.ReadLength(buffer, ref offset);
             return ByteReader.ReadBytes(buffer, ref offset, length);
         }
@@ -188,6 +199,7 @@ namespace SMBLibrary.Authentication.GSSAPI
             {
                 throw new InvalidDataException();
             }
+
             int length = DerEncodingHelper.ReadLength(buffer, ref offset);
             return ByteReader.ReadBytes(buffer, ref offset, length);
         }

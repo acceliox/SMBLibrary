@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,13 +31,14 @@ namespace SMBLibrary.SMB1
             Header = new SMB1Header(buffer);
             SMB1Command command = SMB1Command.ReadCommand(buffer, SMB1Header.Length, Header.Command, Header);
             Commands.Add(command);
-            while(command is SMBAndXCommand)
+            while (command is SMBAndXCommand)
             {
                 SMBAndXCommand andXCommand = (SMBAndXCommand)command;
                 if (andXCommand.AndXCommand == CommandName.SMB_COM_NO_ANDX_COMMAND)
                 {
                     break;
                 }
+
                 command = SMB1Command.ReadCommand(buffer, andXCommand.AndXOffset, andXCommand.AndXCommand, Header);
                 Commands.Add(command);
             }
@@ -80,7 +82,7 @@ namespace SMBLibrary.SMB1
             commandBytes = lastCommand.GetBytes(Header.UnicodeFlag);
             sequence.Add(commandBytes);
             length += commandBytes.Length;
-            
+
             Header.Command = Commands[0].CommandName;
 
             byte[] buffer = new byte[length];
@@ -100,6 +102,7 @@ namespace SMBLibrary.SMB1
             {
                 throw new InvalidDataException("Invalid SMB header signature");
             }
+
             return new SMB1Message(buffer);
         }
     }

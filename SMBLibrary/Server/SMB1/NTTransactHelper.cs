@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,11 +37,9 @@ namespace SMBLibrary.Server.SMB1
                 processState.TransactionDataReceived += request.TransData.Length;
                 return new NTTransactInterimResponse();
             }
-            else
-            {
-                // We have a complete command
-                return GetCompleteNTTransactResponse(header, request.MaxParameterCount, request.MaxDataCount, request.Function, request.Setup, request.TransParameters, request.TransData, share, state);
-            }
+
+            // We have a complete command
+            return GetCompleteNTTransactResponse(header, request.MaxParameterCount, request.MaxDataCount, request.Function, request.Setup, request.TransParameters, request.TransData, share, state);
         }
 
         /// <summary>
@@ -54,6 +53,7 @@ namespace SMBLibrary.Server.SMB1
             {
                 throw new InvalidDataException();
             }
+
             ByteWriter.WriteBytes(processState.TransactionParameters, (int)request.ParameterDisplacement, request.TransParameters);
             ByteWriter.WriteBytes(processState.TransactionData, (int)request.DataDisplacement, request.TransData);
             processState.TransactionParametersReceived += request.TransParameters.Length;
@@ -64,12 +64,10 @@ namespace SMBLibrary.Server.SMB1
             {
                 return new List<SMB1Command>();
             }
-            else
-            {
-                // We have a complete command
-                state.RemoveProcessState(header.PID);
-                return GetCompleteNTTransactResponse(header, processState.MaxParameterCount, processState.MaxDataCount, (NTTransactSubcommandName)processState.SubcommandID, processState.TransactionSetup, processState.TransactionParameters, processState.TransactionData, share, state);
-            }
+
+            // We have a complete command
+            state.RemoveProcessState(header.PID);
+            return GetCompleteNTTransactResponse(header, processState.MaxParameterCount, processState.MaxDataCount, (NTTransactSubcommandName)processState.SubcommandID, processState.TransactionSetup, processState.TransactionParameters, processState.TransactionData, share, state);
         }
 
         internal static List<SMB1Command> GetCompleteNTTransactResponse(SMB1Header header, uint maxParameterCount, uint maxDataCount, NTTransactSubcommandName subcommandName, byte[] requestSetup, byte[] requestParameters, byte[] requestData, ISMBShare share, SMB1ConnectionState state)
@@ -85,6 +83,7 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_INVALID_SMB;
                 return new ErrorResponse(CommandName.SMB_COM_NT_TRANSACT);
             }
+
             state.LogToServer(Severity.Verbose, "Received complete SMB_COM_NT_TRANSACT subcommand: {0}", subcommand.SubcommandName);
             NTTransactSubcommand subcommandResponse = null;
 
@@ -129,10 +128,63 @@ namespace SMBLibrary.Server.SMB1
             return GetNTTransactResponse(responseSetup, responseParameters, responseData, state.MaxBufferSize);
         }
 
+        internal static List<SMB1Command> GetNTTransactResponse(byte[] responseSetup, byte[] responseParameters, byte[] responseData, int maxBufferSize)
+        {
+            List<SMB1Command> result = new List<SMB1Command>();
+            NTTransactResponse response = new NTTransactResponse();
+            result.Add(response);
+            int responseSize = NTTransactResponse.CalculateMessageSize(responseSetup.Length, responseParameters.Length, responseData.Length);
+            if (responseSize <= maxBufferSize)
+            {
+                response.Setup = responseSetup;
+                response.TotalParameterCount = (ushort)responseParameters.Length;
+                response.TotalDataCount = (ushort)responseData.Length;
+                response.TransParameters = responseParameters;
+                response.TransData = responseData;
+            }
+            else
+            {
+                int currentDataLength = maxBufferSize - (responseSize - responseData.Length);
+                byte[] buffer = new byte[currentDataLength];
+                Array.Copy(responseData, 0, buffer, 0, currentDataLength);
+                response.Setup = responseSetup;
+                response.TotalParameterCount = (ushort)responseParameters.Length;
+                response.TotalDataCount = (ushort)responseData.Length;
+                response.TransParameters = responseParameters;
+                response.TransData = buffer;
+
+                int dataBytesLeftToSend = responseData.Length - currentDataLength;
+                while (dataBytesLeftToSend > 0)
+                {
+                    NTTransactResponse additionalResponse = new NTTransactResponse();
+                    currentDataLength = dataBytesLeftToSend;
+                    responseSize = TransactionResponse.CalculateMessageSize(0, 0, dataBytesLeftToSend);
+                    if (responseSize > maxBufferSize)
+                    {
+                        currentDataLength = maxBufferSize - (responseSize - dataBytesLeftToSend);
+                    }
+
+                    buffer = new byte[currentDataLength];
+                    int dataBytesSent = responseData.Length - dataBytesLeftToSend;
+                    Array.Copy(responseData, dataBytesSent, buffer, 0, currentDataLength);
+                    additionalResponse.TotalParameterCount = (ushort)responseParameters.Length;
+                    additionalResponse.TotalDataCount = (ushort)responseData.Length;
+                    additionalResponse.TransData = buffer;
+                    additionalResponse.ParameterDisplacement = (ushort)response.TransParameters.Length;
+                    additionalResponse.DataDisplacement = (ushort)dataBytesSent;
+                    result.Add(additionalResponse);
+
+                    dataBytesLeftToSend -= currentDataLength;
+                }
+            }
+
+            return result;
+        }
+
         private static NTTransactIOCTLResponse GetSubcommandResponse(SMB1Header header, uint maxDataCount, NTTransactIOCTLRequest subcommand, ISMBShare share, SMB1ConnectionState state)
         {
             SMB1Session session = state.GetSession(header.UID);
-            string ctlCode = Enum.IsDefined(typeof(IoControlCode), subcommand.FunctionCode) ? ((IoControlCode)subcommand.FunctionCode).ToString() : ("0x" + subcommand.FunctionCode.ToString("X8"));
+            string ctlCode = Enum.IsDefined(typeof(IoControlCode), subcommand.FunctionCode) ? ((IoControlCode)subcommand.FunctionCode).ToString() : "0x" + subcommand.FunctionCode.ToString("X8");
             if (!subcommand.IsFsctl)
             {
                 // [MS-SMB] If the IsFsctl field is set to zero, the server SHOULD fail the request with STATUS_NOT_SUPPORTED
@@ -219,58 +271,8 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "GetSecurityInformation on '{0}{1}' failed. Security information: 0x{2}, NTStatus: STATUS_BUFFER_TOO_SMALL. (FID: {3})", share.Name, openFile.Path, subcommand.SecurityInfoFields.ToString("X"), subcommand.FID);
                 header.Status = NTStatus.STATUS_BUFFER_TOO_SMALL;
             }
+
             return response;
-        }
-
-        internal static List<SMB1Command> GetNTTransactResponse(byte[] responseSetup, byte[] responseParameters, byte[] responseData, int maxBufferSize)
-        {
-            List<SMB1Command> result = new List<SMB1Command>();
-            NTTransactResponse response = new NTTransactResponse();
-            result.Add(response);
-            int responseSize = NTTransactResponse.CalculateMessageSize(responseSetup.Length, responseParameters.Length, responseData.Length);
-            if (responseSize <= maxBufferSize)
-            {
-                response.Setup = responseSetup;
-                response.TotalParameterCount = (ushort)responseParameters.Length;
-                response.TotalDataCount = (ushort)responseData.Length;
-                response.TransParameters = responseParameters;
-                response.TransData = responseData;
-            }
-            else
-            {
-                int currentDataLength = maxBufferSize - (responseSize - responseData.Length);
-                byte[] buffer = new byte[currentDataLength];
-                Array.Copy(responseData, 0, buffer, 0, currentDataLength);
-                response.Setup = responseSetup;
-                response.TotalParameterCount = (ushort)responseParameters.Length;
-                response.TotalDataCount = (ushort)responseData.Length;
-                response.TransParameters = responseParameters;
-                response.TransData = buffer;
-
-                int dataBytesLeftToSend = responseData.Length - currentDataLength;
-                while (dataBytesLeftToSend > 0)
-                {
-                    NTTransactResponse additionalResponse = new NTTransactResponse();
-                    currentDataLength = dataBytesLeftToSend;
-                    responseSize = TransactionResponse.CalculateMessageSize(0, 0, dataBytesLeftToSend);
-                    if (responseSize > maxBufferSize)
-                    {
-                        currentDataLength = maxBufferSize - (responseSize - dataBytesLeftToSend);
-                    }
-                    buffer = new byte[currentDataLength];
-                    int dataBytesSent = responseData.Length - dataBytesLeftToSend;
-                    Array.Copy(responseData, dataBytesSent, buffer, 0, currentDataLength);
-                    additionalResponse.TotalParameterCount = (ushort)responseParameters.Length;
-                    additionalResponse.TotalDataCount = (ushort)responseData.Length;
-                    additionalResponse.TransData = buffer;
-                    additionalResponse.ParameterDisplacement = (ushort)response.TransParameters.Length;
-                    additionalResponse.DataDisplacement = (ushort)dataBytesSent;
-                    result.Add(additionalResponse);
-
-                    dataBytesLeftToSend -= currentDataLength;
-                }
-            }
-            return result;
         }
     }
 }

@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using SMBLibrary.Authentication.GSSAPI;
-using SMBLibrary.Authentication.NTLM;
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -47,6 +45,7 @@ namespace SMBLibrary.Server.SMB2
                 {
                     return new ErrorResponse(request.CommandName, NTStatus.STATUS_TOO_MANY_SESSIONS);
                 }
+
                 response.Header.SessionID = sessionID.Value;
             }
 
@@ -78,6 +77,7 @@ namespace SMBLibrary.Server.SMB2
                     response.SessionFlags = SessionFlags.IsGuest;
                 }
             }
+
             return response;
         }
     }

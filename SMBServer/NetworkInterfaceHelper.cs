@@ -4,12 +4,11 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
 using System.Net.NetworkInformation;
-using Utilities;
+using System.Net.Sockets;
 
 namespace SMBServer
 {
@@ -29,6 +28,7 @@ namespace SMBServer
                     }
                 }
             }
+
             return result;
         }
 
@@ -41,13 +41,14 @@ namespace SMBServer
                 {
                     if (addressInfo.Address.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        if (IPAddress.Equals(addressInfo.Address, ipAddress))
+                        if (Equals(addressInfo.Address, ipAddress))
                         {
                             return addressInfo.IPv4Mask;
                         }
                     }
                 }
             }
+
             return null;
         }
     }

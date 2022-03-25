@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Utilities;
 
@@ -35,13 +35,15 @@ namespace SMBLibrary.NetBios
         public SessionPacket(byte[] buffer, int offset)
         {
             Type = (SessionPacketTypeName)ByteReader.ReadByte(buffer, offset + 0);
-            TrailerLength = ByteReader.ReadByte(buffer, offset + 1) << 16 | BigEndianConverter.ToUInt16(buffer, offset + 2);
+            TrailerLength = (ByteReader.ReadByte(buffer, offset + 1) << 16) | BigEndianConverter.ToUInt16(buffer, offset + 2);
             Trailer = ByteReader.ReadBytes(buffer, offset + 4, TrailerLength);
         }
 
+        public virtual int Length => HeaderLength + Trailer.Length;
+
         public virtual byte[] GetBytes()
         {
-            TrailerLength = this.Trailer.Length;
+            TrailerLength = Trailer.Length;
 
             byte flags = Convert.ToByte(TrailerLength >> 16);
 
@@ -54,17 +56,9 @@ namespace SMBLibrary.NetBios
             return buffer;
         }
 
-        public virtual int Length
-        {
-            get
-            {
-                return HeaderLength + Trailer.Length;
-            }
-        }
-
         public static int GetSessionPacketLength(byte[] buffer, int offset)
         {
-            int trailerLength = ByteReader.ReadByte(buffer, offset + 1) << 16 | BigEndianConverter.ToUInt16(buffer, offset + 2);
+            int trailerLength = (ByteReader.ReadByte(buffer, offset + 1) << 16) | BigEndianConverter.ToUInt16(buffer, offset + 2);
             return 4 + trailerLength;
         }
 

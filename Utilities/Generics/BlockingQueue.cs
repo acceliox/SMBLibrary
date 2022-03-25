@@ -4,18 +4,19 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.Threading;
-using System.Text;
 
 namespace Utilities
 {
     public class BlockingQueue<T>
     {
-        private Queue<T> m_queue = new Queue<T>();
-        private int m_count = 0;
+        private readonly Queue<T> m_queue = new Queue<T>();
+        private int m_count;
         private bool m_stopping;
+
+        public int Count => m_count;
 
         public void Enqueue(T item)
         {
@@ -36,6 +37,7 @@ namespace Utilities
             {
                 return;
             }
+
             lock (m_queue)
             {
                 foreach (T item in items)
@@ -43,6 +45,7 @@ namespace Utilities
                     m_queue.Enqueue(item);
                     m_count++;
                 }
+
                 if (m_queue.Count == items.Count)
                 {
                     Monitor.Pulse(m_queue);
@@ -60,7 +63,7 @@ namespace Utilities
                     Monitor.Wait(m_queue);
                     if (m_stopping)
                     {
-                        item = default(T);
+                        item = default;
                         return false;
                     }
                 }
@@ -77,14 +80,6 @@ namespace Utilities
             {
                 m_stopping = true;
                 Monitor.PulseAll(m_queue);
-            }
-        }
-
-        public int Count
-        {
-            get
-            {
-                return m_count;
             }
         }
     }

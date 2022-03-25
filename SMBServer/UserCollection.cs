@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 
@@ -18,13 +19,14 @@ namespace SMBServer
 
         public int IndexOf(string accountName)
         {
-            for (int index = 0; index < this.Count; index++)
+            for (int index = 0; index < Count; index++)
             {
                 if (string.Equals(this[index].AccountName, accountName, StringComparison.OrdinalIgnoreCase))
                 {
                     return index;
                 }
             }
+
             return -1;
         }
 
@@ -35,6 +37,7 @@ namespace SMBServer
             {
                 return this[index].Password;
             }
+
             return null;
         }
 
@@ -45,6 +48,7 @@ namespace SMBServer
             {
                 result.Add(user.AccountName);
             }
+
             return result;
         }
     }

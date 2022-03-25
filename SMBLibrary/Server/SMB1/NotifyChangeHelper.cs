@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using SMBLibrary.SMB1;
 using Utilities;
@@ -51,6 +51,7 @@ namespace SMBLibrary.Server.SMB1
                     {
                         connection.LogToServer(Severity.Verbose, "NotifyChange: Monitoring of '{0}{1}' completed. NTStatus: {2}. PID: {3}. MID: {4}.", openFile.ShareName, openFile.Path, status, asyncContext.PID, asyncContext.MID);
                     }
+
                     SMB1Header header = new SMB1Header();
                     header.Command = CommandName.SMB_COM_NT_TRANSACT;
                     header.Status = status;

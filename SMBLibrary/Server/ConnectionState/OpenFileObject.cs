@@ -4,81 +4,34 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace SMBLibrary.Server
 {
     internal class OpenFileObject
     {
-        private uint m_treeID;
-        private string m_shareName;
-        private string m_path;
-        private object m_handle;
-        private FileAccess m_fileAccess;
-        private DateTime m_openedDT;
-
         public OpenFileObject(uint treeID, string shareName, string path, object handle, FileAccess fileAccess)
         {
-            m_treeID = treeID;
-            m_shareName = shareName;
-            m_path = path;
-            m_handle = handle;
-            m_fileAccess = fileAccess;
-            m_openedDT = DateTime.UtcNow;
+            TreeID = treeID;
+            ShareName = shareName;
+            Path = path;
+            Handle = handle;
+            FileAccess = fileAccess;
+            OpenedDT = DateTime.UtcNow;
         }
 
-        public uint TreeID
-        {
-            get
-            {
-                return m_treeID;
-            }
-        }
+        public uint TreeID { get; }
 
-        public string ShareName
-        {
-            get
-            {
-                return m_shareName;
-            }
-        }
+        public string ShareName { get; }
 
-        public string Path
-        {
-            get
-            {
-                return m_path;
-            }
-            set
-            {
-                m_path = value;
-            }
-        }
+        public string Path { get; set; }
 
-        public object Handle
-        {
-            get
-            {
-                return m_handle;
-            }
-        }
+        public object Handle { get; }
 
-        public FileAccess FileAccess
-        {
-            get
-            {
-                return m_fileAccess;
-            }
-        }
+        public FileAccess FileAccess { get; }
 
-        public DateTime OpenedDT
-        {
-            get
-            {
-                return m_openedDT;
-            }
-        }
+        public DateTime OpenedDT { get; }
     }
 }

@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.SMB2
 {
     public enum SMB2Dialect : ushort
@@ -16,6 +15,6 @@ namespace SMBLibrary.SMB2
         /// The wildcard revision number is sent only in response to a multi-protocol negotiate
         /// request with the "SMB 2.???" dialect string.
         /// </summary>
-        SMB2xx = 0x02FF, // SMB 2.xx
+        SMB2xx = 0x02FF // SMB 2.xx
     }
 }

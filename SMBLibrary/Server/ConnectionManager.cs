@@ -4,16 +4,20 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.Net;
+using SMBLibrary.Server.SMB1;
+using SMBLibrary.SMB1;
 using Utilities;
+using EchoResponse = SMBLibrary.SMB2.EchoResponse;
 
 namespace SMBLibrary.Server
 {
     internal class ConnectionManager
     {
-        private List<ConnectionState> m_activeConnections = new List<ConnectionState>();
+        private readonly List<ConnectionState> m_activeConnections = new List<ConnectionState>();
 
         public void AddConnection(ConnectionState connection)
         {
@@ -33,6 +37,7 @@ namespace SMBLibrary.Server
                     m_activeConnections.RemoveAt(connectionIndex);
                     return true;
                 }
+
                 return false;
             }
         }
@@ -70,12 +75,12 @@ namespace SMBLibrary.Server
                     {
                         // [MS-CIFS] Clients SHOULD, at minimum, send an SMB_COM_ECHO to the server every few minutes.
                         // This means that an unsolicited SMB_COM_ECHO reply is not likely to be sent on a connection that is alive.
-                        SMBLibrary.SMB1.SMB1Message echoReply = SMB1.EchoHelper.GetUnsolicitedEchoReply();
+                        SMB1Message echoReply = EchoHelper.GetUnsolicitedEchoReply();
                         SMBServer.EnqueueMessage(connection, echoReply);
                     }
                     else if (connection is SMB2ConnectionState)
                     {
-                        SMBLibrary.SMB2.EchoResponse echoResponse = SMB2.EchoHelper.GetUnsolicitedEchoResponse();
+                        EchoResponse echoResponse = SMB2.EchoHelper.GetUnsolicitedEchoResponse();
                         SMBServer.EnqueueResponse(connection, echoResponse);
                     }
                 }
@@ -91,6 +96,21 @@ namespace SMBLibrary.Server
             }
         }
 
+        public List<SessionInformation> GetSessionsInformation()
+        {
+            List<SessionInformation> result = new List<SessionInformation>();
+            lock (m_activeConnections)
+            {
+                foreach (ConnectionState connection in m_activeConnections)
+                {
+                    List<SessionInformation> sessions = connection.GetSessionsInformation();
+                    result.AddRange(sessions);
+                }
+            }
+
+            return result;
+        }
+
         private ConnectionState FindConnection(IPEndPoint clientEndPoint)
         {
             lock (m_activeConnections)
@@ -103,21 +123,8 @@ namespace SMBLibrary.Server
                     }
                 }
             }
-            return null;
-        }
 
-        public List<SessionInformation> GetSessionsInformation()
-        {
-            List<SessionInformation> result = new List<SessionInformation>();
-            lock (m_activeConnections)
-            {
-                foreach (ConnectionState connection in m_activeConnections)
-                {
-                    List<SessionInformation> sessions = connection.GetSessionsInformation();
-                    result.AddRange(sessions);
-                }
-            }
-            return result;
+            return null;
         }
     }
 }

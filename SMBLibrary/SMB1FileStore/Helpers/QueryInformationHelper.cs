@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using SMBLibrary.SMB1;
-using Utilities;
 
 namespace SMBLibrary.SMB1
 {
@@ -52,7 +50,8 @@ namespace SMBLibrary.SMB1
                 result.ExtFileAttributes = (ExtendedFileAttributes)fileBasicInfo.FileAttributes;
                 return result;
             }
-            else if (fileInformation is FileStandardInformation)
+
+            if (fileInformation is FileStandardInformation)
             {
                 FileStandardInformation fileStandardInfo = (FileStandardInformation)fileInformation;
                 QueryFileStandardInfo result = new QueryFileStandardInfo();
@@ -62,21 +61,24 @@ namespace SMBLibrary.SMB1
                 result.Directory = fileStandardInfo.Directory;
                 return result;
             }
-            else if (fileInformation is FileEaInformation)
+
+            if (fileInformation is FileEaInformation)
             {
                 FileEaInformation fileEAInfo = (FileEaInformation)fileInformation;
                 QueryFileEaInfo result = new QueryFileEaInfo();
                 result.EaSize = fileEAInfo.EaSize;
                 return result;
             }
-            else if (fileInformation is FileNameInformation)
+
+            if (fileInformation is FileNameInformation)
             {
                 FileNameInformation fileNameInfo = (FileNameInformation)fileInformation;
                 QueryFileNameInfo result = new QueryFileNameInfo();
                 result.FileName = fileNameInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileAllInformation)
+
+            if (fileInformation is FileAllInformation)
             {
                 FileAllInformation fileAllInfo = (FileAllInformation)fileInformation;
                 QueryFileAllInfo result = new QueryFileAllInfo();
@@ -93,21 +95,24 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileAllInfo.NameInformation.FileName;
                 return result;
             }
-            else if (fileInformation is FileAlternateNameInformation)
+
+            if (fileInformation is FileAlternateNameInformation)
             {
                 FileAlternateNameInformation fileAltNameInfo = (FileAlternateNameInformation)fileInformation;
                 QueryFileAltNameInfo result = new QueryFileAltNameInfo();
                 result.FileName = fileAltNameInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileStreamInformation)
+
+            if (fileInformation is FileStreamInformation)
             {
                 FileStreamInformation fileStreamInfo = (FileStreamInformation)fileInformation;
                 QueryFileStreamInfo result = new QueryFileStreamInfo();
                 result.Entries.AddRange(fileStreamInfo.Entries);
                 return result;
             }
-            else if (fileInformation is FileCompressionInformation)
+
+            if (fileInformation is FileCompressionInformation)
             {
                 FileCompressionInformation fileCompressionInfo = (FileCompressionInformation)fileInformation;
                 QueryFileCompressionInfo result = new QueryFileCompressionInfo();
@@ -119,10 +124,8 @@ namespace SMBLibrary.SMB1
                 result.Reserved = fileCompressionInfo.Reserved;
                 return result;
             }
-            else
-            {
-                throw new NotImplementedException();
-            }
+
+            throw new NotImplementedException();
         }
 
         /// <exception cref="SMBLibrary.UnsupportedInformationLevelException"></exception>
@@ -164,7 +167,8 @@ namespace SMBLibrary.SMB1
                 result.FileAttributes = (FileAttributes)queryFileBasicInfo.ExtFileAttributes;
                 return result;
             }
-            else if (queryInformation is QueryFileStandardInfo)
+
+            if (queryInformation is QueryFileStandardInfo)
             {
                 QueryFileStandardInfo queryFileStandardInfo = (QueryFileStandardInfo)queryInformation;
                 FileStandardInformation result = new FileStandardInformation();
@@ -174,21 +178,24 @@ namespace SMBLibrary.SMB1
                 result.Directory = queryFileStandardInfo.Directory;
                 return result;
             }
-            else if (queryInformation is QueryFileEaInfo)
+
+            if (queryInformation is QueryFileEaInfo)
             {
                 QueryFileEaInfo queryFileEaInfo = (QueryFileEaInfo)queryInformation;
                 FileEaInformation result = new FileEaInformation();
                 result.EaSize = queryFileEaInfo.EaSize;
                 return result;
             }
-            else if (queryInformation is QueryFileNameInfo)
+
+            if (queryInformation is QueryFileNameInfo)
             {
                 QueryFileNameInfo queryFileNameInfo = (QueryFileNameInfo)queryInformation;
                 FileNameInformation result = new FileNameInformation();
                 result.FileName = queryFileNameInfo.FileName;
                 return result;
             }
-            else if (queryInformation is QueryFileAllInfo)
+
+            if (queryInformation is QueryFileAllInfo)
             {
                 QueryFileAllInfo queryFileAllInfo = (QueryFileAllInfo)queryInformation;
                 FileAllInformation result = new FileAllInformation();
@@ -205,21 +212,24 @@ namespace SMBLibrary.SMB1
                 result.NameInformation.FileName = queryFileAllInfo.FileName;
                 return result;
             }
-            else if (queryInformation is QueryFileAltNameInfo)
+
+            if (queryInformation is QueryFileAltNameInfo)
             {
                 QueryFileAltNameInfo queryFileAltNameInfo = (QueryFileAltNameInfo)queryInformation;
                 FileAlternateNameInformation result = new FileAlternateNameInformation();
                 result.FileName = queryFileAltNameInfo.FileName;
                 return result;
             }
-            else if (queryInformation is QueryFileStreamInfo)
+
+            if (queryInformation is QueryFileStreamInfo)
             {
                 QueryFileStreamInfo queryFileStreamInfo = (QueryFileStreamInfo)queryInformation;
                 FileStreamInformation result = new FileStreamInformation();
                 result.Entries.AddRange(queryFileStreamInfo.Entries);
                 return result;
             }
-            else if (queryInformation is QueryFileCompressionInfo)
+
+            if (queryInformation is QueryFileCompressionInfo)
             {
                 QueryFileCompressionInfo queryFileCompressionInfo = (QueryFileCompressionInfo)queryInformation;
                 FileCompressionInformation result = new FileCompressionInformation();
@@ -231,10 +241,8 @@ namespace SMBLibrary.SMB1
                 result.Reserved = queryFileCompressionInfo.Reserved;
                 return result;
             }
-            else
-            {
-                throw new NotImplementedException();
-            }
+
+            throw new NotImplementedException();
         }
     }
 }

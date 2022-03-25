@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.Net;
 using SMBLibrary.Authentication.GSSAPI;
 
@@ -13,43 +12,22 @@ namespace SMBLibrary
 {
     public class SecurityContext
     {
-        private string m_userName;
-        private string m_machineName;
-        private IPEndPoint m_clientEndPoint;
         public GSSContext AuthenticationContext;
         public object AccessToken;
 
         public SecurityContext(string userName, string machineName, IPEndPoint clientEndPoint, GSSContext authenticationContext, object accessToken)
         {
-            m_userName = userName;
-            m_machineName = machineName;
-            m_clientEndPoint = clientEndPoint;
+            UserName = userName;
+            MachineName = machineName;
+            ClientEndPoint = clientEndPoint;
             AuthenticationContext = authenticationContext;
             AccessToken = accessToken;
         }
 
-        public string UserName
-        {
-            get
-            {
-                return m_userName;
-            }
-        }
+        public string UserName { get; }
 
-        public string MachineName
-        {
-            get
-            {
-                return m_machineName;
-            }
-        }
+        public string MachineName { get; }
 
-        public IPEndPoint ClientEndPoint
-        {
-            get
-            {
-                return m_clientEndPoint;
-            }
-        }
+        public IPEndPoint ClientEndPoint { get; }
     }
 }

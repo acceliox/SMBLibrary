@@ -4,10 +4,6 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Utilities;
 
 namespace SMBLibrary.SMB1
 {
@@ -16,7 +12,7 @@ namespace SMBLibrary.SMB1
         Read = 0x00,
         Write = 0x01,
         ReadWrite = 0x02,
-        Execute = 0x03,
+        Execute = 0x03
     }
 
     public enum SharingMode : byte
@@ -25,7 +21,7 @@ namespace SMBLibrary.SMB1
         DenyReadWriteExecute = 0x01, // Exclusive use
         DenyWrite = 0x02,
         DenyReadExecute = 0x03,
-        DenyNothing = 0x04,
+        DenyNothing = 0x04
     }
 
     public enum ReferenceLocality : byte
@@ -33,13 +29,13 @@ namespace SMBLibrary.SMB1
         Unknown = 0x00,
         Sequential = 0x01,
         Random = 0x02,
-        RandomWithLocality = 0x03,
+        RandomWithLocality = 0x03
     }
 
     public enum CachedMode : byte
     {
         CachingAllowed = 0x00,
-        DoNotCacheFile = 0x01,
+        DoNotCacheFile = 0x01
     }
 
     public enum WriteThroughMode : byte
@@ -51,7 +47,7 @@ namespace SMBLibrary.SMB1
         /// If this flag is set, then no read ahead or write behind is allowed on this file or device.
         /// When the response is returned, data is expected to be on the disk or device.
         /// </summary>
-        WriteThrough = 0x01,
+        WriteThrough = 0x01
     }
 
     public struct AccessModeOptions // 2 bytes

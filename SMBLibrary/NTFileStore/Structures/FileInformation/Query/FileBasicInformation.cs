@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary
@@ -38,6 +37,10 @@ namespace SMBLibrary
             Reserved = LittleEndianConverter.ToUInt32(buffer, offset + 36);
         }
 
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileBasicInformation;
+
+        public override int Length => FixedLength;
+
         public override void WriteBytes(byte[] buffer, int offset)
         {
             FileTimeHelper.WriteSetFileTime(buffer, offset + 0, CreationTime);
@@ -46,22 +49,6 @@ namespace SMBLibrary
             FileTimeHelper.WriteSetFileTime(buffer, offset + 24, ChangeTime);
             LittleEndianWriter.WriteUInt32(buffer, offset + 32, (uint)FileAttributes);
             LittleEndianWriter.WriteUInt32(buffer, offset + 36, Reserved);
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileBasicInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength;
-            }
         }
     }
 }

@@ -4,31 +4,24 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using Utilities;
 
 namespace SMBLibrary
 {
     public abstract class FileInformation
     {
+        public abstract FileInformationClass FileInformationClass { get; }
+
+        public abstract int Length { get; }
+
         public abstract void WriteBytes(byte[] buffer, int offset);
 
         public byte[] GetBytes()
         {
-            byte[] buffer = new byte[this.Length];
+            byte[] buffer = new byte[Length];
             WriteBytes(buffer, 0);
             return buffer;
-        }
-
-        public abstract FileInformationClass FileInformationClass
-        {
-            get;
-        }
-
-        public abstract int Length
-        {
-            get;
         }
 
         public static FileInformation GetFileInformation(byte[] buffer, int offset, FileInformationClass informationClass)
@@ -88,7 +81,7 @@ namespace SMBLibrary
                 case FileInformationClass.FileShortNameInformation:
                     throw new NotImplementedException();
                 default:
-                    throw new UnsupportedInformationLevelException(String.Format("Unsupported information class: {0}", informationClass));
+                    throw new UnsupportedInformationLevelException(string.Format("Unsupported information class: {0}", informationClass));
             }
         }
     }

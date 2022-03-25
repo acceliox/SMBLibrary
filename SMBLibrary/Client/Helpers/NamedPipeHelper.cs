@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using SMBLibrary.RPC;
 using SMBLibrary.Services;
@@ -21,6 +22,7 @@ namespace SMBLibrary.Client
             {
                 return status;
             }
+
             BindPDU bindPDU = new BindPDU();
             bindPDU.Flags = PacketFlags.FirstFragment | PacketFlags.LastFragment;
             bindPDU.DataRepresentation.CharacterFormat = CharacterFormat.ASCII;
@@ -42,6 +44,7 @@ namespace SMBLibrary.Client
             {
                 return status;
             }
+
             BindAckPDU bindAckPDU = RPCPDU.GetPDU(output, 0) as BindAckPDU;
             if (bindAckPDU == null)
             {

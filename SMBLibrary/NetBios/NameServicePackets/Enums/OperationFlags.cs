@@ -12,6 +12,6 @@ namespace SMBLibrary.NetBios
         RecursionAvailable = 0x08,
         RecursionDesired = 0x10,
         Truncated = 0x20,
-        AuthoritativeAnswer = 0x40,
+        AuthoritativeAnswer = 0x40
     }
 }

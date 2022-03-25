@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.IO;
 
@@ -43,10 +44,8 @@ namespace Utilities
             {
                 return XOR(array1, 0, array2, 0, array1.Length);
             }
-            else
-            {
-                throw new ArgumentException("Arrays must be of equal length");
-            }
+
+            throw new ArgumentException("Arrays must be of equal length");
         }
 
         public static byte[] XOR(byte[] array1, int offset1, byte[] array2, int offset2, int length)
@@ -58,18 +57,17 @@ namespace Utilities
                 {
                     result[index] = (byte)(array1[offset1 + index] ^ array2[offset2 + index]);
                 }
+
                 return result;
             }
-            else
-            {
-                throw new ArgumentOutOfRangeException();
-            }
+
+            throw new ArgumentOutOfRangeException();
         }
 
         public static long CopyStream(Stream input, Stream output)
         {
             // input may not support seeking, so don't use input.Position
-            return CopyStream(input, output, Int64.MaxValue);
+            return CopyStream(input, output, long.MaxValue);
         }
 
         public static long CopyStream(Stream input, Stream output, long count)
@@ -89,6 +87,7 @@ namespace Utilities
                     return totalBytesRead;
                 }
             }
+
             return totalBytesRead;
         }
     }

@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +13,20 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
 {
     public interface IFileSystem
     {
+        string Name { get; }
+
+        /// <exception cref="System.IO.IOException"></exception>
+        long Size { get; }
+
+        /// <exception cref="System.IO.IOException"></exception>
+        long FreeSpace { get; }
+
+        /// <summary>
+        /// Indicates support for opening named streams (alternate data streams).
+        /// Named streams are opened using the filename:stream syntax.
+        /// </summary>
+        bool SupportsNamedStreams { get; }
+
         /// <exception cref="System.IO.DirectoryNotFoundException"></exception>
         /// <exception cref="System.IO.FileNotFoundException"></exception>
         /// <exception cref="System.IO.IOException"></exception>
@@ -66,31 +81,5 @@ namespace DiskAccessLibrary.FileSystems.Abstractions
         /// <exception cref="System.IO.IOException"></exception>
         /// <exception cref="System.UnauthorizedAccessException"></exception>
         void SetDates(string path, DateTime? creationDT, DateTime? lastWriteDT, DateTime? lastAccessDT);
-
-        string Name
-        {
-            get; 
-        }
-
-        /// <exception cref="System.IO.IOException"></exception>
-        long Size
-        {
-            get;
-        }
-
-        /// <exception cref="System.IO.IOException"></exception>
-        long FreeSpace
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Indicates support for opening named streams (alternate data streams).
-        /// Named streams are opened using the filename:stream syntax.
-        /// </summary>
-        bool SupportsNamedStreams
-        {
-            get;
-        }
     }
 }

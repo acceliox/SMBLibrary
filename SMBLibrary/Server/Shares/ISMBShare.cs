@@ -4,20 +4,13 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
 
 namespace SMBLibrary.Server
 {
     public interface ISMBShare
     {
-        string Name
-        {
-            get;
-        }
+        string Name { get; }
 
-        INTFileStore FileStore
-        {
-            get;
-        }
+        INTFileStore FileStore { get; }
     }
 }

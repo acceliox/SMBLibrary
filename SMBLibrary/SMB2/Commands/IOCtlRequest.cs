@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedLength = 56;
         public const int DeclaredSize = 57;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public ushort Reserved;
         public uint CtlCode;
         public FileID FileId;
@@ -56,6 +55,24 @@ namespace SMBLibrary.SMB2
             Output = ByteReader.ReadBytes(buffer, offset + (int)OutputOffset, (int)OutputCount);
         }
 
+        public bool IsFSCtl
+        {
+            get => (Flags & IOCtlRequestFlags.IsFSCtl) > 0;
+            set
+            {
+                if (value)
+                {
+                    Flags |= IOCtlRequestFlags.IsFSCtl;
+                }
+                else
+                {
+                    Flags &= ~IOCtlRequestFlags.IsFSCtl;
+                }
+            }
+        }
+
+        public override int CommandLength => FixedLength + Input.Length + Output.Length;
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             InputOffset = 0;
@@ -66,10 +83,12 @@ namespace SMBLibrary.SMB2
             {
                 InputOffset = SMB2Header.Length + FixedLength;
             }
+
             if (Output.Length > 0)
             {
                 OutputOffset = SMB2Header.Length + FixedLength + (uint)Input.Length;
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             LittleEndianWriter.WriteUInt16(buffer, offset + 2, Reserved);
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, CtlCode);
@@ -86,36 +105,10 @@ namespace SMBLibrary.SMB2
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedLength, Input);
             }
+
             if (Output.Length > 0)
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedLength + Input.Length, Output);
-            }
-        }
-
-        public bool IsFSCtl
-        {
-            get
-            {
-                return (Flags & IOCtlRequestFlags.IsFSCtl) > 0;
-            }
-            set
-            {
-                if (value)
-                {
-                    Flags |= IOCtlRequestFlags.IsFSCtl;
-                }
-                else
-                {
-                    Flags &= ~IOCtlRequestFlags.IsFSCtl;
-                }
-            }
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                return FixedLength + Input.Length + Output.Length;
             }
         }
     }
