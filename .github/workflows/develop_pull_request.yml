@@ -15,8 +15,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
-    - name: add feed
-      run: dotnet nuget add source https://nuget.pkg.github.com/acceliox/index.json --name github --store-password-in-clear-text --username acceliox --password ${{ secrets.VA_NUGET_FEED_TOKEN }}
+   
     - name: BuildRelease
       run: dotnet build --configuration Release **/*.sln
     - name: Test
