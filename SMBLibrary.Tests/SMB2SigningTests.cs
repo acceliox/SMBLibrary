@@ -7,16 +7,15 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SMBLibrary.SMB2;
 using Utilities;
+using Xunit;
 
 namespace SMBLibrary.Tests
 {
-    [TestClass]
     public class SMB2SigningTests
     {
-        [TestMethod]
+        [Fact]
         public void TestSMB202SignatureCalculation()
         {
             byte[] exportedSessionKey = new byte[] { 0xD3, 0x83, 0x54, 0xCC, 0x37, 0x43, 0x39, 0xF0, 0x52, 0x4F, 0x78, 0x91, 0x46, 0x78, 0x99, 0x21 };
@@ -32,10 +31,10 @@ namespace SMBLibrary.Tests
             byte[] signature = SMB2Cryptography.CalculateSignature(exportedSessionKey, SMB2Dialect.SMB202, message, 0, message.Length);
             signature = ByteReader.ReadBytes(signature, 0, 16);
             byte[] expected = new byte[] { 0xfb, 0xd2, 0x84, 0x34, 0x03, 0x24, 0xc6, 0x2f, 0xbe, 0xbb, 0x65, 0xdd, 0x10, 0x51, 0xf3, 0xae };
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(signature, expected));
+            Assert.True(ByteUtils.AreByteArraysEqual(signature, expected));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestSMB210SignatureCalculation()
         {
             byte[] exportedSessionKey = new byte[] { 0x04, 0xE7, 0x07, 0x57, 0x1F, 0x8E, 0x03, 0x53, 0xB7, 0x7A, 0x94, 0xC3, 0x65, 0x3B, 0x87, 0xB5 };
@@ -51,10 +50,10 @@ namespace SMBLibrary.Tests
             byte[] signature = SMB2Cryptography.CalculateSignature(exportedSessionKey, SMB2Dialect.SMB210, message, 0, message.Length);
             signature = ByteReader.ReadBytes(signature, 0, 16);
             byte[] expected = new byte[] { 0xa1, 0x64, 0xff, 0xe5, 0x3d, 0x68, 0x11, 0x98, 0x1f, 0x38, 0x67, 0x72, 0xe3, 0x87, 0xe0, 0x6f };
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(signature, expected));
+            Assert.True(ByteUtils.AreByteArraysEqual(signature, expected));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestSMB300SignatureCalculation()
         {
             byte[] exportedSessionKey = new byte[] { 0x35, 0x40, 0x24, 0xCB, 0xCA, 0x4F, 0x94, 0xAA, 0x51, 0xD4, 0x03, 0x3E, 0x6E, 0x9B, 0x2F, 0x98 };
@@ -71,14 +70,7 @@ namespace SMBLibrary.Tests
             byte[] signature = SMB2Cryptography.CalculateSignature(signingKey, SMB2Dialect.SMB300, message, 0, message.Length);
             signature = ByteReader.ReadBytes(signature, 0, 16);
             byte[] expected = new byte[] { 0x73, 0xF2, 0xCC, 0x56, 0x09, 0x3E, 0xD2, 0xB5, 0xD7, 0x10, 0x66, 0x6C, 0xE4, 0x28, 0x2D, 0xD1 };
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(signature, expected));
-        }
-
-        public void TestAll()
-        {
-            TestSMB202SignatureCalculation();
-            TestSMB210SignatureCalculation();
-            TestSMB300SignatureCalculation();
+            Assert.True(ByteUtils.AreByteArraysEqual(signature, expected));
         }
     }
 }

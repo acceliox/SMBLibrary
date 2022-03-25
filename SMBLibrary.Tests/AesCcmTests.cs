@@ -5,14 +5,14 @@
  * either version 3 of the License, or (at your option) any later version.
  */
 using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Utilities;
+using Xunit;
 
 namespace SMBLibrary.Tests
 {
     public class AesCcmTests
     {
-        [TestMethod]
+        [Fact]
         public void TestEncryption_Rfc3610_Packet_Vector1()
         {
             byte[] key = new byte[] { 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF };
@@ -30,11 +30,11 @@ namespace SMBLibrary.Tests
             byte[] calculatedSignature;
             byte[] encrypted = AesCcm.Encrypt(key, nonce, data, associatedData, 8, out calculatedSignature);
 
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(expectedEncrypted, encrypted));
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(expectedSignature, calculatedSignature));
+            Assert.True(ByteUtils.AreByteArraysEqual(expectedEncrypted, encrypted));
+            Assert.True(ByteUtils.AreByteArraysEqual(expectedSignature, calculatedSignature));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestDecryption_Rfc3610_Packet_Vector1()
         {
             byte[] key = new byte[] { 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF };
@@ -52,10 +52,10 @@ namespace SMBLibrary.Tests
 
             byte[] data = AesCcm.DecryptAndAuthenticate(key, nonce, encryptedData, associatedData, signature);
 
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(expectedData, data));
+            Assert.True(ByteUtils.AreByteArraysEqual(expectedData, data));
         }
 
-        [TestMethod]
+        [Fact]
         // Based on #1 test vector from https://docs.microsoft.com/en-us/archive/blogs/openspecification/encryption-in-smb-3-0-a-protocol-perspective
         public void TestEncryption()
         {
@@ -89,11 +89,11 @@ namespace SMBLibrary.Tests
 
             byte[] calculatedSignature;
             byte[] encrypted = AesCcm.Encrypt(key, nonce, data, associatedData, 16, out calculatedSignature);
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(expectedEncrypted, encrypted));
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(expectedSignature, calculatedSignature));
+            Assert.True(ByteUtils.AreByteArraysEqual(expectedEncrypted, encrypted));
+            Assert.True(ByteUtils.AreByteArraysEqual(expectedSignature, calculatedSignature));
         }
 
-        [TestMethod]
+        [Fact]
         // Based on #2 test vector from https://docs.microsoft.com/en-us/archive/blogs/openspecification/encryption-in-smb-3-0-a-protocol-perspective
         public void TestDecryption()
         {
@@ -119,15 +119,7 @@ namespace SMBLibrary.Tests
                                                0x11, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
             byte[] data = AesCcm.DecryptAndAuthenticate(key, nonce, encyrptedData, associatedData, signature);
-            Assert.IsTrue(ByteUtils.AreByteArraysEqual(expectedData, data));
-        }
-
-        public void TestAll()
-        {
-            TestEncryption_Rfc3610_Packet_Vector1();
-            TestDecryption_Rfc3610_Packet_Vector1();
-            TestEncryption();
-            TestDecryption();
+            Assert.True(ByteUtils.AreByteArraysEqual(expectedData, data));
         }
     }
 }

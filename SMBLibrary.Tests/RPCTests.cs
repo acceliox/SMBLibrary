@@ -6,17 +6,16 @@
  */
 using System;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SMBLibrary.RPC;
 using SMBLibrary.Services;
 using Utilities;
+using Xunit;
 
 namespace SMBLibrary.Tests
 {
-    [TestClass]
     public class RPCTests
     {
-        [TestMethod]
+        [Fact]
         public void Test1()
         {
             byte[] buffer = new byte[]{ 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0xf4, 0x01, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00,
@@ -28,20 +27,20 @@ namespace SMBLibrary.Tests
             NetrWkstaGetInfoResponse response = new NetrWkstaGetInfoResponse(buffer);
 
             byte[] responseBytes = response.GetBytes();
-            //Assert.IsTrue(ByteUtils.AreByteArraysEqual(buffer, responseBytes));
+            //Assert.True(ByteUtils.AreByteArraysEqual(buffer, responseBytes));
         }
 
-        [TestMethod]
+        [Fact]
         public void Test2()
         {
             byte[] buffer = new byte[] { 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0xf4, 0x01, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00, 0x05, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x90, 0x84, 0x00, 0x08, 0x00, 0x02, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x31, 0x00, 0x39, 0x00, 0x32, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x36, 0x00, 0x38, 0x00, 0x2e, 0x00, 0x31, 0x00, 0x2e, 0x00, 0x35, 0x00, 0x37, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00 };
             NetrServerGetInfoResponse response = new NetrServerGetInfoResponse(buffer);
 
             byte[] responseBytes = response.GetBytes();
-            //Assert.IsTrue(ByteUtils.AreByteArraysEqual(buffer, responseBytes));
+            //Assert.True(ByteUtils.AreByteArraysEqual(buffer, responseBytes));
         }
 
-        [TestMethod]
+        [Fact]
         public void Test3()
         {
             byte[] buffer = new byte[] {0x00, 0x00, 0x02, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
@@ -52,10 +51,10 @@ namespace SMBLibrary.Tests
             NetrShareEnumRequest request = new NetrShareEnumRequest(buffer);
 
             byte[] requestBytes = request.GetBytes();
-            //Assert.IsTrue(ByteUtils.AreByteArraysEqual(buffer, requestBytes));
+            //Assert.True(ByteUtils.AreByteArraysEqual(buffer, requestBytes));
         }
 
-        [TestMethod]
+        [Fact]
         public void Test4()
         {
             byte[] buffer = new byte[] {0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00,
@@ -81,10 +80,10 @@ namespace SMBLibrary.Tests
             NetrShareEnumResponse response = new NetrShareEnumResponse(buffer);
 
             byte[] responseBytes = response.GetBytes();
-            //Assert.IsTrue(ByteUtils.AreByteArraysEqual(buffer, responseBytes));
+            //Assert.True(ByteUtils.AreByteArraysEqual(buffer, responseBytes));
         }
 
-        [TestMethod]
+        [Fact]
         public void Test5()
         {
             byte[] buffer = new byte[] {0x00, 0x00, 0x02, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
@@ -95,16 +94,7 @@ namespace SMBLibrary.Tests
             NetrShareGetInfoRequest request = new NetrShareGetInfoRequest(buffer);
 
             byte[] requestBytes = request.GetBytes();
-            //Assert.IsTrue(ByteUtils.AreByteArraysEqual(buffer, requestBytes));
-        }
-
-        public void TestAll()
-        {
-            Test1();
-            Test2();
-            Test3();
-            Test4();
-            Test5();
+            //Assert.True(ByteUtils.AreByteArraysEqual(buffer, requestBytes));
         }
     }
 }

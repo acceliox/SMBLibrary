@@ -2,17 +2,13 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net20;net40;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net5.0-windows</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SMBServer</AssemblyName>
     <RootNamespace>SMBServer</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net20' ">
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\SMBLibrary.Win32\SMBLibrary.Win32.csproj" />
     <ProjectReference Include="..\SMBLibrary\SMBLibrary.csproj" />
