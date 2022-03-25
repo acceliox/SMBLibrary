@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net5.0</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SMBLibrary.Tests</AssemblyName>
     <RootNamespace>SMBLibrary.Tests</RootNamespace>
     <IsPackable>false</IsPackable>

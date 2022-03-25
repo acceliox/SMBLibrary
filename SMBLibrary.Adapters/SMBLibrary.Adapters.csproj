@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SMBLibrary.Adapters</AssemblyName>
     <NoWarn>1573;1591</NoWarn>
     <RootNamespace>SMBLibrary.Adapters</RootNamespace>

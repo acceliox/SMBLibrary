@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SMBLibrary</AssemblyName>
     <NoWarn>1573;1591</NoWarn>
     <RootNamespace>SMBLibrary</RootNamespace>
@@ -22,4 +21,9 @@
     <ProjectReference Include="..\Utilities\Utilities.csproj" PrivateAssets="All" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>SMBLibrary.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>
