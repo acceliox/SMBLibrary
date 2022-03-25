@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 
 namespace Utilities
 {
@@ -24,7 +24,7 @@ namespace Utilities
         public static uint ToUInt32(byte[] buffer, int offset)
         {
             return (uint)((buffer[offset + 3] << 24) | (buffer[offset + 2] << 16)
-                | (buffer[offset + 1] << 8) | (buffer[offset + 0] << 0));
+                                                     | (buffer[offset + 1] << 8) | (buffer[offset + 0] << 0));
         }
 
         public static int ToInt32(byte[] buffer, int offset)
@@ -34,7 +34,7 @@ namespace Utilities
 
         public static ulong ToUInt64(byte[] buffer, int offset)
         {
-            return (((ulong)ToUInt32(buffer, offset + 4)) << 32) | ToUInt32(buffer, offset + 0);
+            return ((ulong)ToUInt32(buffer, offset + 4) << 32) | ToUInt32(buffer, offset + 0);
         }
 
         public static long ToInt64(byte[] buffer, int offset)
@@ -56,6 +56,7 @@ namespace Utilities
                     bytes[3 - index] = temp;
                 }
             }
+
             return BitConverter.ToSingle(bytes, 0);
         }
 
@@ -66,13 +67,14 @@ namespace Utilities
             if (!BitConverter.IsLittleEndian)
             {
                 // reverse the order of 'bytes'
-                for(int index = 0; index < 4; index++)
+                for (int index = 0; index < 4; index++)
                 {
                     byte temp = bytes[index];
                     bytes[index] = bytes[7 - index];
                     bytes[7 - index] = temp;
                 }
             }
+
             return BitConverter.ToDouble(bytes, 0);
         }
 
@@ -159,6 +161,7 @@ namespace Utilities
                 result[6] = result[7];
                 result[7] = temp;
             }
+
             return result;
         }
     }

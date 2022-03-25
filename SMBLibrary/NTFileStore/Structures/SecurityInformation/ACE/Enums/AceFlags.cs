@@ -11,6 +11,6 @@ namespace SMBLibrary
         INHERIT_ONLY_ACE = 0x08,
         INHERITED_ACE = 0x10,
         SUCCESSFUL_ACCESS_ACE_FLAG = 0x40,
-        FAILED_ACCESS_ACE_FLAG = 0x80,
+        FAILED_ACCESS_ACE_FLAG = 0x80
     }
 }

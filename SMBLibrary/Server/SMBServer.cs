@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -11,7 +12,7 @@ using System.Net.Sockets;
 using System.Threading;
 using SMBLibrary.Authentication.GSSAPI;
 using SMBLibrary.NetBios;
-using SMBLibrary.Services;
+using SMBLibrary.Server.SMB2;
 using SMBLibrary.SMB1;
 using SMBLibrary.SMB2;
 using Utilities;
@@ -20,18 +21,18 @@ namespace SMBLibrary.Server
 {
     public partial class SMBServer
     {
+        public const string NTLanManagerDialect = "NT LM 0.12";
         public static readonly int NetBiosOverTCPPort = 139;
         public static readonly int DirectTCPPort = 445;
-        public const string NTLanManagerDialect = "NT LM 0.12";
         public static readonly bool EnableExtendedSecurity = true;
         private static readonly int InactivityMonitoringInterval = 30000; // Check every 30 seconds
 
-        private SMBShareCollection m_shares; // e.g. Shared folders
-        private GSSProvider m_securityProvider;
-        private NamedPipeShare m_services; // Named pipes
-        private Guid m_serverGuid;
+        private readonly SMBShareCollection m_shares; // e.g. Shared folders
+        private readonly GSSProvider m_securityProvider;
+        private readonly NamedPipeShare m_services; // Named pipes
+        private readonly Guid m_serverGuid;
 
-        private ConnectionManager m_connectionManager;
+        private readonly ConnectionManager m_connectionManager;
         private Thread m_sendSMBKeepAliveThread;
 
         private IPAddress m_serverAddress;
@@ -43,9 +44,6 @@ namespace SMBLibrary.Server
         private bool m_listening;
         private DateTime m_serverStartTime;
 
-        public event EventHandler<ConnectionRequestEventArgs> ConnectionRequested;
-        public event EventHandler<LogEntry> LogEntryAdded;
-
         public SMBServer(SMBShareCollection shares, GSSProvider securityProvider)
         {
             m_shares = shares;
@@ -54,6 +52,9 @@ namespace SMBLibrary.Server
             m_serverGuid = Guid.NewGuid();
             m_connectionManager = new ConnectionManager();
         }
+
+        public event EventHandler<ConnectionRequestEventArgs> ConnectionRequested;
+        public event EventHandler<LogEntry> LogEntryAdded;
 
         public void Start(IPAddress serverAddress, SMBTransportType transport)
         {
@@ -78,8 +79,31 @@ namespace SMBLibrary.Server
         /// <exception cref="System.Net.Sockets.SocketException"></exception>
         public void Start(IPAddress serverAddress, SMBTransportType transport, bool enableSMB1, bool enableSMB2, bool enableSMB3, TimeSpan? connectionInactivityTimeout)
         {
-            int port = (transport == SMBTransportType.DirectTCPTransport ? DirectTCPPort : NetBiosOverTCPPort);
+            int port = transport == SMBTransportType.DirectTCPTransport ? DirectTCPPort : NetBiosOverTCPPort;
             Start(serverAddress, transport, port, enableSMB1, enableSMB2, enableSMB3, connectionInactivityTimeout);
+        }
+
+        public void Stop()
+        {
+            Log(Severity.Information, "Stopping server");
+            m_listening = false;
+            if (m_sendSMBKeepAliveThread != null)
+            {
+                m_sendSMBKeepAliveThread.Abort();
+            }
+
+            SocketUtils.ReleaseSocket(m_listenerSocket);
+            m_connectionManager.ReleaseAllConnections();
+        }
+
+        public List<SessionInformation> GetSessionsInformation()
+        {
+            return m_connectionManager.GetSessionsInformation();
+        }
+
+        public void TerminateConnection(IPEndPoint clientEndPoint)
+        {
+            m_connectionManager.ReleaseConnection(clientEndPoint);
         }
 
         private void Start(IPAddress serverAddress, SMBTransportType transport, int port, bool enableSMB1, bool enableSMB2, bool enableSMB3, TimeSpan? connectionInactivityTimeout)
@@ -121,18 +145,6 @@ namespace SMBLibrary.Server
             }
         }
 
-        public void Stop()
-        {
-            Log(Severity.Information, "Stopping server");
-            m_listening = false;
-            if (m_sendSMBKeepAliveThread != null)
-            {
-                m_sendSMBKeepAliveThread.Abort();
-            }
-            SocketUtils.ReleaseSocket(m_listenerSocket);
-            m_connectionManager.ReleaseAllConnections();
-        }
-
         // This method accepts new connections
         private void ConnectRequestCallback(IAsyncResult ar)
         {
@@ -157,6 +169,7 @@ namespace SMBLibrary.Server
                 {
                     listenerSocket.BeginAccept(ConnectRequestCallback, listenerSocket);
                 }
+
                 Log(Severity.Debug, "Connection request error {0}", ex.ErrorCode);
                 return;
             }
@@ -241,6 +254,7 @@ namespace SMBLibrary.Server
                 {
                     state.LogToServer(Severity.Debug, "The connection was terminated, Socket error code: {0}", ex.ErrorCode);
                 }
+
                 m_connectionManager.ReleaseConnection(state);
                 return;
             }
@@ -306,8 +320,8 @@ namespace SMBLibrary.Server
             {
                 // Note: To be compatible with SMB2 specifications, we must accept SMB_COM_NEGOTIATE.
                 // We will disconnect the connection if m_enableSMB1 == false and the client does not support SMB2.
-                bool acceptSMB1 = (state.Dialect == SMBDialect.NotSet || state.Dialect == SMBDialect.NTLM012);
-                bool acceptSMB2 = (m_enableSMB2 && (state.Dialect == SMBDialect.NotSet || state.Dialect == SMBDialect.SMB202 || state.Dialect == SMBDialect.SMB210 || state.Dialect == SMBDialect.SMB300));
+                bool acceptSMB1 = state.Dialect == SMBDialect.NotSet || state.Dialect == SMBDialect.NTLM012;
+                bool acceptSMB2 = m_enableSMB2 && (state.Dialect == SMBDialect.NotSet || state.Dialect == SMBDialect.SMB202 || state.Dialect == SMBDialect.SMB210 || state.Dialect == SMBDialect.SMB300);
 
                 if (SMB1Header.IsValidSMB1Header(packet.Trailer))
                 {
@@ -329,19 +343,21 @@ namespace SMBLibrary.Server
                         state.ClientSocket.Close();
                         return;
                     }
+
                     state.LogToServer(Severity.Verbose, "SMB1 message received: {0} requests, First request: {1}, Packet length: {2}", message.Commands.Count, message.Commands[0].CommandName.ToString(), packet.Length);
                     if (state.Dialect == SMBDialect.NotSet && m_enableSMB2)
                     {
                         // Check if the client supports SMB 2
-                        List<string> smb2Dialects = SMB2.NegotiateHelper.FindSMB2Dialects(message);
+                        List<string> smb2Dialects = NegotiateHelper.FindSMB2Dialects(message);
                         if (smb2Dialects.Count > 0)
                         {
-                            SMB2Command response = SMB2.NegotiateHelper.GetNegotiateResponse(smb2Dialects, m_securityProvider, state, m_transport, m_serverGuid, m_serverStartTime);
+                            SMB2Command response = NegotiateHelper.GetNegotiateResponse(smb2Dialects, m_securityProvider, state, m_transport, m_serverGuid, m_serverStartTime);
                             if (state.Dialect != SMBDialect.NotSet)
                             {
                                 state = new SMB2ConnectionState(state);
                                 m_connectionManager.AddConnection(state);
                             }
+
                             EnqueueResponse(state, response);
                             return;
                         }
@@ -379,6 +395,7 @@ namespace SMBLibrary.Server
                         state.ClientSocket.Close();
                         return;
                     }
+
                     state.LogToServer(Severity.Verbose, "SMB2 request chain received: {0} requests, First request: {1}, Packet length: {2}", requestChain.Count, requestChain[0].CommandName.ToString(), packet.Length);
                     ProcessSMB2RequestChain(requestChain, ref state);
                 }
@@ -401,7 +418,6 @@ namespace SMBLibrary.Server
             {
                 state.LogToServer(Severity.Warning, "Inappropriate NetBIOS session packet");
                 state.ClientSocket.Close();
-                return;
             }
         }
 
@@ -416,6 +432,7 @@ namespace SMBLibrary.Server
                 {
                     return;
                 }
+
                 Socket clientSocket = state.ClientSocket;
                 try
                 {
@@ -436,18 +453,9 @@ namespace SMBLibrary.Server
                     m_connectionManager.ReleaseConnection(state.ClientEndPoint);
                     return;
                 }
+
                 state.UpdateLastSendDT();
             }
-        }
-
-        public List<SessionInformation> GetSessionsInformation()
-        {
-            return m_connectionManager.GetSessionsInformation();
-        }
-
-        public void TerminateConnection(IPEndPoint clientEndPoint)
-        {
-            m_connectionManager.ReleaseConnection(clientEndPoint);
         }
 
         private void Log(Severity severity, string message)
@@ -462,7 +470,7 @@ namespace SMBLibrary.Server
 
         private void Log(Severity severity, string message, params object[] args)
         {
-            Log(severity, String.Format(message, args));
+            Log(severity, string.Format(message, args));
         }
     }
 }

@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.SMB1
 {
     public enum CommandName : byte
@@ -36,6 +35,6 @@ namespace SMBLibrary.SMB1
         SMB_COM_NT_TRANSACT_SECONDARY = 0xA1,
         SMB_COM_NT_CREATE_ANDX = 0xA2,
         SMB_COM_NT_CANCEL = 0xA4,
-        SMB_COM_NO_ANDX_COMMAND = 0xFF,
+        SMB_COM_NO_ANDX_COMMAND = 0xFF
     }
 }

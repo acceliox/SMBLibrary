@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -17,7 +17,7 @@ namespace SMBLibrary.SMB2
     {
         public const int DeclaredSize = 60;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public CloseFlags Flags;
         public uint Reserved;
         public DateTime? CreationTime;
@@ -48,6 +48,8 @@ namespace SMBLibrary.SMB2
             FileAttributes = (FileAttributes)LittleEndianConverter.ToUInt32(buffer, offset + SMB2Header.Length + 56);
         }
 
+        public override int CommandLength => DeclaredSize;
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
@@ -60,14 +62,6 @@ namespace SMBLibrary.SMB2
             LittleEndianWriter.WriteInt64(buffer, offset + 40, AllocationSize);
             LittleEndianWriter.WriteInt64(buffer, offset + 48, EndofFile);
             LittleEndianWriter.WriteUInt32(buffer, offset + 56, (uint)FileAttributes);
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                return DeclaredSize;
-            }
         }
     }
 }

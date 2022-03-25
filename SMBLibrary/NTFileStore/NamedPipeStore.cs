@@ -4,10 +4,10 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
-using SMBLibrary.RPC;
 using SMBLibrary.Services;
 using Utilities;
 
@@ -15,7 +15,7 @@ namespace SMBLibrary
 {
     public class NamedPipeStore : INTFileStore
     {
-        private List<RemoteService> m_services;
+        private readonly List<RemoteService> m_services;
 
         public NamedPipeStore(List<RemoteService> services)
         {
@@ -37,6 +37,7 @@ namespace SMBLibrary
                 fileStatus = FileStatus.FILE_OPENED;
                 return NTStatus.STATUS_SUCCESS;
             }
+
             handle = null;
             return NTStatus.STATUS_OBJECT_PATH_NOT_FOUND;
         }
@@ -48,24 +49,8 @@ namespace SMBLibrary
             {
                 fileHandle.Stream.Close();
             }
+
             return NTStatus.STATUS_SUCCESS;
-        }
-
-        private RemoteService GetService(string path)
-        {
-            if (path.StartsWith(@"\"))
-            {
-                path = path.Substring(1);
-            }
-
-            foreach (RemoteService service in m_services)
-            {
-                if (String.Equals(path, service.PipeName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return service;
-                }
-            }
-            return null;
         }
 
         public NTStatus ReadFile(out byte[] data, object handle, long offset, int maxCount)
@@ -78,6 +63,7 @@ namespace SMBLibrary
                 // EOF, we must trim the response data array
                 data = ByteReader.ReadBytes(data, 0, bytesRead);
             }
+
             return NTStatus.STATUS_SUCCESS;
         }
 
@@ -96,6 +82,7 @@ namespace SMBLibrary
             {
                 fileHandle.Stream.Flush();
             }
+
             return NTStatus.STATUS_SUCCESS;
         }
 
@@ -133,7 +120,8 @@ namespace SMBLibrary
                 output = new byte[0];
                 return NTStatus.STATUS_SUCCESS;
             }
-            else if (ctlCode == (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE)
+
+            if (ctlCode == (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE)
             {
                 int numberOfBytesWritten;
                 NTStatus writeStatus = WriteFile(out numberOfBytesWritten, handle, 0, input);
@@ -141,6 +129,7 @@ namespace SMBLibrary
                 {
                     return writeStatus;
                 }
+
                 int messageLength = ((RPCPipeStream)((FileHandle)handle).Stream).MessageLength;
                 NTStatus readStatus = ReadFile(out output, handle, 0, maxOutputLength);
                 if (readStatus != NTStatus.STATUS_SUCCESS)
@@ -152,10 +141,8 @@ namespace SMBLibrary
                 {
                     return NTStatus.STATUS_BUFFER_OVERFLOW;
                 }
-                else
-                {
-                    return NTStatus.STATUS_SUCCESS;
-                }
+
+                return NTStatus.STATUS_SUCCESS;
             }
 
             return NTStatus.STATUS_NOT_SUPPORTED;
@@ -172,26 +159,26 @@ namespace SMBLibrary
             switch (informationClass)
             {
                 case FileInformationClass.FileBasicInformation:
-                    {
-                        FileBasicInformation information = new FileBasicInformation();
-                        information.FileAttributes = FileAttributes.Temporary;
-                        result = information;
-                        return NTStatus.STATUS_SUCCESS;
-                    }
+                {
+                    FileBasicInformation information = new FileBasicInformation();
+                    information.FileAttributes = FileAttributes.Temporary;
+                    result = information;
+                    return NTStatus.STATUS_SUCCESS;
+                }
                 case FileInformationClass.FileStandardInformation:
-                    {
-                        FileStandardInformation information = new FileStandardInformation();
-                        information.DeletePending = false;
-                        result = information;
-                        return NTStatus.STATUS_SUCCESS;
-                    }
+                {
+                    FileStandardInformation information = new FileStandardInformation();
+                    information.DeletePending = false;
+                    result = information;
+                    return NTStatus.STATUS_SUCCESS;
+                }
                 case FileInformationClass.FileNetworkOpenInformation:
-                    {
-                        FileNetworkOpenInformation information = new FileNetworkOpenInformation();
-                        information.FileAttributes = FileAttributes.Temporary;
-                        result = information;
-                        return NTStatus.STATUS_SUCCESS;
-                    }
+                {
+                    FileNetworkOpenInformation information = new FileNetworkOpenInformation();
+                    information.FileAttributes = FileAttributes.Temporary;
+                    result = information;
+                    return NTStatus.STATUS_SUCCESS;
+                }
                 default:
                     result = null;
                     return NTStatus.STATUS_INVALID_INFO_CLASS;
@@ -234,6 +221,24 @@ namespace SMBLibrary
         public NTStatus Cancel(object ioRequest)
         {
             return NTStatus.STATUS_NOT_SUPPORTED;
+        }
+
+        private RemoteService GetService(string path)
+        {
+            if (path.StartsWith(@"\"))
+            {
+                path = path.Substring(1);
+            }
+
+            foreach (RemoteService service in m_services)
+            {
+                if (string.Equals(path, service.PipeName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return service;
+                }
+            }
+
+            return null;
         }
     }
 }

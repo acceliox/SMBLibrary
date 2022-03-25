@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.Authentication.NTLM
@@ -27,8 +25,8 @@ namespace SMBLibrary.Authentication.NTLM
         {
             Signature = AuthenticateMessage.ValidSignature;
             MessageType = MessageTypeName.Negotiate;
-            DomainName = String.Empty;
-            Workstation = String.Empty;
+            DomainName = string.Empty;
+            Workstation = string.Empty;
         }
 
         public NegotiateMessage(byte[] buffer)
@@ -48,12 +46,12 @@ namespace SMBLibrary.Authentication.NTLM
         {
             if ((NegotiateFlags & NegotiateFlags.DomainNameSupplied) == 0)
             {
-                DomainName = String.Empty;
+                DomainName = string.Empty;
             }
 
             if ((NegotiateFlags & NegotiateFlags.WorkstationNameSupplied) == 0)
             {
-                Workstation = String.Empty;
+                Workstation = string.Empty;
             }
 
             int fixedLength = 32;
@@ -61,6 +59,7 @@ namespace SMBLibrary.Authentication.NTLM
             {
                 fixedLength += 8;
             }
+
             int payloadLength = DomainName.Length * 2 + Workstation.Length * 2;
             byte[] buffer = new byte[fixedLength + payloadLength];
             ByteWriter.WriteAnsiString(buffer, 0, AuthenticateMessage.ValidSignature, 8);

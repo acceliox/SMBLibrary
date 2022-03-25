@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -33,6 +34,7 @@ namespace SMBLibrary.Client
                 {
                     return null;
                 }
+
                 useGSSAPI = true;
             }
 
@@ -69,10 +71,8 @@ namespace SMBLibrary.Client
                 outputToken.MechanismToken = negotiateMessage.GetBytes();
                 return outputToken.GetBytes(true);
             }
-            else
-            {
-                return negotiateMessage.GetBytes();
-            }
+
+            return negotiateMessage.GetBytes();
         }
 
         public static byte[] GetAuthenticateMessage(byte[] securityBlob, string domainName, string userName, string password, AuthenticationMethod authenticationMethod, out byte[] sessionKey)
@@ -156,6 +156,7 @@ namespace SMBLibrary.Client
                     authenticateMessage.LmChallengeResponse = ByteUtils.Concatenate(clientChallenge, new byte[16]);
                     authenticateMessage.NtChallengeResponse = NTLMCryptography.ComputeNTLMv1ExtendedSessionSecurityResponse(challengeMessage.ServerChallenge, clientChallenge, password);
                 }
+
                 // https://msdn.microsoft.com/en-us/library/cc236699.aspx
                 sessionBaseKey = new MD4().GetByteHashFromBytes(NTLMCryptography.NTOWFv1(password));
                 byte[] lmowf = NTLMCryptography.LMOWFv1(password);
@@ -175,6 +176,7 @@ namespace SMBLibrary.Client
                 sessionBaseKey = new HMACMD5(responseKeyNT).ComputeHash(ntProofStr);
                 keyExchangeKey = sessionBaseKey;
             }
+
             authenticateMessage.Version = NTLMVersion.Server2003;
 
             // https://msdn.microsoft.com/en-us/library/cc236676.aspx
@@ -195,10 +197,8 @@ namespace SMBLibrary.Client
                 outputToken.ResponseToken = authenticateMessage.GetBytes();
                 return outputToken.GetBytes();
             }
-            else
-            {
-                return authenticateMessage.GetBytes();
-            }
+
+            return authenticateMessage.GetBytes();
         }
 
         private static ChallengeMessage GetChallengeMessage(byte[] messageBytes)
@@ -218,6 +218,7 @@ namespace SMBLibrary.Client
                     }
                 }
             }
+
             return null;
         }
 
@@ -230,6 +231,7 @@ namespace SMBLibrary.Client
                     return true;
                 }
             }
+
             return false;
         }
     }

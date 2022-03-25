@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -25,12 +26,6 @@ namespace SMBLibrary
             FileIndex = LittleEndianConverter.ToUInt32(buffer, offset + 4);
         }
 
-        public override void WriteBytes(byte[] buffer, int offset)
-        {
-            LittleEndianWriter.WriteUInt32(buffer, offset + 0, NextEntryOffset);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 4, FileIndex);
-        }
-
         public static QueryDirectoryFileInformation ReadFileInformation(byte[] buffer, int offset, FileInformationClass fileInformationClass)
         {
             switch (fileInformationClass)
@@ -48,7 +43,7 @@ namespace SMBLibrary
                 case FileInformationClass.FileIdFullDirectoryInformation:
                     return new FileIdFullDirectoryInformation(buffer, offset);
                 default:
-                    throw new NotImplementedException(String.Format("File information class {0} is not supported.", (int)fileInformationClass));
+                    throw new NotImplementedException(string.Format("File information class {0} is not supported.", (int)fileInformationClass));
             }
         }
 
@@ -61,8 +56,8 @@ namespace SMBLibrary
                 entry = ReadFileInformation(buffer, offset, fileInformationClass);
                 result.Add(entry);
                 offset += (int)entry.NextEntryOffset;
-            }
-            while (entry.NextEntryOffset != 0);
+            } while (entry.NextEntryOffset != 0);
+
             return result;
         }
 
@@ -84,16 +79,18 @@ namespace SMBLibrary
                 {
                     entry.NextEntryOffset = 0;
                 }
+
                 entry.WriteBytes(buffer, offset);
                 offset += paddedLength;
             }
+
             return buffer;
         }
 
         public static int GetListLength(List<QueryDirectoryFileInformation> fileInformationList)
         {
             int result = 0;
-            for(int index = 0; index < fileInformationList.Count; index++)
+            for (int index = 0; index < fileInformationList.Count; index++)
             {
                 QueryDirectoryFileInformation entry = fileInformationList[index];
                 int length = entry.Length;
@@ -109,7 +106,14 @@ namespace SMBLibrary
                     result += length;
                 }
             }
+
             return result;
+        }
+
+        public override void WriteBytes(byte[] buffer, int offset)
+        {
+            LittleEndianWriter.WriteUInt32(buffer, offset + 0, NextEntryOffset);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 4, FileIndex);
         }
     }
 }

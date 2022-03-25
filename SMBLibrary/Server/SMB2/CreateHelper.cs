@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.IO;
 using SMBLibrary.SMB2;
 using Utilities;
@@ -60,12 +59,10 @@ namespace SMBLibrary.Server.SMB2
             {
                 return CreateResponseForNamedPipe(fileID.Value, FileStatus.FILE_OPENED);
             }
-            else
-            {
-                FileNetworkOpenInformation fileInfo = NTFileStoreHelper.GetNetworkOpenInformation(share.FileStore, handle);
-                CreateResponse response = CreateResponseFromFileSystemEntry(fileInfo, fileID.Value, fileStatus);
-                return response;
-            }
+
+            FileNetworkOpenInformation fileInfo = NTFileStoreHelper.GetNetworkOpenInformation(share.FileStore, handle);
+            CreateResponse response = CreateResponseFromFileSystemEntry(fileInfo, fileID.Value, fileStatus);
+            return response;
         }
 
         private static CreateResponse CreateResponseForNamedPipe(FileID fileID, FileStatus fileStatus)

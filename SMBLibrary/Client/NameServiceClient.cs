@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -16,7 +16,7 @@ namespace SMBLibrary.Client
     {
         public static readonly int NetBiosNameServicePort = 137;
 
-        private IPAddress m_serverAddress;
+        private readonly IPAddress m_serverAddress;
 
         public NameServiceClient(IPAddress serverAddress)
         {

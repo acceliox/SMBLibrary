@@ -11,6 +11,6 @@ namespace SMBLibrary.RPC
         ConcurrntMultiplexing = 0x10, // PFC_CONC_MPX
         DidNotExecute = 0x20, // PFC_DID_NOT_EXECUTE
         Maybe = 0x40, // PFC_MAYBE
-        ObjectUUID = 0x80, // PFC_OBJECT_UUID
+        ObjectUUID = 0x80 // PFC_OBJECT_UUID
     }
 }

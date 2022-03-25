@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using Utilities;
 
 namespace SMBLibrary
 {
@@ -15,7 +14,7 @@ namespace SMBLibrary
     /// </summary>
     public class FileStreamInformation : FileInformation
     {
-        List<FileStreamEntry> m_entries = new List<FileStreamEntry>();
+        private readonly List<FileStreamEntry> m_entries = new List<FileStreamEntry>();
 
         public FileStreamInformation()
         {
@@ -31,38 +30,13 @@ namespace SMBLibrary
                     entry = new FileStreamEntry(buffer, offset);
                     m_entries.Add(entry);
                     offset += (int)entry.NextEntryOffset;
-                }
-                while (entry.NextEntryOffset != 0);
+                } while (entry.NextEntryOffset != 0);
             }
         }
 
-        public override void WriteBytes(byte[] buffer, int offset)
-        {
-            for (int index = 0; index < m_entries.Count; index++)
-            {
-                FileStreamEntry entry = m_entries[index];
-                int entryLength = entry.PaddedLength;
-                entry.NextEntryOffset = (index < m_entries.Count - 1) ? (uint)entryLength : 0;
-                entry.WriteBytes(buffer, offset);
-                offset += entryLength;
-            }
-        }
+        public List<FileStreamEntry> Entries => m_entries;
 
-        public List<FileStreamEntry> Entries
-        {
-            get
-            {
-                return m_entries;
-            }
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileStreamInformation;
-            }
-        }
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileStreamInformation;
 
         public override int Length
         {
@@ -72,10 +46,23 @@ namespace SMBLibrary
                 for (int index = 0; index < m_entries.Count; index++)
                 {
                     FileStreamEntry entry = m_entries[index];
-                    int entryLength = (index < m_entries.Count - 1) ? entry.PaddedLength : entry.Length;
+                    int entryLength = index < m_entries.Count - 1 ? entry.PaddedLength : entry.Length;
                     length += entryLength;
                 }
+
                 return length;
+            }
+        }
+
+        public override void WriteBytes(byte[] buffer, int offset)
+        {
+            for (int index = 0; index < m_entries.Count; index++)
+            {
+                FileStreamEntry entry = m_entries[index];
+                int entryLength = entry.PaddedLength;
+                entry.NextEntryOffset = index < m_entries.Count - 1 ? (uint)entryLength : 0;
+                entry.WriteBytes(buffer, offset);
+                offset += entryLength;
             }
         }
     }

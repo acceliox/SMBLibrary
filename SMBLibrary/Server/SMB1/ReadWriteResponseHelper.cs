@@ -4,13 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using SMBLibrary.RPC;
+
 using SMBLibrary.SMB1;
-using SMBLibrary.Services;
 using Utilities;
 
 namespace SMBLibrary.Server.SMB1
@@ -74,10 +69,11 @@ namespace SMBLibrary.Server.SMB1
             }
 
             uint maxCount = request.MaxCount;
-            if ((share is FileSystemShare) && state.LargeRead)
+            if (share is FileSystemShare && state.LargeRead)
             {
                 maxCount = request.MaxCountLarge;
             }
+
             byte[] data;
             header.Status = share.FileStore.ReadFile(out data, openFile.Handle, (long)request.Offset, (int)maxCount);
             if (header.Status == NTStatus.STATUS_END_OF_FILE)
@@ -99,6 +95,7 @@ namespace SMBLibrary.Server.SMB1
                 // If the client reads from a disk file, this field MUST be set to -1 (0xFFFF)
                 response.Available = 0xFFFF;
             }
+
             response.Data = data;
             return response;
         }
@@ -131,6 +128,7 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "Write to '{0}{1}' failed. NTStatus: {2}. (FID: {3})", share.Name, openFile.Path, header.Status, request.FID);
                 return new ErrorResponse(request.CommandName);
             }
+
             WriteResponse response = new WriteResponse();
             response.CountOfBytesWritten = (ushort)numberOfBytesWritten;
             return response;
@@ -164,6 +162,7 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "Write to '{0}{1}' failed. NTStatus: {2}. (FID: {3})", share.Name, openFile.Path, header.Status, request.FID);
                 return new ErrorResponse(request.CommandName);
             }
+
             WriteAndXResponse response = new WriteAndXResponse();
             response.Count = (uint)numberOfBytesWritten;
             if (share is FileSystemShare)
@@ -171,6 +170,7 @@ namespace SMBLibrary.Server.SMB1
                 // If the client wrote to a disk file, this field MUST be set to 0xFFFF.
                 response.Available = 0xFFFF;
             }
+
             return response;
         }
 
@@ -192,12 +192,14 @@ namespace SMBLibrary.Server.SMB1
                 header.Status = NTStatus.STATUS_INVALID_HANDLE;
                 return new ErrorResponse(request.CommandName);
             }
+
             header.Status = share.FileStore.FlushFileBuffers(openFile.Handle);
             if (header.Status != NTStatus.STATUS_SUCCESS)
             {
                 state.LogToServer(Severity.Verbose, "Flush '{0}{1}' failed. NTStatus: {2}. (FID: {3})", share.Name, openFile.Path, header.Status, request.FID);
                 return new ErrorResponse(request.CommandName);
             }
+
             return new FlushResponse();
         }
     }

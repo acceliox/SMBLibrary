@@ -103,6 +103,6 @@ namespace SMBLibrary
         /// </summary>
         FILE_OPEN_NO_RECALL = 0x00400000,
 
-        FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000,
+        FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000
     }
 }

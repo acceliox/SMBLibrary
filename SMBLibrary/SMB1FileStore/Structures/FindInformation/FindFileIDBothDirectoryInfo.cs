@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -26,25 +25,29 @@ namespace SMBLibrary.SMB1
         public DateTime? LastChangeTime;
         public long EndOfFile;
         public long AllocationSize;
+
         public ExtendedFileAttributes ExtFileAttributes;
+
         //uint FileNameLength; // In bytes, MUST exclude the null termination.
         public uint EASize;
+
         //byte ShortNameLength; // In bytes
         public byte Reserved;
         public string ShortName; // 24 bytes, 8.3 name of the file in Unicode format
         public ushort Reserved2;
         public ulong FileID;
+
         public string FileName; // OEM / Unicode character array. MUST be written as SMB_STRING, and read as fixed length string.
         // Omitting the NULL termination from the FileName field in a single SMB_FIND_FILE_BOTH_DIRECTORY_INFO structure
         // (as a response to TRANS2_QUERY_PATH_INFORMATION on a single directory)
         // Will, in some rare but repeatable cases, cause issues with Windows XP SP3 as a client
         // (the client will display an error message that the folder "refers to a location that is unavailable"...)
 
-        public FindFileIDBothDirectoryInfo() : base()
+        public FindFileIDBothDirectoryInfo()
         {
         }
 
-        public FindFileIDBothDirectoryInfo(byte[] buffer, int offset, bool isUnicode) : base()
+        public FindFileIDBothDirectoryInfo(byte[] buffer, int offset, bool isUnicode)
         {
             NextEntryOffset = LittleEndianReader.ReadUInt32(buffer, ref offset);
             FileIndex = LittleEndianReader.ReadUInt32(buffer, ref offset);
@@ -65,6 +68,8 @@ namespace SMBLibrary.SMB1
             FileID = LittleEndianReader.ReadUInt64(buffer, ref offset);
             FileName = SMB1Helper.ReadFixedLengthString(buffer, ref offset, isUnicode, (int)fileNameLength);
         }
+
+        public override FindInformationLevel InformationLevel => FindInformationLevel.SMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO;
 
         public override void WriteBytes(byte[] buffer, ref int offset, bool isUnicode)
         {
@@ -102,15 +107,8 @@ namespace SMBLibrary.SMB1
             {
                 length += FileName.Length + 1;
             }
-            return length;
-        }
 
-        public override FindInformationLevel InformationLevel
-        {
-            get
-            {
-                return FindInformationLevel.SMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO;
-            }
+            return length;
         }
     }
 }

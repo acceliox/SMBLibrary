@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using SMBLibrary.SMB1;
 using Utilities;
@@ -39,7 +39,7 @@ namespace SMBLibrary.Server.SMB1
             }
 
             // [MS-CIFS] If the CANCEL_LOCK bit is set, Windows NT servers cancel only the first lock request range listed in the lock array.
-            for(int lockIndex = 0; lockIndex < request.Unlocks.Count; lockIndex++)
+            for (int lockIndex = 0; lockIndex < request.Unlocks.Count; lockIndex++)
             {
                 LockingRange lockingRange = request.Unlocks[lockIndex];
                 header.Status = share.FileStore.UnlockFile(openFile.Handle, (long)lockingRange.ByteOffset, (long)lockingRange.LengthInBytes);
@@ -48,6 +48,7 @@ namespace SMBLibrary.Server.SMB1
                     state.LogToServer(Severity.Verbose, "Locking: Unlocking '{0}{1}' failed. Offset: {2}, Length: {3}. NTStatus: {4}.", share.Name, openFile.Path, lockingRange.ByteOffset, lockingRange.LengthInBytes, header.Status);
                     return new ErrorResponse(request.CommandName);
                 }
+
                 state.LogToServer(Severity.Verbose, "Locking: Unlocking '{0}{1}' succeeded. Offset: {2}, Length: {3}.", share.Name, openFile.Path, lockingRange.ByteOffset, lockingRange.LengthInBytes);
             }
 
@@ -65,8 +66,10 @@ namespace SMBLibrary.Server.SMB1
                     {
                         share.FileStore.UnlockFile(openFile.Handle, (long)request.Locks[index].ByteOffset, (long)request.Locks[index].LengthInBytes);
                     }
+
                     return new ErrorResponse(request.CommandName);
                 }
+
                 state.LogToServer(Severity.Verbose, "Locking: Locking '{0}{1}' succeeded. Offset: {2}, Length: {3}.", share.Name, openFile.Path, lockingRange.ByteOffset, lockingRange.LengthInBytes);
             }
 

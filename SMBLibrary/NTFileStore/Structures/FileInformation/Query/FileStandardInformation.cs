@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary
@@ -33,10 +33,14 @@ namespace SMBLibrary
             AllocationSize = LittleEndianConverter.ToInt64(buffer, offset + 0);
             EndOfFile = LittleEndianConverter.ToInt64(buffer, offset + 8);
             NumberOfLinks = LittleEndianConverter.ToUInt32(buffer, offset + 16);
-            DeletePending = (ByteReader.ReadByte(buffer, offset + 20) > 0);
-            Directory = (ByteReader.ReadByte(buffer, offset + 21) > 0);
+            DeletePending = ByteReader.ReadByte(buffer, offset + 20) > 0;
+            Directory = ByteReader.ReadByte(buffer, offset + 21) > 0;
             Reserved = LittleEndianConverter.ToUInt16(buffer, offset + 22);
         }
+
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileStandardInformation;
+
+        public override int Length => FixedLength;
 
         public override void WriteBytes(byte[] buffer, int offset)
         {
@@ -46,22 +50,6 @@ namespace SMBLibrary
             ByteWriter.WriteByte(buffer, offset + 20, Convert.ToByte(DeletePending));
             ByteWriter.WriteByte(buffer, offset + 21, Convert.ToByte(Directory));
             LittleEndianWriter.WriteUInt16(buffer, offset + 22, Reserved);
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileStandardInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength;
-            }
         }
     }
 }

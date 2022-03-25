@@ -1,8 +1,7 @@
-
 namespace SMBLibrary.NetBios
 {
     public enum ResourceRecordClass : ushort
     {
-        In = 0x0001,
+        In = 0x0001
     }
 }

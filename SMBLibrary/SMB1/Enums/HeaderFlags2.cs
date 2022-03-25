@@ -20,6 +20,6 @@ namespace SMBLibrary.SMB1
         DFS = 0x1000, // SMB_FLAGS2_DFS
         ReadIfExecute = 0x2000, // SMB_FLAGS2_PAGING_IO
         NTStatusCode = 0x4000, // SMB_FLAGS2_NT_STATUS
-        Unicode = 0x8000, // SMB_FLAGS2_UNICODE
+        Unicode = 0x8000 // SMB_FLAGS2_UNICODE
     }
 }

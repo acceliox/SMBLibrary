@@ -9,6 +9,6 @@ namespace SMBLibrary.SMB1
         CaseInsensitive = 0x08, // SMB_FLAGS_CASE_INSENSITIVE
         CanonicalizedPaths = 0x10, // SMB_FLAGS_CANONICALIZED_PATHS
         Oplock = 0x20, // SMB_FLAGS_OPLOCK
-        Reply = 0x80, // SMB_FLAGS_REPLY
+        Reply = 0x80 // SMB_FLAGS_REPLY
     }
 }

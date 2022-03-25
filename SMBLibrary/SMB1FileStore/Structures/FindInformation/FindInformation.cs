@@ -4,9 +4,6 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SMBLibrary.SMB1
 {
@@ -14,18 +11,11 @@ namespace SMBLibrary.SMB1
     {
         public uint NextEntryOffset;
 
-        public FindInformation()
-        {
-        }
+        public abstract FindInformationLevel InformationLevel { get; }
 
         public abstract void WriteBytes(byte[] buffer, ref int offset, bool isUnicode);
-        
-        public abstract int GetLength(bool isUnicode);
 
-        public abstract FindInformationLevel InformationLevel
-        {
-            get;
-        }
+        public abstract int GetLength(bool isUnicode);
 
         public static FindInformation ReadEntry(byte[] buffer, int offset, FindInformationLevel informationLevel, bool isUnicode)
         {

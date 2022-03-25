@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using SMBLibrary.Authentication;
+
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -51,9 +49,11 @@ namespace SMBLibrary.Server.SMB2
                     response.Header.Status = NTStatus.STATUS_BUFFER_OVERFLOW;
                     response.OutputBuffer = ByteReader.ReadBytes(response.OutputBuffer, 0, (int)request.OutputBufferLength);
                 }
+
                 return response;
             }
-            else if (request.InfoType == InfoType.FileSystem)
+
+            if (request.InfoType == InfoType.FileSystem)
             {
                 if (share is FileSystemShare)
                 {
@@ -121,6 +121,7 @@ namespace SMBLibrary.Server.SMB2
                 response.SetSecurityInformation(securityDescriptor);
                 return response;
             }
+
             return new ErrorResponse(request.CommandName, NTStatus.STATUS_NOT_SUPPORTED);
         }
     }

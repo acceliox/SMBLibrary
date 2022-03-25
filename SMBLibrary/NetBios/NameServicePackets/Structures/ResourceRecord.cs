@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.NetBios
@@ -20,13 +19,15 @@ namespace SMBLibrary.NetBios
         public string Name;
         public NameRecordType Type;
         public ResourceRecordClass Class;
+
         public uint TTL;
+
         // ushort DataLength
         public byte[] Data;
 
         public ResourceRecord(NameRecordType type)
         {
-            Name = String.Empty;
+            Name = string.Empty;
             Type = type;
             Class = ResourceRecordClass.In;
             TTL = (uint)new TimeSpan(7, 0, 0, 0).TotalSeconds;
@@ -56,9 +57,10 @@ namespace SMBLibrary.NetBios
             }
             else
             {
-                byte[] encodedName = NetBiosUtils.EncodeName(Name, String.Empty);
+                byte[] encodedName = NetBiosUtils.EncodeName(Name, string.Empty);
                 ByteWriter.WriteBytes(stream, encodedName);
             }
+
             BigEndianWriter.WriteUInt16(stream, (ushort)Type);
             BigEndianWriter.WriteUInt16(stream, (ushort)Class);
             BigEndianWriter.WriteUInt32(stream, TTL);

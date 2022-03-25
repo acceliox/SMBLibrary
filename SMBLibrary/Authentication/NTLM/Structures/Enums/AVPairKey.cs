@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.Authentication.NTLM
 {
     public enum AVPairKey : ushort
@@ -13,6 +12,6 @@ namespace SMBLibrary.Authentication.NTLM
         Timestamp = 0x0006, // Filetime
         SingleHost = 0x0008, // platform-specific BLOB
         TargetName = 0x0009, // Unicode
-        ChannelBindings = 0x000A, // MD5 Hash
+        ChannelBindings = 0x000A // MD5 Hash
     }
 }

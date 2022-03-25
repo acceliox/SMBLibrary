@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -45,6 +45,11 @@ namespace SMBLibrary.RPC
             CallID = LittleEndianConverter.ToUInt32(buffer, offset + 12);
         }
 
+        /// <summary>
+        /// The length of the entire PDU
+        /// </summary>
+        public abstract int Length { get; }
+
         public abstract byte[] GetBytes();
 
         public void WriteCommonFieldsBytes(byte[] buffer)
@@ -57,14 +62,6 @@ namespace SMBLibrary.RPC
             LittleEndianWriter.WriteUInt16(buffer, 8, (ushort)Length);
             LittleEndianWriter.WriteUInt16(buffer, 10, AuthLength);
             LittleEndianWriter.WriteUInt32(buffer, 12, CallID);
-        }
-
-        /// <summary>
-        /// The length of the entire PDU
-        /// </summary>
-        public abstract int Length
-        {
-            get;
         }
 
         public static RPCPDU GetPDU(byte[] buffer, int offset)

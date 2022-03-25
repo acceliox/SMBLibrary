@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using SMBLibrary.SMB1;
-using Utilities;
 
 namespace SMBLibrary.SMB1
 {
@@ -54,6 +53,7 @@ namespace SMBLibrary.SMB1
                     break;
                 }
             }
+
             return result;
         }
 
@@ -75,7 +75,8 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileDirectoryInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileFullDirectoryInformation)
+
+            if (fileInformation is FileFullDirectoryInformation)
             {
                 FileFullDirectoryInformation fileFullDirectoryInfo = (FileFullDirectoryInformation)fileInformation;
                 FindFileFullDirectoryInfo result = new FindFileFullDirectoryInfo();
@@ -91,7 +92,8 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileFullDirectoryInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileNamesInformation)
+
+            if (fileInformation is FileNamesInformation)
             {
                 FileNamesInformation fileNamesInfo = (FileNamesInformation)fileInformation;
                 FindFileNamesInfo result = new FindFileNamesInfo();
@@ -99,7 +101,8 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileNamesInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileBothDirectoryInformation)
+
+            if (fileInformation is FileBothDirectoryInformation)
             {
                 FileBothDirectoryInformation fileBothDirectoryInfo = (FileBothDirectoryInformation)fileInformation;
                 FindFileBothDirectoryInfo result = new FindFileBothDirectoryInfo();
@@ -117,7 +120,8 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileBothDirectoryInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileIdFullDirectoryInformation)
+
+            if (fileInformation is FileIdFullDirectoryInformation)
             {
                 FileIdFullDirectoryInformation fileIDFullDirectoryInfo = (FileIdFullDirectoryInformation)fileInformation;
                 FindFileIDFullDirectoryInfo result = new FindFileIDFullDirectoryInfo();
@@ -135,7 +139,8 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileIDFullDirectoryInfo.FileName;
                 return result;
             }
-            else if (fileInformation is FileIdBothDirectoryInformation)
+
+            if (fileInformation is FileIdBothDirectoryInformation)
             {
                 FileIdBothDirectoryInformation fileIDBothDirectoryInfo = (FileIdBothDirectoryInformation)fileInformation;
                 FindFileIDBothDirectoryInfo result = new FindFileIDBothDirectoryInfo();
@@ -155,10 +160,8 @@ namespace SMBLibrary.SMB1
                 result.FileName = fileIDBothDirectoryInfo.FileName;
                 return result;
             }
-            else
-            {
-                throw new NotImplementedException();
-            }
+
+            throw new NotImplementedException();
         }
     }
 }

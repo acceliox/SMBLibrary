@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -18,23 +17,15 @@ namespace SMBLibrary.RPC
     /// </summary>
     public class NDRWriter
     {
-        private MemoryStream m_stream = new MemoryStream();
+        private readonly MemoryStream m_stream = new MemoryStream();
         private int m_depth;
-        private List<INDRStructure> m_deferredStructures = new List<INDRStructure>();
-        private Dictionary<uint, INDRStructure> m_referentToInstance = new Dictionary<uint, INDRStructure>();
+        private readonly List<INDRStructure> m_deferredStructures = new List<INDRStructure>();
+        private readonly Dictionary<uint, INDRStructure> m_referentToInstance = new Dictionary<uint, INDRStructure>();
         private uint m_nextReferentID = 0x00020000;
 
         public void BeginStructure()
         {
             m_depth++;
-        }
-
-        /// <summary>
-        /// Add embedded pointer deferred structure (referent) writer
-        /// </summary>
-        private void AddDeferredStructure(INDRStructure structure)
-        {
-            m_deferredStructures.Add(structure);
         }
 
         public void EndStructure()
@@ -95,20 +86,18 @@ namespace SMBLibrary.RPC
                 WriteUInt32(0); // null
                 return;
             }
-            else
-            {
-                // Note: We do not bother searching for existing values
-                uint referentID = GetNextReferentID();
-                WriteUInt32(referentID);
-                AddDeferredStructure(structure);
-                m_referentToInstance.Add(referentID, structure);
-            }
+
+            // Note: We do not bother searching for existing values
+            uint referentID = GetNextReferentID();
+            WriteUInt32(referentID);
+            AddDeferredStructure(structure);
+            m_referentToInstance.Add(referentID, structure);
         }
 
         // 14.2.2 - Alignment of Primitive Types
         public void WriteUInt16(ushort value)
         {
-            uint padding = (uint)(2 - (m_stream.Position % 2)) % 2;
+            uint padding = (uint)(2 - m_stream.Position % 2) % 2;
             m_stream.Position += padding;
             LittleEndianWriter.WriteUInt16(m_stream, value);
         }
@@ -116,7 +105,7 @@ namespace SMBLibrary.RPC
         // 14.2.2 - Alignment of Primitive Types
         public void WriteUInt32(uint value)
         {
-            uint padding = (uint)(4 - (m_stream.Position % 4)) % 4;
+            uint padding = (uint)(4 - m_stream.Position % 4) % 4;
             m_stream.Position += padding;
             LittleEndianWriter.WriteUInt32(m_stream, value);
         }
@@ -132,6 +121,14 @@ namespace SMBLibrary.RPC
             m_stream.Seek(0, SeekOrigin.Begin);
             m_stream.Read(buffer, 0, buffer.Length);
             return buffer;
+        }
+
+        /// <summary>
+        /// Add embedded pointer deferred structure (referent) writer
+        /// </summary>
+        private void AddDeferredStructure(INDRStructure structure)
+        {
+            m_deferredStructures.Add(structure);
         }
 
         private uint GetNextReferentID()

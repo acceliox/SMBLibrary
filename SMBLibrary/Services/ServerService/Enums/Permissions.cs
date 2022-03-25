@@ -11,6 +11,6 @@ namespace SMBLibrary.Services
         ACCESS_EXEC = 0x00000008,
         ACCESS_DELETE = 0x00000010,
         ACCESS_ATRIB = 0x00000020,
-        ACCESS_PERM = 0x00000040,
+        ACCESS_PERM = 0x00000040
     }
 }

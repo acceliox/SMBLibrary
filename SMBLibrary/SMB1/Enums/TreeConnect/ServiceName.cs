@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.SMB1
 {
     public enum ServiceName
@@ -11,6 +10,6 @@ namespace SMBLibrary.SMB1
         /// <summary>
         /// Valid only for request
         /// </summary>
-        AnyType,
+        AnyType
     }
 }

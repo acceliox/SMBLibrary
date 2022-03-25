@@ -1,13 +1,14 @@
-
 namespace SMBLibrary.RPC
 {
     // Commented out packet types are connectionless-only
     public enum PacketTypeName : byte
     {
         Request = 0x00,
+
         // Ping = 0x01,
         Response = 0x02,
         Fault = 0x03,
+
         //Working = 0x04,
         //NoCall = 0x05,
         //Reject = 0x06,
@@ -22,6 +23,6 @@ namespace SMBLibrary.RPC
         AlterContextResponse = 0x0F, // alter_context_resp
         Shutdown = 0x11,
         COCancel = 0x12, // co_cancel
-        Orphaned = 0x13,
+        Orphaned = 0x13
     }
 }

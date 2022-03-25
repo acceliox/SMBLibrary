@@ -19,6 +19,6 @@ namespace SMBLibrary.SMB1
         SearchHidden = 0x0200, // SMB_SEARCH_ATTRIBUTE_HIDDEN
         SearchSystem = 0x0400, // SMB_SEARCH_ATTRIBUTE_SYSTEM
         SearchDirectory = 0x1000, // SMB_SEARCH_ATTRIBUTE_DIRECTORY
-        SearchArchive = 0x2000, // SMB_SEARCH_ATTRIBUTE_ARCHIVE
+        SearchArchive = 0x2000 // SMB_SEARCH_ATTRIBUTE_ARCHIVE
     }
 }

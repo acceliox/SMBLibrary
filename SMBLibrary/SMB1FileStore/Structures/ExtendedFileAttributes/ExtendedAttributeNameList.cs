@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -29,25 +28,8 @@ namespace SMBLibrary.SMB1
             while (position < eof)
             {
                 ExtendedAttributeName attribute = new ExtendedAttributeName(buffer, position);
-                this.Add(attribute);
+                Add(attribute);
                 position += attribute.Length;
-            }
-        }
-
-        public byte[] GetBytes()
-        {
-            byte[] buffer = new byte[this.Length];
-            WriteBytes(buffer, 0);
-            return buffer;
-        }
-
-        public void WriteBytes(byte[] buffer, int offset)
-        {
-            LittleEndianWriter.WriteUInt32(buffer, ref offset, (uint)Length);
-            foreach (ExtendedAttributeName entry in this)
-            {
-                entry.WriteBytes(buffer, offset);
-                offset += entry.Length;
             }
         }
 
@@ -60,7 +42,25 @@ namespace SMBLibrary.SMB1
                 {
                     length += entry.Length;
                 }
+
                 return length;
+            }
+        }
+
+        public byte[] GetBytes()
+        {
+            byte[] buffer = new byte[Length];
+            WriteBytes(buffer, 0);
+            return buffer;
+        }
+
+        public void WriteBytes(byte[] buffer, int offset)
+        {
+            LittleEndianWriter.WriteUInt32(buffer, ref offset, (uint)Length);
+            foreach (ExtendedAttributeName entry in this)
+            {
+                entry.WriteBytes(buffer, offset);
+                offset += entry.Length;
             }
         }
     }

@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -17,6 +16,7 @@ namespace SMBLibrary.RPC
     public class ContextElement // Presentation Context Element
     {
         public ushort ContextID;
+
         // byte NumberOfTransferSyntaxItems;
         public byte Reserved;
         public SyntaxID AbstractSyntax;
@@ -41,6 +41,8 @@ namespace SMBLibrary.RPC
             }
         }
 
+        public int Length => 4 + SyntaxID.Length * (TransferSyntaxList.Count + 1);
+
         public void WriteBytes(byte[] buffer, int offset)
         {
             byte numberOfTransferSyntaxItems = (byte)TransferSyntaxList.Count;
@@ -55,14 +57,6 @@ namespace SMBLibrary.RPC
             {
                 TransferSyntaxList[index].WriteBytes(buffer, offset);
                 offset += SyntaxID.Length;
-            }
-        }
-
-        public int Length
-        {
-            get
-            {
-                return 4 + SyntaxID.Length * (TransferSyntaxList.Count + 1);
             }
         }
     }

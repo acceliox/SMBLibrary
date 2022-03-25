@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary
@@ -38,6 +37,10 @@ namespace SMBLibrary
             Reserved = ByteReader.ReadBytes(buffer, offset + 13, 3);
         }
 
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileCompressionInformation;
+
+        public override int Length => FixedLength;
+
         public override void WriteBytes(byte[] buffer, int offset)
         {
             LittleEndianWriter.WriteInt64(buffer, offset + 0, CompressedFileSize);
@@ -46,22 +49,6 @@ namespace SMBLibrary
             ByteWriter.WriteByte(buffer, offset + 11, ChunkShift);
             ByteWriter.WriteByte(buffer, offset + 12, ClusterShift);
             ByteWriter.WriteBytes(buffer, offset + 13, Reserved, 3);
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileCompressionInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength;
-            }
         }
     }
 }

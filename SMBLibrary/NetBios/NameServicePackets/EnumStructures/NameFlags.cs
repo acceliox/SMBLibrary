@@ -4,10 +4,6 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Utilities;
 
 namespace SMBLibrary.NetBios
 {
@@ -15,7 +11,7 @@ namespace SMBLibrary.NetBios
     {
         BNode = 0x00,
         PNode = 0x01,
-        MNode = 0x10,
+        MNode = 0x10
     }
 
     public struct NameFlags // ushort
@@ -27,11 +23,12 @@ namespace SMBLibrary.NetBios
 
         public static explicit operator ushort(NameFlags nameFlags)
         {
-            ushort value = (ushort)(((byte)nameFlags.NodeType) << 13);
+            ushort value = (ushort)((byte)nameFlags.NodeType << 13);
             if (nameFlags.WorkGroup)
             {
                 value |= 0x8000;
             }
+
             return value;
         }
 

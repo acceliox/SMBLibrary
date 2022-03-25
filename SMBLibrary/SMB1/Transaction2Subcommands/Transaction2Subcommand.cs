@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.IO;
 using Utilities;
 
@@ -13,9 +12,7 @@ namespace SMBLibrary.SMB1
 {
     public abstract class Transaction2Subcommand
     {
-        public Transaction2Subcommand()
-        {
-        }
+        public abstract Transaction2SubcommandName SubcommandName { get; }
 
         public virtual byte[] GetSetup()
         {
@@ -30,11 +27,6 @@ namespace SMBLibrary.SMB1
         public virtual byte[] GetData(bool isUnicode)
         {
             return new byte[0];
-        }
-
-        public abstract Transaction2SubcommandName SubcommandName
-        {
-            get;
         }
 
         public static Transaction2Subcommand GetSubcommandRequest(byte[] setup, byte[] parameters, byte[] data, bool isUnicode)
@@ -68,6 +60,7 @@ namespace SMBLibrary.SMB1
                         return new Transaction2GetDfsReferralRequest(parameters, data);
                 }
             }
+
             throw new InvalidDataException();
         }
     }

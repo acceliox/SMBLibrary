@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using SMBLibrary.RPC;
 using SMBLibrary.Services;
@@ -37,7 +37,7 @@ namespace SMBLibrary.Client
             shareEnumRequest.InfoStruct = new ShareEnum();
             shareEnumRequest.InfoStruct.Level = 1;
             shareEnumRequest.InfoStruct.Info = new ShareInfo1Container();
-            shareEnumRequest.PreferedMaximumLength = UInt32.MaxValue;
+            shareEnumRequest.PreferedMaximumLength = uint.MaxValue;
             shareEnumRequest.ServerName = @"\\" + serverName;
             RequestPDU requestPDU = new RequestPDU();
             requestPDU.Flags = PacketFlags.FirstFragment | PacketFlags.LastFragment;
@@ -55,6 +55,7 @@ namespace SMBLibrary.Client
             {
                 return null;
             }
+
             ResponsePDU responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
             if (responsePDU == null)
             {
@@ -70,14 +71,17 @@ namespace SMBLibrary.Client
                 {
                     return null;
                 }
+
                 responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
                 if (responsePDU == null)
                 {
                     status = NTStatus.STATUS_NOT_SUPPORTED;
                     return null;
                 }
+
                 responseData = ByteUtils.Concatenate(responseData, responsePDU.Data);
             }
+
             namedPipeShare.CloseFile(pipeHandle);
             NetrShareEnumResponse shareEnumResponse = new NetrShareEnumResponse(responseData);
             ShareInfo1Container shareInfo1 = shareEnumResponse.InfoStruct.Info as ShareInfo1Container;
@@ -91,6 +95,7 @@ namespace SMBLibrary.Client
                 {
                     status = NTStatus.STATUS_NOT_SUPPORTED;
                 }
+
                 return null;
             }
 
@@ -102,6 +107,7 @@ namespace SMBLibrary.Client
                     result.Add(entry.NetName.Value);
                 }
             }
+
             return result;
         }
     }

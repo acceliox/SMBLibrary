@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,20 +16,23 @@ namespace SMBLibrary.SMB1
     public class Transaction2FindFirst2Response : Transaction2Subcommand
     {
         public const int ParametersLength = 10;
+
         // Parameters:
         public ushort SID; // Search handle
         private ushort SearchCount;
         public bool EndOfSearch;
         public ushort EaErrorOffset;
+
         public ushort LastNameOffset;
+
         // Data:
         private byte[] FindInformationListBytes = new byte[0];
 
-        public Transaction2FindFirst2Response() : base()
+        public Transaction2FindFirst2Response()
         {
         }
 
-        public Transaction2FindFirst2Response(byte[] parameters, byte[] data, bool isUnicode) : base()
+        public Transaction2FindFirst2Response(byte[] parameters, byte[] data, bool isUnicode)
         {
             SID = LittleEndianConverter.ToUInt16(parameters, 0);
             SearchCount = LittleEndianConverter.ToUInt16(parameters, 2);
@@ -39,6 +41,19 @@ namespace SMBLibrary.SMB1
             LastNameOffset = LittleEndianConverter.ToUInt16(parameters, 8);
 
             FindInformationListBytes = data;
+        }
+
+        public override Transaction2SubcommandName SubcommandName => Transaction2SubcommandName.TRANS2_FIND_FIRST2;
+
+        public FindInformationList GetFindInformationList(FindInformationLevel findInformationLevel, bool isUnicode)
+        {
+            return new FindInformationList(FindInformationListBytes, findInformationLevel, isUnicode);
+        }
+
+        public void SetFindInformationList(FindInformationList findInformationList, bool isUnicode)
+        {
+            SearchCount = (ushort)findInformationList.Count;
+            FindInformationListBytes = findInformationList.GetBytes(isUnicode);
         }
 
         public override byte[] GetParameters(bool isUnicode)
@@ -55,25 +70,6 @@ namespace SMBLibrary.SMB1
         public override byte[] GetData(bool isUnicode)
         {
             return FindInformationListBytes;
-        }
-
-        public FindInformationList GetFindInformationList(FindInformationLevel findInformationLevel, bool isUnicode)
-        {
-            return new FindInformationList(FindInformationListBytes, findInformationLevel, isUnicode);
-        }
-
-        public void SetFindInformationList(FindInformationList findInformationList, bool isUnicode)
-        {
-            SearchCount = (ushort)findInformationList.Count;
-            FindInformationListBytes = findInformationList.GetBytes(isUnicode);
-        }
-
-        public override Transaction2SubcommandName SubcommandName
-        {
-            get
-            {
-                return Transaction2SubcommandName.TRANS2_FIND_FIRST2;
-            }
         }
     }
 }

@@ -4,14 +4,13 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
 
 namespace SMBLibrary.SMB1
 {
     public enum LockStatus : byte
     {
         NoOpLockWasRequestedOrGranted = 0x00,
-        OpLockWasRequestedAndGranted = 0x01,
+        OpLockWasRequestedAndGranted = 0x01
     }
 
     public struct ActionTaken

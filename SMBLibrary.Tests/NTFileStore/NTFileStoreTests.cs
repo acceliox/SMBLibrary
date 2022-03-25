@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
 using System.Threading;
-using SMBLibrary;
 using Xunit;
 
 namespace SMBLibrary.Tests
 {
     public abstract class NTFileStoreTests
     {
-        private INTFileStore m_fileStore;
+        private readonly INTFileStore m_fileStore;
         private readonly string TestDirName = "Dir";
 
         private NTStatus? m_notifyChangeStatus;
@@ -43,17 +40,18 @@ namespace SMBLibrary.Tests
             {
                 Thread.Sleep(1);
             }
-            Assert.True(m_notifyChangeStatus.Value == NTStatus.STATUS_CANCELLED);
-        }
 
-        private void OnNotifyChangeCompleted(NTStatus status, byte[] buffer, object context)
-        {
-            m_notifyChangeStatus = status;
+            Assert.True(m_notifyChangeStatus.Value == NTStatus.STATUS_CANCELLED);
         }
 
         public void TestAll()
         {
             TestCancel();
+        }
+
+        private void OnNotifyChangeCompleted(NTStatus status, byte[] buffer, object context)
+        {
+            m_notifyChangeStatus = status;
         }
     }
 }

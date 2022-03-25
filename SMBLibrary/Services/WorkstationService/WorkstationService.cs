@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SMBLibrary.Services
 {
@@ -16,14 +15,14 @@ namespace SMBLibrary.Services
     public class WorkstationService : RemoteService
     {
         public const string ServicePipeName = @"wkssvc";
-        public static readonly Guid ServiceInterfaceGuid = new Guid("6BFFD098-A112-3610-9833-46C3F87E345A");
         public const int ServiceVersion = 1;
+        public static readonly Guid ServiceInterfaceGuid = new Guid("6BFFD098-A112-3610-9833-46C3F87E345A");
 
-        private uint m_platformID;
-        private string m_computerName;
-        private string m_lanGroup;
-        private uint m_verMajor;
-        private uint m_verMinor;
+        private readonly uint m_platformID;
+        private readonly string m_computerName;
+        private readonly string m_lanGroup;
+        private readonly uint m_verMajor;
+        private readonly uint m_verMinor;
 
         public WorkstationService(string computerName, string lanGroup)
         {
@@ -32,6 +31,56 @@ namespace SMBLibrary.Services
             m_lanGroup = lanGroup;
             m_verMajor = 5;
             m_verMinor = 2;
+        }
+
+        public override Guid InterfaceGuid => ServiceInterfaceGuid;
+
+        public override string PipeName => ServicePipeName;
+
+        public NetrWkstaGetInfoResponse GetNetrWkstaGetInfoResponse(NetrWkstaGetInfoRequest request)
+        {
+            NetrWkstaGetInfoResponse response = new NetrWkstaGetInfoResponse();
+            switch (request.Level)
+            {
+                case 100:
+                {
+                    WorkstationInfo100 info = new WorkstationInfo100();
+                    info.PlatformID = m_platformID;
+                    info.ComputerName.Value = m_computerName;
+                    info.LanGroup.Value = m_lanGroup;
+                    info.VerMajor = m_verMajor;
+                    info.VerMinor = m_verMinor;
+                    response.WkstaInfo = new WorkstationInfo(info);
+                    response.Result = Win32Error.ERROR_SUCCESS;
+                    return response;
+                }
+                case 101:
+                {
+                    WorkstationInfo101 info = new WorkstationInfo101();
+                    info.PlatformID = m_platformID;
+                    info.ComputerName.Value = m_computerName;
+                    info.LanGroup.Value = m_lanGroup;
+                    info.VerMajor = m_verMajor;
+                    info.VerMinor = m_verMinor;
+                    info.LanRoot.Value = m_lanGroup;
+                    response.WkstaInfo = new WorkstationInfo(info);
+                    response.Result = Win32Error.ERROR_SUCCESS;
+                    return response;
+                }
+                case 102:
+                case 502:
+                {
+                    response.WkstaInfo = new WorkstationInfo(request.Level);
+                    response.Result = Win32Error.ERROR_NOT_SUPPORTED;
+                    return response;
+                }
+                default:
+                {
+                    response.WkstaInfo = new WorkstationInfo(request.Level);
+                    response.Result = Win32Error.ERROR_INVALID_LEVEL;
+                    return response;
+                }
+            }
         }
 
         public override byte[] GetResponseBytes(ushort opNum, byte[] requestBytes)
@@ -44,68 +93,6 @@ namespace SMBLibrary.Services
                     return response.GetBytes();
                 default:
                     throw new UnsupportedOpNumException();
-            }
-        }
-
-        public NetrWkstaGetInfoResponse GetNetrWkstaGetInfoResponse(NetrWkstaGetInfoRequest request)
-        {
-            NetrWkstaGetInfoResponse response = new NetrWkstaGetInfoResponse();
-            switch (request.Level)
-            {
-                case 100:
-                    {
-                        WorkstationInfo100 info = new WorkstationInfo100();
-                        info.PlatformID = m_platformID;
-                        info.ComputerName.Value = m_computerName;
-                        info.LanGroup.Value = m_lanGroup;
-                        info.VerMajor = m_verMajor;
-                        info.VerMinor = m_verMinor;
-                        response.WkstaInfo = new WorkstationInfo(info);
-                        response.Result = Win32Error.ERROR_SUCCESS;
-                        return response;
-                    }
-                case 101:
-                    {
-                        WorkstationInfo101 info = new WorkstationInfo101();
-                        info.PlatformID = m_platformID;
-                        info.ComputerName.Value = m_computerName;
-                        info.LanGroup.Value = m_lanGroup;
-                        info.VerMajor = m_verMajor;
-                        info.VerMinor = m_verMinor;
-                        info.LanRoot.Value = m_lanGroup;
-                        response.WkstaInfo = new WorkstationInfo(info);
-                        response.Result = Win32Error.ERROR_SUCCESS;
-                        return response;
-                    }
-                case 102:
-                case 502:
-                    {
-                        response.WkstaInfo = new WorkstationInfo(request.Level);
-                        response.Result = Win32Error.ERROR_NOT_SUPPORTED;
-                        return response;
-                    }
-                default:
-                    {
-                        response.WkstaInfo = new WorkstationInfo(request.Level);
-                        response.Result = Win32Error.ERROR_INVALID_LEVEL;
-                        return response;
-                    }
-            }
-        }
-
-        public override Guid InterfaceGuid
-        {
-            get
-            {
-                return ServiceInterfaceGuid;
-            }
-        }
-
-        public override string PipeName
-        {
-            get
-            {
-                return ServicePipeName;
             }
         }
     }

@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,28 +16,33 @@ namespace SMBLibrary.SMB1
     public class NTTransactIOCTLRequest : NTTransactSubcommand
     {
         public const int SetupLength = 8;
+
         // Setup:
         public uint FunctionCode;
         public ushort FID;
         public bool IsFsctl;
+
         public bool IsFlags;
+
         // Data:
         public byte[] Data;
 
-        public NTTransactIOCTLRequest() : base()
+        public NTTransactIOCTLRequest()
         {
             Data = new byte[0];
         }
 
-        public NTTransactIOCTLRequest(byte[] setup, byte[] data) : base()
+        public NTTransactIOCTLRequest(byte[] setup, byte[] data)
         {
             FunctionCode = LittleEndianConverter.ToUInt32(setup, 0);
             FID = LittleEndianConverter.ToUInt16(setup, 4);
-            IsFsctl = (ByteReader.ReadByte(setup, 6) != 0);
-            IsFlags = (ByteReader.ReadByte(setup, 7) != 0);
+            IsFsctl = ByteReader.ReadByte(setup, 6) != 0;
+            IsFlags = ByteReader.ReadByte(setup, 7) != 0;
 
             Data = data;
         }
+
+        public override NTTransactSubcommandName SubcommandName => NTTransactSubcommandName.NT_TRANSACT_IOCTL;
 
         public override byte[] GetSetup()
         {
@@ -50,17 +54,9 @@ namespace SMBLibrary.SMB1
             return setup;
         }
 
-        public override byte[]  GetData()
+        public override byte[] GetData()
         {
- 	        return Data;
-        }
-
-        public override NTTransactSubcommandName SubcommandName
-        {
-            get
-            {
-                return NTTransactSubcommandName.NT_TRANSACT_IOCTL;
-            }
+            return Data;
         }
     }
 }

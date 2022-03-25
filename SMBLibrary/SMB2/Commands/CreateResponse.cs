@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -17,7 +18,7 @@ namespace SMBLibrary.SMB2
     {
         public const int DeclaredSize = 89;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public OplockLevel OplockLevel;
         public CreateResponseFlags Flags;
         public CreateAction CreateAction;
@@ -63,6 +64,8 @@ namespace SMBLibrary.SMB2
             }
         }
 
+        public override int CommandLength => 88 + CreateContext.GetCreateContextListLength(CreateContexts);
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
@@ -84,14 +87,6 @@ namespace SMBLibrary.SMB2
             {
                 CreateContextsOffsets = SMB2Header.Length + 88;
                 CreateContext.WriteCreateContextList(buffer, 88, CreateContexts);
-            }
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                return 88 + CreateContext.GetCreateContextListLength(CreateContexts);
             }
         }
     }

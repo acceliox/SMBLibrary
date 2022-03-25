@@ -4,31 +4,22 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using Utilities;
 
 namespace SMBLibrary
 {
     public abstract class FileSystemInformation
     {
+        public abstract FileSystemInformationClass FileSystemInformationClass { get; }
+
+        public abstract int Length { get; }
+
         public abstract void WriteBytes(byte[] buffer, int offset);
 
         public byte[] GetBytes()
         {
-            byte[] buffer = new byte[this.Length];
+            byte[] buffer = new byte[Length];
             WriteBytes(buffer, 0);
             return buffer;
-        }
-
-        public abstract FileSystemInformationClass FileSystemInformationClass
-        {
-            get;
-        }
-
-        public abstract int Length
-        {
-            get;
         }
 
         public static FileSystemInformation GetFileSystemInformation(byte[] buffer, int offset, FileSystemInformationClass informationClass)

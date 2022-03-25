@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -34,6 +35,8 @@ namespace SMBLibrary.SMB2
             ByteReader.ReadBytes(buffer, offset + 8, DataLength);
         }
 
+        public int Length => FixedLength + Data.Length;
+
         public void WriteBytes(byte[] buffer, int offset)
         {
             DataLength = (ushort)Data.Length;
@@ -41,14 +44,6 @@ namespace SMBLibrary.SMB2
             LittleEndianWriter.WriteUInt16(buffer, offset + 2, DataLength);
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, Reserved);
             ByteWriter.WriteBytes(buffer, offset + 8, Data);
-        }
-
-        public int Length
-        {
-            get
-            {
-                return FixedLength + Data.Length;
-            }
         }
 
         public static List<NegotiateContext> ReadNegotiateContextList(byte[] buffer, int offset, int count)
@@ -60,6 +55,7 @@ namespace SMBLibrary.SMB2
                 result.Add(context);
                 offset += context.Length;
             }
+
             return result;
         }
 
@@ -93,6 +89,7 @@ namespace SMBLibrary.SMB2
                     result += length;
                 }
             }
+
             return result;
         }
     }

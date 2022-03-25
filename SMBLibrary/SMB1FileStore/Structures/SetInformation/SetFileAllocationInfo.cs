@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -33,19 +31,13 @@ namespace SMBLibrary.SMB1
             AllocationSize = LittleEndianConverter.ToInt64(buffer, offset);
         }
 
+        public override SetInformationLevel InformationLevel => SetInformationLevel.SMB_SET_FILE_ALLOCATION_INFO;
+
         public override byte[] GetBytes()
         {
             byte[] buffer = new byte[Length];
             LittleEndianWriter.WriteInt64(buffer, 0, AllocationSize);
             return buffer;
-        }
-
-        public override SetInformationLevel InformationLevel
-        {
-            get
-            {
-                return SetInformationLevel.SMB_SET_FILE_ALLOCATION_INFO;
-            }
         }
     }
 }

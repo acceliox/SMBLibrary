@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.RPC
 {
     public enum RejectionReason : ushort
@@ -6,6 +5,6 @@ namespace SMBLibrary.RPC
         NotSpecified,
         AbstractSyntaxNotSupported,
         ProposedTransferSyntaxesNotSupported,
-        LocalLimitExceeded,
+        LocalLimitExceeded
     }
 }

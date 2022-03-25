@@ -4,11 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.IO;
-using System.Text;
-using SMBLibrary.Services;
 using SMBLibrary.SMB1;
 using Utilities;
 
@@ -69,24 +66,20 @@ namespace SMBLibrary.Server.SMB1
                 {
                     return CreateResponseExtendedForNamedPipe(fileID.Value, FileStatus.FILE_OPENED);
                 }
-                else
-                {
-                    return CreateResponseForNamedPipe(fileID.Value, FileStatus.FILE_OPENED);
-                }
+
+                return CreateResponseForNamedPipe(fileID.Value, FileStatus.FILE_OPENED);
             }
-            else // FileSystemShare
+
+            FileNetworkOpenInformation fileInfo = NTFileStoreHelper.GetNetworkOpenInformation(share.FileStore, handle);
+            if (isExtended)
             {
-                FileNetworkOpenInformation fileInfo = NTFileStoreHelper.GetNetworkOpenInformation(share.FileStore, handle);
-                if (isExtended)
-                {
-                    NTCreateAndXResponseExtended response = CreateResponseExtendedFromFileInformation(fileInfo, fileID.Value, fileStatus);
-                    return response;
-                }
-                else
-                {
-                    NTCreateAndXResponse response = CreateResponseFromFileInformation(fileInfo, fileID.Value, fileStatus);
-                    return response;
-                }
+                NTCreateAndXResponseExtended response = CreateResponseExtendedFromFileInformation(fileInfo, fileID.Value, fileStatus);
+                return response;
+            }
+            else
+            {
+                NTCreateAndXResponse response = CreateResponseFromFileInformation(fileInfo, fileID.Value, fileStatus);
+                return response;
             }
         }
 
@@ -119,11 +112,11 @@ namespace SMBLibrary.Server.SMB1
                                                         FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                         FileAccessMask.FILE_EXECUTE |
                                                         FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                        AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
+                                           AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
             response.GuestMaximalAccessRights = (AccessMask)(FileAccessMask.FILE_READ_DATA | FileAccessMask.FILE_WRITE_DATA |
                                                              FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                              FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                             AccessMask.READ_CONTROL | AccessMask.SYNCHRONIZE;
+                                                AccessMask.READ_CONTROL | AccessMask.SYNCHRONIZE;
             return response;
         }
 
@@ -163,11 +156,11 @@ namespace SMBLibrary.Server.SMB1
                                                         FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                         FileAccessMask.FILE_EXECUTE |
                                                         FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                        AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
+                                           AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
             response.GuestMaximalAccessRights = (AccessMask)(FileAccessMask.FILE_READ_DATA | FileAccessMask.FILE_WRITE_DATA |
                                                              FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                              FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                             AccessMask.READ_CONTROL | AccessMask.SYNCHRONIZE;
+                                                AccessMask.READ_CONTROL | AccessMask.SYNCHRONIZE;
             return response;
         }
 
@@ -177,32 +170,32 @@ namespace SMBLibrary.Server.SMB1
             {
                 return CreateDisposition.FILE_SUPERSEDE;
             }
-            else if (fileStatus == FileStatus.FILE_CREATED)
+
+            if (fileStatus == FileStatus.FILE_CREATED)
             {
                 return CreateDisposition.FILE_CREATE;
             }
-            else if (fileStatus == FileStatus.FILE_OVERWRITTEN)
+
+            if (fileStatus == FileStatus.FILE_OVERWRITTEN)
             {
                 return CreateDisposition.FILE_OVERWRITE;
             }
-            else
-            {
-                return CreateDisposition.FILE_OPEN;
-            }
+
+            return CreateDisposition.FILE_OPEN;
         }
 
         private static FileAttributes ToFileAttributes(ExtendedFileAttributes extendedFileAttributes)
         {
             // We only return flags that can be used with NtCreateFile
             FileAttributes fileAttributes = FileAttributes.ReadOnly |
-                                              FileAttributes.Hidden |
-                                              FileAttributes.System |
-                                              FileAttributes.Archive |
-                                              FileAttributes.Normal |
-                                              FileAttributes.Temporary |
-                                              FileAttributes.Offline |
-                                              FileAttributes.Encrypted;
-            return (fileAttributes & (FileAttributes)extendedFileAttributes);
+                                            FileAttributes.Hidden |
+                                            FileAttributes.System |
+                                            FileAttributes.Archive |
+                                            FileAttributes.Normal |
+                                            FileAttributes.Temporary |
+                                            FileAttributes.Offline |
+                                            FileAttributes.Encrypted;
+            return fileAttributes & (FileAttributes)extendedFileAttributes;
         }
     }
 }

@@ -9,15 +9,13 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 
 namespace Utilities
 {
     public delegate void ForDelegate(int i);
+
     public delegate void DelegateProcess();
 
     public class Parallel
@@ -68,7 +66,7 @@ namespace Utilities
 
             // processing function
             // takes next chunk and processes it using action
-            DelegateProcess process = delegate()
+            DelegateProcess process = delegate
             {
                 while (true)
                 {
@@ -79,12 +77,17 @@ namespace Utilities
                         index += chunkSize;
                         chunkStart = index;
                     }
+
                     // process the chunk
                     // (another thread is processing another chunk 
                     //  so the real order of items will be out-of-order)
                     for (int i = chunkStart; i < chunkStart + chunkSize; i++)
                     {
-                        if (i >= toExclusive) return;
+                        if (i >= toExclusive)
+                        {
+                            return;
+                        }
+
                         forDelegate(i);
                     }
                 }
@@ -96,6 +99,7 @@ namespace Utilities
             {
                 asyncResults[i] = process.BeginInvoke(null, null);
             }
+
             // wait for all threads to complete
             for (int i = 0; i < threadCount; ++i)
             {

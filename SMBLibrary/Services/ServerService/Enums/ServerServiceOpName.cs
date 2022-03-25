@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.Services
 {
     public enum ServerServiceOpName : ushort
@@ -49,6 +48,6 @@ namespace SMBLibrary.Services
         NetrServerAliasAdd = 54,
         NetrServerAliasEnum = 55,
         NetrServerAliasDel = 56,
-        NetrShareDelEx = 57,
+        NetrShareDelEx = 57
     }
 }

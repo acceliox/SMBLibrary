@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary
@@ -40,6 +38,8 @@ namespace SMBLibrary
             EaValue = ByteReader.ReadAnsiString(buffer, ref offset, EaValueLength);
         }
 
+        public int Length => FixedLength + EaName.Length + 1 + EaValue.Length;
+
         public void WriteBytes(byte[] buffer, int offset)
         {
             EaNameLength = (byte)EaName.Length;
@@ -51,14 +51,6 @@ namespace SMBLibrary
             ByteWriter.WriteAnsiString(buffer, ref offset, EaName);
             ByteWriter.WriteByte(buffer, ref offset, 0); // terminating null
             ByteWriter.WriteAnsiString(buffer, ref offset, EaValue);
-        }
-
-        public int Length
-        {
-            get
-            {
-                return FixedLength + EaName.Length + 1 + EaValue.Length;
-            }
         }
     }
 }

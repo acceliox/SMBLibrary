@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.Services
 {
     public enum WorkstationServiceOpName : ushort
@@ -23,6 +22,6 @@ namespace SMBLibrary.Services
         NetrAddAlternateComputerName = 27,
         NetrRemoveAlternateComputerName = 28,
         NetrSetPrimaryComputerName = 29,
-        NetrEnumerateComputerNames = 30,
+        NetrEnumerateComputerNames = 30
     }
 }

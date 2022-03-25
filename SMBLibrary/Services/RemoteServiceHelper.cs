@@ -4,9 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Text;
 using SMBLibrary.RPC;
 using Utilities;
 
@@ -14,17 +14,19 @@ namespace SMBLibrary.Services
 {
     public class RemoteServiceHelper
     {
+        public const int NDRTransferSyntaxVersion = 2;
+
+        public const int BindTimeFeatureIdentifierVersion = 1;
+
         // v1 - DCE 1.1: Remote Procedure Call
         // v2 - [MS-RPCE] 2.2.4.12 NDR Transfer Syntax Identifier
         public static readonly Guid NDRTransferSyntaxIdentifier = new Guid("8A885D04-1CEB-11C9-9FE8-08002B104860");
-        public const int NDRTransferSyntaxVersion = 2;
 
         // v1 - [MS-RPCE] 3.3.1.5.3 - Bind Time Feature Negotiation
         // Windows will reject this:
         //private static readonly Guid BindTimeFeatureIdentifier1 = new Guid("6CB71C2C-9812-4540-0100-000000000000");
         // Windows will return NegotiationResult.NegotiateAck:
         public static readonly Guid BindTimeFeatureIdentifier3 = new Guid("6CB71C2C-9812-4540-0300-000000000000");
-        public const int BindTimeFeatureIdentifierVersion = 1;
 
         private static uint m_associationGroupID = 1;
 
@@ -51,6 +53,7 @@ namespace SMBLibrary.Services
             {
                 bindAckPDU.AssociationGroupID = bindPDU.AssociationGroupID;
             }
+
             bindAckPDU.SecondaryAddress = @"\PIPE\" + service.PipeName;
             bindAckPDU.MaxTransmitFragmentSize = bindPDU.MaxReceiveFragmentSize;
             bindAckPDU.MaxReceiveFragmentSize = bindPDU.MaxTransmitFragmentSize;
@@ -84,27 +87,11 @@ namespace SMBLibrary.Services
                     resultElement.Result = NegotiationResult.ProviderRejection;
                     resultElement.Reason = RejectionReason.AbstractSyntaxNotSupported;
                 }
+
                 bindAckPDU.ResultList.Add(resultElement);
             }
 
             return bindAckPDU;
-        }
-
-        private static int IndexOfSupportedTransferSyntax(List<SyntaxID> syntaxList)
-        {
-            List<SyntaxID> supportedTransferSyntaxes = new List<SyntaxID>();
-            supportedTransferSyntaxes.Add(new SyntaxID(NDRTransferSyntaxIdentifier, 1));
-            // [MS-RPCE] Version 2.0 data representation protocol:
-            supportedTransferSyntaxes.Add(new SyntaxID(NDRTransferSyntaxIdentifier, 2));
-
-            for(int index = 0; index < syntaxList.Count; index++)
-            {
-                if (supportedTransferSyntaxes.Contains(syntaxList[index]))
-                {
-                    return index;
-                }
-            }
-            return -1;
         }
 
         public static List<RPCPDU> GetRPCResponse(RequestPDU requestPDU, RemoteService service, int maxTransmitFragmentSize)
@@ -142,16 +129,35 @@ namespace SMBLibrary.Services
                 {
                     responsePDU.Flags |= PacketFlags.FirstFragment;
                 }
+
                 if (offset + pduDataLength == responseBytes.Length)
                 {
                     responsePDU.Flags |= PacketFlags.LastFragment;
                 }
+
                 result.Add(responsePDU);
                 offset += pduDataLength;
-            }
-            while (offset < responseBytes.Length);
-            
+            } while (offset < responseBytes.Length);
+
             return result;
+        }
+
+        private static int IndexOfSupportedTransferSyntax(List<SyntaxID> syntaxList)
+        {
+            List<SyntaxID> supportedTransferSyntaxes = new List<SyntaxID>();
+            supportedTransferSyntaxes.Add(new SyntaxID(NDRTransferSyntaxIdentifier, 1));
+            // [MS-RPCE] Version 2.0 data representation protocol:
+            supportedTransferSyntaxes.Add(new SyntaxID(NDRTransferSyntaxIdentifier, 2));
+
+            for (int index = 0; index < syntaxList.Count; index++)
+            {
+                if (supportedTransferSyntaxes.Contains(syntaxList[index]))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
         }
     }
 }

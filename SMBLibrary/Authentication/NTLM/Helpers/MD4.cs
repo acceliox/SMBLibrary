@@ -32,9 +32,6 @@ using System.Text;
 
 namespace System.Security.Cryptography
 {
-    using System;
-
-
     /// <summary>
     ///   Implements the MD4 message digest algorithm in C#
     /// </summary>
@@ -106,114 +103,6 @@ namespace System.Security.Cryptography
         public object Clone()
         {
             return new MD4(this);
-        }
-
-        // JCE methods
-        //-------------------------------------------------------------------------
-
-        /// <summary>
-        ///   Resets this object disregarding any temporary data present at the
-        ///   time of the invocation of this call.
-        /// </summary>
-        private void EngineReset()
-        {
-            // initial values of MD4 i.e. A, B, C, D
-            // as per rfc-1320; they are low-order byte first
-            context[0] = 0x67452301;
-            context[1] = 0xEFCDAB89;
-            context[2] = 0x98BADCFE;
-            context[3] = 0x10325476;
-            count = 0L;
-            for (int i = 0; i < BLOCK_LENGTH; i++)
-                buffer[i] = 0;
-        }
-
-
-        /// <summary>
-        ///   Continues an MD4 message digest using the input byte
-        /// </summary>
-        /// <param name = "b">byte to input</param>
-        private void EngineUpdate(byte b)
-        {
-            // compute number of bytes still unhashed; ie. present in buffer
-            int i = (int)(count % BLOCK_LENGTH);
-            count++; // update number of bytes
-            buffer[i] = b;
-            if (i == BLOCK_LENGTH - 1)
-                Transform(ref buffer, 0);
-        }
-
-        /// <summary>
-        ///   MD4 block update operation
-        /// </summary>
-        /// <remarks>
-        ///   Continues an MD4 message digest operation by filling the buffer, 
-        ///   transform(ing) data in 512-bit message block(s), updating the variables
-        ///   context and count, and leaving (buffering) the remaining bytes in buffer
-        ///   for the next update or finish.
-        /// </remarks>
-        /// <param name = "input">input block</param>
-        /// <param name = "offset">start of meaningful bytes in input</param>
-        /// <param name = "len">count of bytes in input blcok to consider</param>
-        private void EngineUpdate(byte[] input, int offset, int len)
-        {
-            // make sure we don't exceed input's allocated size/length
-            if (offset < 0 || len < 0 || (long)offset + len > input.Length)
-                throw new ArgumentOutOfRangeException();
-
-            // compute number of bytes still unhashed; ie. present in buffer
-            int bufferNdx = (int)(count % BLOCK_LENGTH);
-            count += len; // update number of bytes
-            int partLen = BLOCK_LENGTH - bufferNdx;
-            int i = 0;
-            if (len >= partLen)
-            {
-                Array.Copy(input, offset + i, buffer, bufferNdx, partLen);
-
-                Transform(ref buffer, 0);
-
-                for (i = partLen; i + BLOCK_LENGTH - 1 < len; i += BLOCK_LENGTH)
-                    Transform(ref input, offset + i);
-                bufferNdx = 0;
-            }
-            // buffer remaining input
-            if (i < len)
-                Array.Copy(input, offset + i, buffer, bufferNdx, len - i);
-        }
-
-        /// <summary>
-        ///   Completes the hash computation by performing final operations such
-        ///   as padding.  At the return of this engineDigest, the MD engine is
-        ///   reset.
-        /// </summary>
-        /// <returns>the array of bytes for the resulting hash value.</returns>
-        private byte[] EngineDigest()
-        {
-            // pad output to 56 mod 64; as RFC1320 puts it: congruent to 448 mod 512
-            int bufferNdx = (int)(count % BLOCK_LENGTH);
-            int padLen = (bufferNdx < 56) ? (56 - bufferNdx) : (120 - bufferNdx);
-
-            // padding is always binary 1 followed by binary 0's
-            byte[] tail = new byte[padLen + 8];
-            tail[0] = 0x80;
-
-            // append length before final transform
-            // save number of bits, casting the long to an array of 8 bytes
-            // save low-order byte first.
-            for (int i = 0; i < 8; i++)
-                tail[padLen + i] = (byte)((count * 8) >> (8 * i));
-
-            EngineUpdate(tail, 0, tail.Length);
-
-            byte[] result = new byte[16];
-            // cast this MD4's context (array of 4 uints) into an array of 16 bytes.
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 4; j++)
-                    result[i * 4 + j] = (byte)(context[i] >> (8 * j));
-
-            // reset the engine
-            EngineReset();
-            return result;
         }
 
         /// <summary>
@@ -292,6 +181,130 @@ namespace System.Security.Cryptography
             return BytesToHex(b, b.Length);
         }
 
+        // JCE methods
+        //-------------------------------------------------------------------------
+
+        /// <summary>
+        ///   Resets this object disregarding any temporary data present at the
+        ///   time of the invocation of this call.
+        /// </summary>
+        private void EngineReset()
+        {
+            // initial values of MD4 i.e. A, B, C, D
+            // as per rfc-1320; they are low-order byte first
+            context[0] = 0x67452301;
+            context[1] = 0xEFCDAB89;
+            context[2] = 0x98BADCFE;
+            context[3] = 0x10325476;
+            count = 0L;
+            for (int i = 0; i < BLOCK_LENGTH; i++)
+            {
+                buffer[i] = 0;
+            }
+        }
+
+
+        /// <summary>
+        ///   Continues an MD4 message digest using the input byte
+        /// </summary>
+        /// <param name = "b">byte to input</param>
+        private void EngineUpdate(byte b)
+        {
+            // compute number of bytes still unhashed; ie. present in buffer
+            int i = (int)(count % BLOCK_LENGTH);
+            count++; // update number of bytes
+            buffer[i] = b;
+            if (i == BLOCK_LENGTH - 1)
+            {
+                Transform(ref buffer, 0);
+            }
+        }
+
+        /// <summary>
+        ///   MD4 block update operation
+        /// </summary>
+        /// <remarks>
+        ///   Continues an MD4 message digest operation by filling the buffer, 
+        ///   transform(ing) data in 512-bit message block(s), updating the variables
+        ///   context and count, and leaving (buffering) the remaining bytes in buffer
+        ///   for the next update or finish.
+        /// </remarks>
+        /// <param name = "input">input block</param>
+        /// <param name = "offset">start of meaningful bytes in input</param>
+        /// <param name = "len">count of bytes in input blcok to consider</param>
+        private void EngineUpdate(byte[] input, int offset, int len)
+        {
+            // make sure we don't exceed input's allocated size/length
+            if (offset < 0 || len < 0 || (long)offset + len > input.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            // compute number of bytes still unhashed; ie. present in buffer
+            int bufferNdx = (int)(count % BLOCK_LENGTH);
+            count += len; // update number of bytes
+            int partLen = BLOCK_LENGTH - bufferNdx;
+            int i = 0;
+            if (len >= partLen)
+            {
+                Array.Copy(input, offset + i, buffer, bufferNdx, partLen);
+
+                Transform(ref buffer, 0);
+
+                for (i = partLen; i + BLOCK_LENGTH - 1 < len; i += BLOCK_LENGTH)
+                {
+                    Transform(ref input, offset + i);
+                }
+
+                bufferNdx = 0;
+            }
+
+            // buffer remaining input
+            if (i < len)
+            {
+                Array.Copy(input, offset + i, buffer, bufferNdx, len - i);
+            }
+        }
+
+        /// <summary>
+        ///   Completes the hash computation by performing final operations such
+        ///   as padding.  At the return of this engineDigest, the MD engine is
+        ///   reset.
+        /// </summary>
+        /// <returns>the array of bytes for the resulting hash value.</returns>
+        private byte[] EngineDigest()
+        {
+            // pad output to 56 mod 64; as RFC1320 puts it: congruent to 448 mod 512
+            int bufferNdx = (int)(count % BLOCK_LENGTH);
+            int padLen = bufferNdx < 56 ? 56 - bufferNdx : 120 - bufferNdx;
+
+            // padding is always binary 1 followed by binary 0's
+            byte[] tail = new byte[padLen + 8];
+            tail[0] = 0x80;
+
+            // append length before final transform
+            // save number of bits, casting the long to an array of 8 bytes
+            // save low-order byte first.
+            for (int i = 0; i < 8; i++)
+            {
+                tail[padLen + i] = (byte)((count * 8) >> (8 * i));
+            }
+
+            EngineUpdate(tail, 0, tail.Length);
+
+            byte[] result = new byte[16];
+            // cast this MD4's context (array of 4 uints) into an array of 16 bytes.
+            for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+            {
+                result[i * 4 + j] = (byte)(context[i] >> (8 * j));
+            }
+
+            // reset the engine
+            EngineReset();
+            return result;
+        }
+
         private static string BytesToHex(byte[] a, int len)
         {
             string temp = BitConverter.ToString(a);
@@ -300,8 +313,12 @@ namespace System.Security.Cryptography
             StringBuilder sb = new StringBuilder((len - 2) / 2); // This should be the final size
 
             for (int i = 0; i < temp.Length; i++)
+            {
                 if (temp[i] != '-')
+                {
                     sb.Append(temp[i]);
+                }
+            }
 
             return sb.ToString();
         }
@@ -323,10 +340,12 @@ namespace System.Security.Cryptography
             // decodes 64 bytes from input block into an array of 16 32-bit
             // entities. Use A as a temp var.
             for (int i = 0; i < 16; i++)
+            {
                 X[i] = ((uint)block[offset++] & 0xFF) |
                        (((uint)block[offset++] & 0xFF) << 8) |
                        (((uint)block[offset++] & 0xFF) << 16) |
                        (((uint)block[offset++] & 0xFF) << 24);
+            }
 
 
             uint A = context[0];
@@ -396,19 +415,19 @@ namespace System.Security.Cryptography
         private uint FF(uint a, uint b, uint c, uint d, uint x, int s)
         {
             uint t = a + ((b & c) | (~b & d)) + x;
-            return t << s | t >> (32 - s);
+            return (t << s) | (t >> (32 - s));
         }
 
         private uint GG(uint a, uint b, uint c, uint d, uint x, int s)
         {
             uint t = a + ((b & (c | d)) | (c & d)) + x + 0x5A827999;
-            return t << s | t >> (32 - s);
+            return (t << s) | (t >> (32 - s));
         }
 
         private uint HH(uint a, uint b, uint c, uint d, uint x, int s)
         {
             uint t = a + (b ^ c ^ d) + x + 0x6ED9EBA1;
-            return t << s | t >> (32 - s);
+            return (t << s) | (t >> (32 - s));
         }
     }
 

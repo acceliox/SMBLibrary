@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 16;
         public const int DeclaredSize = 17;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         public ushort Reserved;
         public uint Count;
         public uint Remaining;
@@ -43,6 +42,8 @@ namespace SMBLibrary.SMB2
             WriteChannelInfo = ByteReader.ReadBytes(buffer, offset + WriteChannelInfoOffset, WriteChannelInfoLength);
         }
 
+        public override int CommandLength => FixedSize + WriteChannelInfo.Length;
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             WriteChannelInfoOffset = 0;
@@ -51,6 +52,7 @@ namespace SMBLibrary.SMB2
             {
                 WriteChannelInfoOffset = SMB2Header.Length + FixedSize;
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             LittleEndianWriter.WriteUInt16(buffer, offset + 2, Reserved);
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, Count);
@@ -60,14 +62,6 @@ namespace SMBLibrary.SMB2
             if (WriteChannelInfo.Length > 0)
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedSize, WriteChannelInfo);
-            }
-        }
-
-        public override int CommandLength
-        {
-            get 
-            {
-                return FixedSize + WriteChannelInfo.Length;
             }
         }
     }

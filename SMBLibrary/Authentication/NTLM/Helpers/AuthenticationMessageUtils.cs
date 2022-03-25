@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.Text;
 using Utilities;
 
@@ -16,13 +15,13 @@ namespace SMBLibrary.Authentication.NTLM
         public static string ReadAnsiStringBufferPointer(byte[] buffer, int offset)
         {
             byte[] bytes = ReadBufferPointer(buffer, offset);
-            return ASCIIEncoding.Default.GetString(bytes);
+            return Encoding.Default.GetString(bytes);
         }
 
         public static string ReadUnicodeStringBufferPointer(byte[] buffer, int offset)
         {
             byte[] bytes = ReadBufferPointer(buffer, offset);
-            return UnicodeEncoding.Unicode.GetString(bytes);
+            return Encoding.Unicode.GetString(bytes);
         }
 
         public static byte[] ReadBufferPointer(byte[] buffer, int offset)
@@ -35,10 +34,8 @@ namespace SMBLibrary.Authentication.NTLM
             {
                 return new byte[0];
             }
-            else
-            {
-                return ByteReader.ReadBytes(buffer, (int)bufferOffset, length);
-            }
+
+            return ByteReader.ReadBytes(buffer, (int)bufferOffset, length);
         }
 
         public static void WriteBufferPointer(byte[] buffer, int offset, ushort bufferLength, uint bufferOffset)
@@ -54,8 +51,9 @@ namespace SMBLibrary.Authentication.NTLM
             {
                 return false;
             }
+
             string signature = ByteReader.ReadAnsiString(messageBytes, 0, 8);
-            return (signature == AuthenticateMessage.ValidSignature);
+            return signature == AuthenticateMessage.ValidSignature;
         }
 
         /// <summary>
@@ -73,8 +71,10 @@ namespace SMBLibrary.Authentication.NTLM
                     // Challenge not present, cannot be NTLM v1 Extended Session Security
                     return false;
                 }
+
                 return ByteUtils.AreByteArraysEqual(ByteReader.ReadBytes(lmResponse, 8, 16), new byte[16]);
             }
+
             return false;
         }
 
@@ -83,9 +83,9 @@ namespace SMBLibrary.Authentication.NTLM
         /// </remarks>
         public static bool IsNTLMv2NTResponse(byte[] ntResponse)
         {
-            return (ntResponse.Length >= 16 + NTLMv2ClientChallenge.MinimumLength &&
-                    ntResponse[16] == NTLMv2ClientChallenge.StructureVersion &&
-                    ntResponse[17] == NTLMv2ClientChallenge.StructureVersion);
+            return ntResponse.Length >= 16 + NTLMv2ClientChallenge.MinimumLength &&
+                   ntResponse[16] == NTLMv2ClientChallenge.StructureVersion &&
+                   ntResponse[17] == NTLMv2ClientChallenge.StructureVersion;
         }
 
         public static MessageTypeName GetMessageType(byte[] messageBytes)

@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using SMBLibrary.RPC;
 
 namespace SMBLibrary.Services
@@ -35,6 +33,8 @@ namespace SMBLibrary.Services
             Read(parser);
         }
 
+        public override uint Level => 101;
+
         public override void Read(NDRParser parser)
         {
             parser.BeginStructure();
@@ -57,14 +57,6 @@ namespace SMBLibrary.Services
             writer.WriteUInt32(VerMinor);
             writer.WriteEmbeddedStructureFullPointer(LanRoot);
             writer.EndStructure();
-        }
-
-        public override uint Level
-        {
-            get
-            {
-                return 101;
-            }
         }
     }
 }

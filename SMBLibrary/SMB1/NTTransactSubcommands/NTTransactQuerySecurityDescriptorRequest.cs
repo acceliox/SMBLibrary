@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,6 +15,7 @@ namespace SMBLibrary.SMB1
     public class NTTransactQuerySecurityDescriptorRequest : NTTransactSubcommand
     {
         public const int ParametersLength = 8;
+
         // Parameters:
         public ushort FID;
         public ushort Reserved;
@@ -33,6 +32,8 @@ namespace SMBLibrary.SMB1
             SecurityInfoFields = (SecurityInformation)LittleEndianConverter.ToUInt32(parameters, 4);
         }
 
+        public override NTTransactSubcommandName SubcommandName => NTTransactSubcommandName.NT_TRANSACT_QUERY_SECURITY_DESC;
+
         public override byte[] GetParameters(bool isUnicode)
         {
             byte[] parameters = new byte[ParametersLength];
@@ -40,14 +41,6 @@ namespace SMBLibrary.SMB1
             LittleEndianWriter.WriteUInt16(parameters, 2, Reserved);
             LittleEndianWriter.WriteUInt32(parameters, 4, (uint)SecurityInfoFields);
             return parameters;
-        }
-
-        public override NTTransactSubcommandName SubcommandName
-        {
-            get
-            {
-                return NTTransactSubcommandName.NT_TRANSACT_QUERY_SECURITY_DESC;
-            }
         }
     }
 }

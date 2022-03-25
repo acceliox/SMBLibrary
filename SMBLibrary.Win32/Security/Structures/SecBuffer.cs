@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace SMBLibrary.Win32.Security
@@ -20,7 +20,7 @@ namespace SMBLibrary.Win32.Security
     [StructLayout(LayoutKind.Sequential)]
     public struct SecBuffer : IDisposable
     {
-        public uint cbBuffer;    // Specifies the size, in bytes, of the buffer pointed to by the pvBuffer member.
+        public uint cbBuffer; // Specifies the size, in bytes, of the buffer pointed to by the pvBuffer member.
         public uint BufferType;
         public IntPtr pvBuffer; // A pointer to a buffer.
 
@@ -47,15 +47,6 @@ namespace SMBLibrary.Win32.Security
             Marshal.Copy(secBufferBytes, 0, pvBuffer, secBufferBytes.Length);
         }
 
-        public void Dispose()
-        {
-            if (pvBuffer != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(pvBuffer);
-                pvBuffer = IntPtr.Zero;
-            }
-        }
-
         public byte[] GetBufferBytes()
         {
             byte[] buffer = null;
@@ -64,7 +55,17 @@ namespace SMBLibrary.Win32.Security
                 buffer = new byte[cbBuffer];
                 Marshal.Copy(pvBuffer, buffer, 0, (int)cbBuffer);
             }
+
             return buffer;
+        }
+
+        public void Dispose()
+        {
+            if (pvBuffer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(pvBuffer);
+                pvBuffer = IntPtr.Zero;
+            }
         }
     }
 }

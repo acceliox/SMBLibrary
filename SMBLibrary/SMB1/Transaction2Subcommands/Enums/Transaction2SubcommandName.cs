@@ -1,4 +1,3 @@
-
 namespace SMBLibrary.SMB1
 {
     public enum Transaction2SubcommandName : ushort
@@ -13,6 +12,6 @@ namespace SMBLibrary.SMB1
         TRANS2_QUERY_FILE_INFORMATION = 0x0007,
         TRANS2_SET_FILE_INFORMATION = 0x0008,
         TRANS2_CREATE_DIRECTORY = 0x000D,
-        TRANS2_GET_DFS_REFERRAL = 0x0010,
+        TRANS2_GET_DFS_REFERRAL = 0x0010
     }
 }

@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -22,7 +21,7 @@ namespace SMBLibrary.Server.SMB2
             ISMBShare share;
             ShareType shareType;
             ShareFlags shareFlags;
-            if (String.Equals(shareName, NamedPipeShare.NamedPipeShareName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(shareName, NamedPipeShare.NamedPipeShareName, StringComparison.OrdinalIgnoreCase))
             {
                 share = services;
                 shareType = ShareType.Pipe;
@@ -50,6 +49,7 @@ namespace SMBLibrary.Server.SMB2
             {
                 return new ErrorResponse(request.CommandName, NTStatus.STATUS_INSUFF_SERVER_RESOURCES);
             }
+
             state.LogToServer(Severity.Information, "Tree Connect: User '{0}' connected to '{1}' (SessionID: {2}, TreeID: {3})", session.UserName, share.Name, request.Header.SessionID, treeID.Value);
             response.Header.TreeID = treeID.Value;
             response.ShareType = shareType;
@@ -58,8 +58,16 @@ namespace SMBLibrary.Server.SMB2
                                                   FileAccessMask.FILE_READ_EA | FileAccessMask.FILE_WRITE_EA |
                                                   FileAccessMask.FILE_EXECUTE |
                                                   FileAccessMask.FILE_READ_ATTRIBUTES | FileAccessMask.FILE_WRITE_ATTRIBUTES) |
-                                                  AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
+                                     AccessMask.DELETE | AccessMask.READ_CONTROL | AccessMask.WRITE_DAC | AccessMask.WRITE_OWNER | AccessMask.SYNCHRONIZE;
             return response;
+        }
+
+        internal static SMB2Command GetTreeDisconnectResponse(TreeDisconnectRequest request, ISMBShare share, SMB2ConnectionState state)
+        {
+            SMB2Session session = state.GetSession(request.Header.SessionID);
+            session.DisconnectTree(request.Header.TreeID);
+            state.LogToServer(Severity.Information, "Tree Disconnect: User '{0}' disconnected from '{1}' (SessionID: {2}, TreeID: {3})", session.UserName, share.Name, request.Header.SessionID, request.Header.TreeID);
+            return new TreeDisconnectResponse();
         }
 
         private static ShareFlags GetShareCachingFlags(CachingPolicy cachingPolicy)
@@ -75,14 +83,6 @@ namespace SMBLibrary.Server.SMB2
                 default:
                     return ShareFlags.NoCaching;
             }
-        }
-
-        internal static SMB2Command GetTreeDisconnectResponse(TreeDisconnectRequest request, ISMBShare share, SMB2ConnectionState state)
-        {
-            SMB2Session session = state.GetSession(request.Header.SessionID);
-            session.DisconnectTree(request.Header.TreeID);
-            state.LogToServer(Severity.Information, "Tree Disconnect: User '{0}' disconnected from '{1}' (SessionID: {2}, TreeID: {3})", session.UserName, share.Name, request.Header.SessionID, request.Header.TreeID);
-            return new TreeDisconnectResponse();
         }
     }
 }

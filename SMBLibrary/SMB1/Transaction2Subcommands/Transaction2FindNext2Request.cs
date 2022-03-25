@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -22,16 +20,18 @@ namespace SMBLibrary.SMB1
         public FindInformationLevel InformationLevel;
         public uint ResumeKey;
         public FindFlags Flags;
+
         public string FileName; // SMB_STRING
+
         // Data:
         public ExtendedAttributeNameList GetExtendedAttributeList; // Used with FindInformationLevel.SMB_INFO_QUERY_EAS_FROM_LIST
 
-        public Transaction2FindNext2Request() : base()
+        public Transaction2FindNext2Request()
         {
             GetExtendedAttributeList = new ExtendedAttributeNameList();
         }
 
-        public Transaction2FindNext2Request(byte[] parameters, byte[] data, bool isUnicode) : base()
+        public Transaction2FindNext2Request(byte[] parameters, byte[] data, bool isUnicode)
         {
             SID = LittleEndianConverter.ToUInt16(parameters, 0);
             SearchCount = LittleEndianConverter.ToUInt16(parameters, 2);
@@ -45,6 +45,8 @@ namespace SMBLibrary.SMB1
                 GetExtendedAttributeList = new ExtendedAttributeNameList(data, 0);
             }
         }
+
+        public override Transaction2SubcommandName SubcommandName => Transaction2SubcommandName.TRANS2_FIND_NEXT2;
 
         public override byte[] GetSetup()
         {
@@ -80,18 +82,8 @@ namespace SMBLibrary.SMB1
             {
                 return GetExtendedAttributeList.GetBytes();
             }
-            else
-            {
-                return new byte[0];
-            }
-        }
 
-        public override Transaction2SubcommandName SubcommandName
-        {
-            get
-            {
-                return Transaction2SubcommandName.TRANS2_FIND_NEXT2;
-            }
+            return new byte[0];
         }
     }
 }

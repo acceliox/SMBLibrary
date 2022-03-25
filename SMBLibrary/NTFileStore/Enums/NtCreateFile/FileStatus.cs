@@ -1,4 +1,3 @@
-
 namespace SMBLibrary
 {
     public enum FileStatus : uint
@@ -8,6 +7,6 @@ namespace SMBLibrary
         FILE_CREATED = 0x00000002,
         FILE_OVERWRITTEN = 0x00000003,
         FILE_EXISTS = 0x00000004,
-        FILE_DOES_NOT_EXIST = 0x00000005,
+        FILE_DOES_NOT_EXIST = 0x00000005
     }
 }

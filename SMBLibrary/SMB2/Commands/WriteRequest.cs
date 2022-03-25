@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 48;
         public const int DeclaredSize = 49;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         private ushort DataOffset;
         private uint DataLength;
         public ulong Offset;
@@ -52,6 +51,8 @@ namespace SMBLibrary.SMB2
             WriteChannelInfo = ByteReader.ReadBytes(buffer, offset + WriteChannelInfoOffset, WriteChannelInfoLength);
         }
 
+        public override int CommandLength => FixedSize + Data.Length + WriteChannelInfo.Length;
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             // Note: DataLength is UInt32 while WriteChannelInfoOffset is UInt16
@@ -62,12 +63,14 @@ namespace SMBLibrary.SMB2
             {
                 WriteChannelInfoOffset = SMB2Header.Length + FixedSize;
             }
+
             DataOffset = 0;
             DataLength = (uint)Data.Length;
             if (Data.Length > 0)
             {
                 DataOffset = (ushort)(SMB2Header.Length + FixedSize + WriteChannelInfo.Length);
             }
+
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
             LittleEndianWriter.WriteUInt16(buffer, offset + 2, DataOffset);
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, DataLength);
@@ -82,17 +85,10 @@ namespace SMBLibrary.SMB2
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedSize, WriteChannelInfo);
             }
+
             if (Data.Length > 0)
             {
                 ByteWriter.WriteBytes(buffer, offset + FixedSize + WriteChannelInfo.Length, Data);
-            }
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                return FixedSize + Data.Length + WriteChannelInfo.Length;
             }
         }
     }

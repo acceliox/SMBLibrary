@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.IO;
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -17,7 +16,7 @@ namespace SMBLibrary.Server.SMB2
         internal static SMB2Command GetIOCtlResponse(IOCtlRequest request, ISMBShare share, SMB2ConnectionState state)
         {
             SMB2Session session = state.GetSession(request.Header.SessionID);
-            string ctlCode = Enum.IsDefined(typeof(IoControlCode), request.CtlCode) ? ((IoControlCode)request.CtlCode).ToString() : ("0x" + request.CtlCode.ToString("X8"));
+            string ctlCode = Enum.IsDefined(typeof(IoControlCode), request.CtlCode) ? ((IoControlCode)request.CtlCode).ToString() : "0x" + request.CtlCode.ToString("X8");
             if (!request.IsFSCtl)
             {
                 // [MS-SMB2] If the Flags field of the request is not SMB2_0_IOCTL_IS_FSCTL the server MUST fail the request with STATUS_NOT_SUPPORTED.
@@ -45,6 +44,7 @@ namespace SMBLibrary.Server.SMB2
                     state.LogToServer(Severity.Verbose, "IOCTL failed. CTL Code: {0}. FileId MUST be 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", ctlCode);
                     return new ErrorResponse(request.CommandName, NTStatus.STATUS_INVALID_PARAMETER);
                 }
+
                 handle = null;
             }
             else
@@ -55,6 +55,7 @@ namespace SMBLibrary.Server.SMB2
                     state.LogToServer(Severity.Verbose, "IOCTL failed. CTL Code: {0}. Invalid FileId. (SessionID: {1}, TreeID: {2}, FileId: {3})", ctlCode, request.Header.SessionID, request.Header.TreeID, request.FileId.Volatile);
                     return new ErrorResponse(request.CommandName, NTStatus.STATUS_FILE_CLOSED);
                 }
+
                 handle = openFile.Handle;
             }
 

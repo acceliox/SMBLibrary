@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary
@@ -34,20 +33,14 @@ namespace SMBLibrary
             Sid = new SID(buffer, offset + 8);
         }
 
+        public override int Length => FixedLength + Sid.Length;
+
         public override void WriteBytes(byte[] buffer, ref int offset)
         {
-            Header.AceSize = (ushort)this.Length;
+            Header.AceSize = (ushort)Length;
             Header.WriteBytes(buffer, ref offset);
             LittleEndianWriter.WriteUInt32(buffer, ref offset, (uint)Mask);
             Sid.WriteBytes(buffer, ref offset);
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength + Sid.Length;
-            }
         }
     }
 }

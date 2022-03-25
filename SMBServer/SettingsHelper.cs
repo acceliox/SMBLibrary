@@ -4,7 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -42,6 +42,7 @@ namespace SMBServer
                 string password = userNode.Attributes["Password"].Value;
                 users.Add(accountName, password);
             }
+
             return users;
         }
 
@@ -63,6 +64,7 @@ namespace SMBServer
                 ShareSettings share = new ShareSettings(shareName, sharePath, readAccess, writeAccess);
                 shares.Add(share);
             }
+
             return shares;
         }
 
@@ -82,6 +84,7 @@ namespace SMBServer
                     result.AddRange(splitted);
                 }
             }
+
             return result;
         }
     }

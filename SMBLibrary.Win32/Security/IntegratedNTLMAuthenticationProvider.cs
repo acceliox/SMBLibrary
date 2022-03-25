@@ -4,32 +4,55 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
 using System.Runtime.InteropServices;
-using Utilities;
 using SMBLibrary.Authentication.GSSAPI;
 using SMBLibrary.Authentication.NTLM;
-using Microsoft.Win32;
 
 namespace SMBLibrary.Win32.Security
 {
     public class IntegratedNTLMAuthenticationProvider : NTLMAuthenticationProviderBase
     {
-        public class AuthContext
-        {
-            public SecHandle ServerContext;
-            public string DomainName;
-            public string UserName;
-            public string WorkStation;
-            public string OSVersion;
-            public bool IsGuest;
+        /// <summary>
+        /// We immitate Windows, Guest logins are disabled in any of these cases:
+        /// 1. The Guest account is disabled.
+        /// 2. The Guest account has password set.
+        /// 3. The Guest account is listed in the "deny access to this computer from the network" list.
+        /// </summary>
+        private bool EnableGuestLogin => LoginAPI.ValidateUserPassword("Guest", string.Empty, LogonType.Network);
 
-            public AuthContext(SecHandle serverContext)
+        public static bool IsUserExists(string userName)
+        {
+            return NetworkAPI.IsUserExists(userName);
+        }
+
+        public static NTStatus ToNTStatus(Win32Error errorCode)
+        {
+            switch (errorCode)
             {
-                ServerContext = serverContext;
+                case Win32Error.ERROR_NO_TOKEN:
+                    return NTStatus.SEC_E_INVALID_TOKEN;
+                case Win32Error.ERROR_ACCOUNT_RESTRICTION:
+                    return NTStatus.STATUS_ACCOUNT_RESTRICTION;
+                case Win32Error.ERROR_INVALID_LOGON_HOURS:
+                    return NTStatus.STATUS_INVALID_LOGON_HOURS;
+                case Win32Error.ERROR_INVALID_WORKSTATION:
+                    return NTStatus.STATUS_INVALID_WORKSTATION;
+                case Win32Error.ERROR_PASSWORD_EXPIRED:
+                    return NTStatus.STATUS_PASSWORD_EXPIRED;
+                case Win32Error.ERROR_ACCOUNT_DISABLED:
+                    return NTStatus.STATUS_ACCOUNT_DISABLED;
+                case Win32Error.ERROR_LOGON_TYPE_NOT_GRANTED:
+                    return NTStatus.STATUS_LOGON_TYPE_NOT_GRANTED;
+                case Win32Error.ERROR_ACCOUNT_EXPIRED:
+                    return NTStatus.STATUS_ACCOUNT_EXPIRED;
+                case Win32Error.ERROR_PASSWORD_MUST_CHANGE:
+                    return NTStatus.STATUS_PASSWORD_MUST_CHANGE;
+                case Win32Error.ERROR_ACCOUNT_LOCKED_OUT:
+                    return NTStatus.STATUS_ACCOUNT_LOCKED_OUT;
+                default:
+                    return NTStatus.STATUS_LOGON_FAILURE;
             }
         }
 
@@ -64,7 +87,7 @@ namespace SMBLibrary.Win32.Security
             {
                 message = new AuthenticateMessage(authenticateMessageBytes);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return NTStatus.SEC_E_INVALID_TOKEN;
             }
@@ -91,15 +114,13 @@ namespace SMBLibrary.Win32.Security
             if ((message.NegotiateFlags & NegotiateFlags.Anonymous) > 0 ||
                 !IsUserExists(message.UserName))
             {
-                if (this.EnableGuestLogin)
+                if (EnableGuestLogin)
                 {
                     authContext.IsGuest = true;
                     return NTStatus.STATUS_SUCCESS;
                 }
-                else
-                {
-                    return NTStatus.STATUS_LOGON_FAILURE;
-                }
+
+                return NTStatus.STATUS_LOGON_FAILURE;
             }
 
             bool success;
@@ -117,26 +138,22 @@ namespace SMBLibrary.Win32.Security
             {
                 return NTStatus.STATUS_SUCCESS;
             }
-            else
+
+            Win32Error result = (Win32Error)Marshal.GetLastWin32Error();
+            // Windows will permit fallback when these conditions are met:
+            // 1. The guest user account is enabled.
+            // 2. The guest user account does not have a password set.
+            // 3. The specified account does not exist.
+            //    OR:
+            //    The password is correct but 'limitblankpassworduse' is set to 1 (logon over a network is disabled for accounts without a password).
+            bool allowFallback = result == Win32Error.ERROR_ACCOUNT_RESTRICTION;
+            if (allowFallback && EnableGuestLogin)
             {
-                Win32Error result = (Win32Error)Marshal.GetLastWin32Error();
-                // Windows will permit fallback when these conditions are met:
-                // 1. The guest user account is enabled.
-                // 2. The guest user account does not have a password set.
-                // 3. The specified account does not exist.
-                //    OR:
-                //    The password is correct but 'limitblankpassworduse' is set to 1 (logon over a network is disabled for accounts without a password).
-                bool allowFallback = (result == Win32Error.ERROR_ACCOUNT_RESTRICTION);
-                if (allowFallback && this.EnableGuestLogin)
-                {
-                    authContext.IsGuest = true;
-                    return NTStatus.STATUS_SUCCESS;
-                }
-                else
-                {
-                    return ToNTStatus(result);
-                }
+                authContext.IsGuest = true;
+                return NTStatus.STATUS_SUCCESS;
             }
+
+            return ToNTStatus(result);
         }
 
         public override bool DeleteSecurityContext(ref object context)
@@ -149,11 +166,12 @@ namespace SMBLibrary.Win32.Security
 
             SecHandle handle = ((AuthContext)context).ServerContext;
             uint result = SSPIHelper.DeleteSecurityContext(ref handle);
-            bool success = (result == 0); // SEC_E_OK
+            bool success = result == 0; // SEC_E_OK
             if (success)
             {
                 context = null;
             }
+
             return success;
         }
 
@@ -184,51 +202,18 @@ namespace SMBLibrary.Win32.Security
             return null;
         }
 
-        /// <summary>
-        /// We immitate Windows, Guest logins are disabled in any of these cases:
-        /// 1. The Guest account is disabled.
-        /// 2. The Guest account has password set.
-        /// 3. The Guest account is listed in the "deny access to this computer from the network" list.
-        /// </summary>
-        private bool EnableGuestLogin
+        public class AuthContext
         {
-            get
-            {
-                return LoginAPI.ValidateUserPassword("Guest", String.Empty, LogonType.Network);
-            }
-        }
+            public SecHandle ServerContext;
+            public string DomainName;
+            public string UserName;
+            public string WorkStation;
+            public string OSVersion;
+            public bool IsGuest;
 
-        public static bool IsUserExists(string userName)
-        {
-            return NetworkAPI.IsUserExists(userName);
-        }
-
-        public static NTStatus ToNTStatus(Win32Error errorCode)
-        {
-            switch (errorCode)
+            public AuthContext(SecHandle serverContext)
             {
-                case Win32Error.ERROR_NO_TOKEN:
-                    return NTStatus.SEC_E_INVALID_TOKEN;
-                case Win32Error.ERROR_ACCOUNT_RESTRICTION:
-                    return NTStatus.STATUS_ACCOUNT_RESTRICTION;
-                case Win32Error.ERROR_INVALID_LOGON_HOURS:
-                    return NTStatus.STATUS_INVALID_LOGON_HOURS;
-                case Win32Error.ERROR_INVALID_WORKSTATION:
-                    return NTStatus.STATUS_INVALID_WORKSTATION;
-                case Win32Error.ERROR_PASSWORD_EXPIRED:
-                    return NTStatus.STATUS_PASSWORD_EXPIRED;
-                case Win32Error.ERROR_ACCOUNT_DISABLED:
-                    return NTStatus.STATUS_ACCOUNT_DISABLED;
-                case Win32Error.ERROR_LOGON_TYPE_NOT_GRANTED:
-                    return NTStatus.STATUS_LOGON_TYPE_NOT_GRANTED;
-                case Win32Error.ERROR_ACCOUNT_EXPIRED:
-                    return NTStatus.STATUS_ACCOUNT_EXPIRED;
-                case Win32Error.ERROR_PASSWORD_MUST_CHANGE:
-                    return NTStatus.STATUS_PASSWORD_MUST_CHANGE;
-                case Win32Error.ERROR_ACCOUNT_LOCKED_OUT:
-                    return NTStatus.STATUS_ACCOUNT_LOCKED_OUT;
-                default:
-                    return NTStatus.STATUS_LOGON_FAILURE;
+                ServerContext = serverContext;
             }
         }
     }

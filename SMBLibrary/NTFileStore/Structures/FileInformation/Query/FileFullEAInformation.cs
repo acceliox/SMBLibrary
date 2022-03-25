@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using System.Text;
-using Utilities;
 
 namespace SMBLibrary
 {
@@ -16,7 +14,7 @@ namespace SMBLibrary
     /// </summary>
     public class FileFullEAInformation : FileInformation
     {
-        List<FileFullEAEntry> m_entries = new List<FileFullEAEntry>();
+        private readonly List<FileFullEAEntry> m_entries = new List<FileFullEAEntry>();
 
         public FileFullEAInformation()
         {
@@ -27,26 +25,9 @@ namespace SMBLibrary
             m_entries = ReadList(buffer, offset);
         }
 
-        public override void WriteBytes(byte[] buffer, int offset)
-        {
-            WriteList(buffer, offset, m_entries);
-        }
+        public List<FileFullEAEntry> Entries => m_entries;
 
-        public List<FileFullEAEntry> Entries
-        {
-            get
-            {
-                return m_entries;
-            }
-        }
-
-        public override FileInformationClass FileInformationClass
-        {
-            get
-            {
-                return FileInformationClass.FileFullEaInformation;
-            }
-        }
+        public override FileInformationClass FileInformationClass => FileInformationClass.FileFullEaInformation;
 
         public override int Length
         {
@@ -59,10 +40,11 @@ namespace SMBLibrary
                     if (index < m_entries.Count - 1)
                     {
                         // When multiple FILE_FULL_EA_INFORMATION data elements are present in the buffer, each MUST be aligned on a 4-byte boundary
-                        int padding = (4 - (length % 4)) % 4;
+                        int padding = (4 - length % 4) % 4;
                         length += padding;
                     }
                 }
+
                 return length;
             }
         }
@@ -78,9 +60,9 @@ namespace SMBLibrary
                     entry = new FileFullEAEntry(buffer, offset);
                     result.Add(entry);
                     offset += (int)entry.NextEntryOffset;
-                }
-                while (entry.NextEntryOffset != 0);
+                } while (entry.NextEntryOffset != 0);
             }
+
             return result;
         }
 
@@ -95,10 +77,15 @@ namespace SMBLibrary
                 if (index < list.Count - 1)
                 {
                     // When multiple FILE_FULL_EA_INFORMATION data elements are present in the buffer, each MUST be aligned on a 4-byte boundary
-                    int padding = (4 - (entryLength % 4)) % 4;
+                    int padding = (4 - entryLength % 4) % 4;
                     offset += padding;
                 }
             }
+        }
+
+        public override void WriteBytes(byte[] buffer, int offset)
+        {
+            WriteList(buffer, offset, m_entries);
         }
     }
 }

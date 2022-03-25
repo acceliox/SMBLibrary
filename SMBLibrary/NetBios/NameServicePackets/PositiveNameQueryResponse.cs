@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.NetBios
@@ -20,7 +19,9 @@ namespace SMBLibrary.NetBios
         public const int EntryLength = 6;
 
         public NameServicePacketHeader Header;
+
         public ResourceRecord Resource;
+
         // Resource Data:
         public KeyValuePairList<byte[], NameFlags> Addresses = new KeyValuePairList<byte[], NameFlags>();
 
@@ -65,6 +66,7 @@ namespace SMBLibrary.NetBios
                 BigEndianWriter.WriteUInt16(data, ref offset, (ushort)entry.Value);
                 ByteWriter.WriteBytes(data, ref offset, entry.Key, 4);
             }
+
             return data;
         }
     }

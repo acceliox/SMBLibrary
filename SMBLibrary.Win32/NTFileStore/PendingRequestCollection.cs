@@ -4,15 +4,15 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SMBLibrary.Win32
 {
     internal class PendingRequestCollection
     {
-        private Dictionary<IntPtr, List<PendingRequest>> m_handleToNotifyChangeRequests = new Dictionary<IntPtr, List<PendingRequest>>();
+        private readonly Dictionary<IntPtr, List<PendingRequest>> m_handleToNotifyChangeRequests = new Dictionary<IntPtr, List<PendingRequest>>();
 
         public void Add(PendingRequest request)
         {
@@ -61,11 +61,12 @@ namespace SMBLibrary.Win32
         public List<PendingRequest> GetRequestsByHandle(IntPtr handle)
         {
             List<PendingRequest> pendingRequests;
-            bool containsKey = m_handleToNotifyChangeRequests.TryGetValue((IntPtr)handle, out pendingRequests);
+            bool containsKey = m_handleToNotifyChangeRequests.TryGetValue(handle, out pendingRequests);
             if (containsKey)
             {
                 return new List<PendingRequest>(pendingRequests);
             }
+
             return new List<PendingRequest>();
         }
     }

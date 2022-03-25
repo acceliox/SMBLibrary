@@ -4,14 +4,12 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using SMBLibrary.NetBios;
-using Utilities;
 
 namespace SMBLibrary.Server
 {
@@ -23,8 +21,8 @@ namespace SMBLibrary.Server
         public static readonly int NetBiosNameServicePort = 137;
         public static readonly string WorkgroupName = "WORKGROUP";
 
-        private IPAddress m_serverAddress;
-        private IPAddress m_broadcastAddress;
+        private readonly IPAddress m_serverAddress;
+        private readonly IPAddress m_broadcastAddress;
         private UdpClient m_client;
         private bool m_listening;
 
@@ -35,7 +33,7 @@ namespace SMBLibrary.Server
                 throw new ArgumentException("NetBIOS name service can only supply IPv4 addresses");
             }
 
-            if (IPAddress.Equals(serverAddress, IPAddress.Any))
+            if (Equals(serverAddress, IPAddress.Any))
             {
                 // When registering a NetBIOS name, we must supply the client with a usable IPAddress.
                 throw new ArgumentException("NetBIOS name service requires an IPAddress that is associated with a specific network interface");
@@ -54,7 +52,7 @@ namespace SMBLibrary.Server
                 m_client = new UdpClient(new IPEndPoint(m_serverAddress, NetBiosNameServicePort));
                 m_client.BeginReceive(ReceiveCallback, null);
 
-                ThreadStart threadStart = new ThreadStart(RegisterNetBIOSName);
+                ThreadStart threadStart = RegisterNetBIOSName;
                 Thread thread = new Thread(threadStart);
                 thread.Start();
             }
@@ -64,6 +62,20 @@ namespace SMBLibrary.Server
         {
             m_listening = false;
             m_client.Close();
+        }
+
+        public static IPAddress GetBroadcastAddress(IPAddress address, IPAddress subnetMask)
+        {
+            byte[] ipAdressBytes = address.GetAddressBytes();
+            byte[] subnetMaskBytes = subnetMask.GetAddressBytes();
+
+            byte[] broadcastAddress = new byte[ipAdressBytes.Length];
+            for (int i = 0; i < broadcastAddress.Length; i++)
+            {
+                broadcastAddress[i] = (byte)(ipAdressBytes[i] | (subnetMaskBytes[i] ^ 255));
+            }
+
+            return new IPAddress(broadcastAddress);
         }
 
         private void ReceiveCallback(IAsyncResult result)
@@ -102,6 +114,7 @@ namespace SMBLibrary.Server
                     catch
                     {
                     }
+
                     if (request != null)
                     {
                         if (request.Question.Type == NameRecordType.NB)
@@ -109,9 +122,9 @@ namespace SMBLibrary.Server
                             string name = NetBiosUtils.GetNameFromMSNetBiosName(request.Question.Name);
                             NetBiosSuffix suffix = (NetBiosSuffix)request.Question.Name[15];
 
-                            bool nameMatch = String.Equals(name, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
-                            
-                            if (nameMatch && ((suffix == NetBiosSuffix.WorkstationService) || (suffix == NetBiosSuffix.FileServiceService)))
+                            bool nameMatch = string.Equals(name, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+
+                            if (nameMatch && (suffix == NetBiosSuffix.WorkstationService || suffix == NetBiosSuffix.FileServiceService))
                             {
                                 PositiveNameQueryResponse response = new PositiveNameQueryResponse();
                                 response.Header.TransactionID = request.Header.TransactionID;
@@ -189,22 +202,9 @@ namespace SMBLibrary.Server
 
                 if (index < 3)
                 {
-                    System.Threading.Thread.Sleep(250);
+                    Thread.Sleep(250);
                 }
             }
-        }
-
-        public static IPAddress GetBroadcastAddress(IPAddress address, IPAddress subnetMask)
-        {
-            byte[] ipAdressBytes = address.GetAddressBytes();
-            byte[] subnetMaskBytes = subnetMask.GetAddressBytes();
-
-            byte[] broadcastAddress = new byte[ipAdressBytes.Length];
-            for (int i = 0; i < broadcastAddress.Length; i++)
-            {
-                broadcastAddress[i] = (byte)(ipAdressBytes[i] | (subnetMaskBytes[i] ^ 255));
-            }
-            return new IPAddress(broadcastAddress);
         }
     }
 }

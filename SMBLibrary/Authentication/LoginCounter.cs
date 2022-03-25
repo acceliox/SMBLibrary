@@ -4,23 +4,17 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SMBLibrary.Authentication
 {
     public class LoginCounter
     {
-        public class LoginEntry
-        {
-            public DateTime LoginWindowStartDT;
-            public int NumberOfAttempts;
-        }
-
-        private int m_maxLoginAttemptsInWindow;
-        private TimeSpan m_loginWindowDuration;
-        private Dictionary<string, LoginEntry> m_loginEntries = new Dictionary<string, LoginEntry>();
+        private readonly int m_maxLoginAttemptsInWindow;
+        private readonly TimeSpan m_loginWindowDuration;
+        private readonly Dictionary<string, LoginEntry> m_loginEntries = new Dictionary<string, LoginEntry>();
 
         public LoginCounter(int maxLoginAttemptsInWindow, TimeSpan loginWindowDuration)
         {
@@ -55,6 +49,7 @@ namespace SMBLibrary.Authentication
                         {
                             return true;
                         }
+
                         entry.LoginWindowStartDT = DateTime.UtcNow;
                         entry.NumberOfAttempts = 1;
                     }
@@ -65,13 +60,21 @@ namespace SMBLibrary.Authentication
                     {
                         return true;
                     }
+
                     entry = new LoginEntry();
                     entry.LoginWindowStartDT = DateTime.UtcNow;
                     entry.NumberOfAttempts = 1;
                     m_loginEntries.Add(userID, entry);
                 }
-                return (entry.NumberOfAttempts < m_maxLoginAttemptsInWindow);
+
+                return entry.NumberOfAttempts < m_maxLoginAttemptsInWindow;
             }
+        }
+
+        public class LoginEntry
+        {
+            public DateTime LoginWindowStartDT;
+            public int NumberOfAttempts;
         }
     }
 }

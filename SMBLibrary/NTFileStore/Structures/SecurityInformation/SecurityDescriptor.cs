@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary
@@ -19,7 +18,9 @@ namespace SMBLibrary
 
         public byte Revision;
         public byte Sbz1;
+
         public SecurityDescriptorControl Control;
+
         // uint OffsetOwner;
         // uint OffsetGroup;
         // uint OffsetSacl;
@@ -61,6 +62,35 @@ namespace SMBLibrary
             if (offsetDacl != 0)
             {
                 Dacl = new ACL(buffer, (int)offsetDacl);
+            }
+        }
+
+        public int Length
+        {
+            get
+            {
+                int length = FixedLength;
+                if (OwnerSid != null)
+                {
+                    length += OwnerSid.Length;
+                }
+
+                if (GroupSid != null)
+                {
+                    length += GroupSid.Length;
+                }
+
+                if (Sacl != null)
+                {
+                    length += Sacl.Length;
+                }
+
+                if (Dacl != null)
+                {
+                    length += Dacl.Length;
+                }
+
+                return length;
             }
         }
 
@@ -125,35 +155,6 @@ namespace SMBLibrary
             }
 
             return buffer;
-        }
-
-        public int Length
-        {
-            get
-            {
-                int length = FixedLength;
-                if (OwnerSid != null)
-                {
-                    length += OwnerSid.Length;
-                }
-
-                if (GroupSid != null)
-                {
-                    length += GroupSid.Length;
-                }
-
-                if (Sacl != null)
-                {
-                    length += Sacl.Length;
-                }
-
-                if (Dacl != null)
-                {
-                    length += Dacl.Length;
-                }
-
-                return length;
-            }
         }
     }
 }

@@ -4,9 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -37,10 +36,8 @@ namespace SMBLibrary.SMB1
             {
                 return MinUTimeValue.AddSeconds(span);
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         public static DateTime? ReadNullableUTime(byte[] buffer, ref int offset)
@@ -70,6 +67,7 @@ namespace SMBLibrary.SMB1
                 TimeSpan timespan = time.Value - MinUTimeValue;
                 span = (uint)timespan.TotalSeconds;
             }
+
             LittleEndianWriter.WriteUInt32(buffer, offset, span);
         }
 

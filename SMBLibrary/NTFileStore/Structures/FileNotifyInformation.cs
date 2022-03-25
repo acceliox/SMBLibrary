@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -12,17 +13,17 @@ namespace SMBLibrary
 {
     public enum FileAction : uint
     {
-        Added = 0x00000001,               // FILE_ACTION_ADDED
-        Removed = 0x00000002,             // FILE_ACTION_REMOVED
-        Modified = 0x00000003,            // FILE_ACTION_MODIFIED
-        RenamedOldName = 0x00000004,      // FILE_ACTION_RENAMED_OLD_NAME
-        RenamedNewName = 0x00000005,      // FILE_ACTION_RENAMED_NEW_NAME
-        AddedStream = 0x00000006,         // FILE_ACTION_ADDED_STREAM
-        RemovedStream = 0x00000007,       // FILE_ACTION_REMOVED_STREAM
-        ModifiedStream = 0x00000008,      // FILE_ACTION_MODIFIED_STREAM
-        RemovedByDelete = 0x00000009,     // FILE_ACTION_REMOVED_BY_DELETE
-        IDNotTunneled = 0x0000000A,       // FILE_ACTION_ID_NOT_TUNNELLED
-        TunneledIDCollision = 0x0000000B, // FILE_ACTION_TUNNELLED_ID_COLLISION
+        Added = 0x00000001, // FILE_ACTION_ADDED
+        Removed = 0x00000002, // FILE_ACTION_REMOVED
+        Modified = 0x00000003, // FILE_ACTION_MODIFIED
+        RenamedOldName = 0x00000004, // FILE_ACTION_RENAMED_OLD_NAME
+        RenamedNewName = 0x00000005, // FILE_ACTION_RENAMED_NEW_NAME
+        AddedStream = 0x00000006, // FILE_ACTION_ADDED_STREAM
+        RemovedStream = 0x00000007, // FILE_ACTION_REMOVED_STREAM
+        ModifiedStream = 0x00000008, // FILE_ACTION_MODIFIED_STREAM
+        RemovedByDelete = 0x00000009, // FILE_ACTION_REMOVED_BY_DELETE
+        IDNotTunneled = 0x0000000A, // FILE_ACTION_ID_NOT_TUNNELLED
+        TunneledIDCollision = 0x0000000B // FILE_ACTION_TUNNELLED_ID_COLLISION
     }
 
     /// <summary>
@@ -39,7 +40,7 @@ namespace SMBLibrary
 
         public FileNotifyInformation()
         {
-            FileName = String.Empty;
+            FileName = string.Empty;
         }
 
         public FileNotifyInformation(byte[] buffer, int offset)
@@ -50,6 +51,8 @@ namespace SMBLibrary
             FileName = ByteReader.ReadUTF16String(buffer, offset + 12, (int)(FileNameLength / 2));
         }
 
+        public int Length => FixedLength + FileName.Length * 2;
+
         public void WriteBytes(byte[] buffer, int offset)
         {
             FileNameLength = (uint)(FileName.Length * 2);
@@ -57,14 +60,6 @@ namespace SMBLibrary
             LittleEndianWriter.WriteUInt32(buffer, offset + 4, (uint)Action);
             LittleEndianWriter.WriteUInt32(buffer, offset + 8, FileNameLength);
             ByteWriter.WriteUTF16String(buffer, offset + 12, FileName);
-        }
-
-        public int Length
-        {
-            get
-            {
-                return FixedLength + FileName.Length * 2;
-            }
         }
 
         public static List<FileNotifyInformation> ReadList(byte[] buffer, int offset)
@@ -76,8 +71,8 @@ namespace SMBLibrary
                 entry = new FileNotifyInformation(buffer, offset);
                 result.Add(entry);
                 offset += (int)entry.NextEntryOffset;
-            }
-            while (entry.NextEntryOffset != 0);
+            } while (entry.NextEntryOffset != 0);
+
             return result;
         }
 
@@ -99,9 +94,11 @@ namespace SMBLibrary
                 {
                     entry.NextEntryOffset = 0;
                 }
+
                 entry.WriteBytes(buffer, offset);
                 offset += paddedLength;
             }
+
             return buffer;
         }
 
@@ -125,6 +122,7 @@ namespace SMBLibrary
                     result += length;
                 }
             }
+
             return result;
         }
     }

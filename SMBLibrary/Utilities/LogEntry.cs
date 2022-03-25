@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 
 namespace Utilities
@@ -16,7 +17,7 @@ namespace Utilities
         Information = 4,
         Verbose = 5,
         Debug = 6,
-        Trace = 7,
+        Trace = 7
     }
 
     public class LogEntry : EventArgs

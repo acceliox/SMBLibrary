@@ -4,11 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
+
 using System.Collections.Generic;
-using System.Text;
-using SMBLibrary.SMB1;
-using Utilities;
 
 namespace SMBLibrary.Server.SMB1
 {
@@ -39,15 +36,14 @@ namespace SMBLibrary.Server.SMB1
                     result = null;
                     return status;
                 }
+
                 status = fileStore.QueryDirectory(out result, handle, fileName, fileInformation);
                 fileStore.CloseFile(handle);
                 return status;
             }
-            else
-            {
-                result = null;
-                return NTStatus.STATUS_INVALID_PARAMETER;
-            }
+
+            result = null;
+            return NTStatus.STATUS_INVALID_PARAMETER;
         }
     }
 }

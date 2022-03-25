@@ -6,9 +6,6 @@
  * 
  * Based on: https://bitlush.com/blog/rc4-encryption-in-c-sharp
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace System.Security.Cryptography
 {
@@ -58,6 +55,7 @@ namespace System.Security.Cryptography
                 Swap(s, i, j);
                 output[index] = (byte)(data[index] ^ s[(s[i] + s[j]) & 255]);
             }
+
             return output;
         }
 

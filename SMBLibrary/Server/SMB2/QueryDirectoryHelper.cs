@@ -4,9 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using SMBLibrary.Authentication;
 using SMBLibrary.SMB2;
 using Utilities;
 
@@ -40,6 +40,7 @@ namespace SMBLibrary.Server.SMB2
                 {
                     session.RemoveOpenSearch(fileID);
                 }
+
                 List<QueryDirectoryFileInformation> entries;
                 NTStatus searchStatus = share.FileStore.QueryDirectory(out entries, openFile.Handle, request.FileName, request.FileInformationClass);
                 if (searchStatus != NTStatus.STATUS_SUCCESS)
@@ -47,6 +48,7 @@ namespace SMBLibrary.Server.SMB2
                     state.LogToServer(Severity.Verbose, "Query Directory on '{0}{1}', Searched for '{2}', NTStatus: {3}", share.Name, openFile.Path, request.FileName, searchStatus.ToString());
                     return new ErrorResponse(request.CommandName, searchStatus);
                 }
+
                 state.LogToServer(Severity.Information, "Query Directory on '{0}{1}', Searched for '{2}', found {3} matching entries", share.Name, openFile.Path, request.FileName, entries.Count);
                 openSearch = session.AddOpenSearch(fileID, entries, 0);
             }
@@ -97,7 +99,7 @@ namespace SMBLibrary.Server.SMB2
                     break;
                 }
             }
-            
+
             QueryDirectoryResponse response = new QueryDirectoryResponse();
             response.SetFileInformationList(page);
             return response;

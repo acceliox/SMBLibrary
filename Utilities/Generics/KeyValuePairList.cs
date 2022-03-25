@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System.Collections.Generic;
 
 namespace Utilities
@@ -18,42 +19,6 @@ namespace Utilities
         {
         }
 
-        public bool ContainsKey(TKey key)
-        {
-            return (this.IndexOfKey(key) != -1);
-        }
-
-        public int IndexOfKey(TKey key)
-        {
-            for (int index = 0; index < this.Count; index++)
-            {
-                if (this[index].Key.Equals(key))
-                {
-                    return index;
-                }
-            }
-
-            return -1;
-        }
-
-        public TValue ValueOf(TKey key)
-        {
-            for (int index = 0; index < this.Count; index++)
-            {
-                if (this[index].Key.Equals(key))
-                {
-                    return this[index].Value;
-                }
-            }
-
-            return default(TValue);
-        }
-
-        public void Add(TKey key, TValue value)
-        {
-            this.Add(new KeyValuePair<TKey, TValue>(key, value));
-        }
-
         public List<TKey> Keys
         {
             get
@@ -63,6 +28,7 @@ namespace Utilities
                 {
                     result.Add(entity.Key);
                 }
+
                 return result;
             }
         }
@@ -76,8 +42,45 @@ namespace Utilities
                 {
                     result.Add(entity.Value);
                 }
+
                 return result;
             }
+        }
+
+        public bool ContainsKey(TKey key)
+        {
+            return IndexOfKey(key) != -1;
+        }
+
+        public int IndexOfKey(TKey key)
+        {
+            for (int index = 0; index < Count; index++)
+            {
+                if (this[index].Key.Equals(key))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        public TValue ValueOf(TKey key)
+        {
+            for (int index = 0; index < Count; index++)
+            {
+                if (this[index].Key.Equals(key))
+                {
+                    return this[index].Value;
+                }
+            }
+
+            return default;
+        }
+
+        public void Add(TKey key, TValue value)
+        {
+            Add(new KeyValuePair<TKey, TValue>(key, value));
         }
 
         public new KeyValuePairList<TKey, TValue> GetRange(int index, int count)

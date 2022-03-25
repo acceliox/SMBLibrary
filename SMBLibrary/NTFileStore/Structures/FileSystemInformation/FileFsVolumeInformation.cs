@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using Utilities;
 
 namespace SMBLibrary
@@ -22,7 +22,7 @@ namespace SMBLibrary
         private uint VolumeLabelLength;
         public bool SupportsObjects;
         public byte Reserved;
-        public string VolumeLabel = String.Empty;
+        public string VolumeLabel = string.Empty;
 
         public FileFsVolumeInformation()
         {
@@ -41,6 +41,10 @@ namespace SMBLibrary
             }
         }
 
+        public override FileSystemInformationClass FileSystemInformationClass => FileSystemInformationClass.FileFsVolumeInformation;
+
+        public override int Length => FixedLength + VolumeLabel.Length * 2;
+
         public override void WriteBytes(byte[] buffer, int offset)
         {
             VolumeLabelLength = (uint)(VolumeLabel.Length * 2);
@@ -50,22 +54,6 @@ namespace SMBLibrary
             ByteWriter.WriteByte(buffer, offset + 16, Convert.ToByte(SupportsObjects));
             ByteWriter.WriteByte(buffer, offset + 17, Reserved);
             ByteWriter.WriteUTF16String(buffer, offset + 18, VolumeLabel);
-        }
-
-        public override FileSystemInformationClass FileSystemInformationClass
-        {
-            get
-            {
-                return FileSystemInformationClass.FileFsVolumeInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength + VolumeLabel.Length * 2;
-            }
         }
     }
 }

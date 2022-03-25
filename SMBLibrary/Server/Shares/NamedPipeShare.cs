@@ -4,10 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.IO;
-using SMBLibrary.RPC;
 using SMBLibrary.Services;
 
 namespace SMBLibrary.Server
@@ -17,7 +16,7 @@ namespace SMBLibrary.Server
         // A pipe share, as defined by the SMB Protocol, MUST always have the name "IPC$".
         public const string NamedPipeShareName = "IPC$";
 
-        private NamedPipeStore m_store;
+        private readonly NamedPipeStore m_store;
 
         public NamedPipeShare(List<string> shareList)
         {
@@ -27,20 +26,8 @@ namespace SMBLibrary.Server
             m_store = new NamedPipeStore(services);
         }
 
-        public string Name
-        {
-            get
-            {
-                return NamedPipeShareName;
-            }
-        }
+        public string Name => NamedPipeShareName;
 
-        public INTFileStore FileStore
-        {
-            get
-            {
-                return m_store;
-            }
-        }
+        public INTFileStore FileStore => m_store;
     }
 }

@@ -4,14 +4,12 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using System.IO;
-using Utilities;
 
 namespace SMBLibrary
 {
-    public partial class NTFileStoreHelper
+    public class NTFileStoreHelper
     {
         public static FileAccess ToCreateFileAccess(AccessMask desiredAccess, CreateDisposition createDisposition)
         {
@@ -126,6 +124,7 @@ namespace SMBLibrary
             {
                 return null;
             }
+
             FileInformation fileInfo;
             NTStatus queryStatus = fileStore.GetFileInformation(out fileInfo, handle, FileInformationClass.FileNetworkOpenInformation);
             fileStore.CloseFile(handle);
@@ -133,6 +132,7 @@ namespace SMBLibrary
             {
                 return null;
             }
+
             return (FileNetworkOpenInformation)fileInfo;
         }
 

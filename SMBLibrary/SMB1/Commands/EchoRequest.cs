@@ -4,9 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -17,44 +15,33 @@ namespace SMBLibrary.SMB1
     public class EchoRequest : SMB1Command
     {
         public const int ParametersLength = 2;
+
         // Parameters
         public ushort EchoCount;
 
-        public EchoRequest() : base()
+        public EchoRequest()
         {
         }
 
         public EchoRequest(byte[] buffer, int offset) : base(buffer, offset, false)
         {
-            EchoCount = LittleEndianConverter.ToUInt16(this.SMBParameters, 0);
-        }
-
-        public override byte[] GetBytes(bool isUnicode)
-        {
-            this.SMBParameters = new byte[ParametersLength];
-            LittleEndianWriter.WriteUInt16(this.SMBParameters, 0, EchoCount);
-
-            return base.GetBytes(isUnicode);
+            EchoCount = LittleEndianConverter.ToUInt16(SMBParameters, 0);
         }
 
         public byte[] Data
         {
-            get
-            {
-                return this.SMBData;
-            }
-            set
-            {
-                this.SMBData = value;
-            }
+            get => SMBData;
+            set => SMBData = value;
         }
 
-        public override CommandName CommandName
+        public override CommandName CommandName => CommandName.SMB_COM_ECHO;
+
+        public override byte[] GetBytes(bool isUnicode)
         {
-            get
-            {
-                return CommandName.SMB_COM_ECHO;
-            }
+            SMBParameters = new byte[ParametersLength];
+            LittleEndianWriter.WriteUInt16(SMBParameters, 0, EchoCount);
+
+            return base.GetBytes(isUnicode);
         }
     }
 }

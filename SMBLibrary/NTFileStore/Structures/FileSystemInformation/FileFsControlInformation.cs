@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary
@@ -40,6 +39,10 @@ namespace SMBLibrary
             Padding = LittleEndianConverter.ToUInt32(buffer, offset + 44);
         }
 
+        public override FileSystemInformationClass FileSystemInformationClass => FileSystemInformationClass.FileFsControlInformation;
+
+        public override int Length => FixedLength;
+
         public override void WriteBytes(byte[] buffer, int offset)
         {
             LittleEndianWriter.WriteInt64(buffer, offset + 0, FreeSpaceStartFiltering);
@@ -49,22 +52,6 @@ namespace SMBLibrary
             LittleEndianWriter.WriteUInt64(buffer, offset + 32, DefaultQuotaLimit);
             LittleEndianWriter.WriteUInt32(buffer, offset + 40, (uint)FileSystemControlFlags);
             LittleEndianWriter.WriteUInt32(buffer, offset + 44, Padding);
-        }
-
-        public override FileSystemInformationClass FileSystemInformationClass
-        {
-            get
-            {
-                return FileSystemInformationClass.FileFsControlInformation;
-            }
-        }
-
-        public override int Length
-        {
-            get
-            {
-                return FixedLength;
-            }
         }
     }
 }

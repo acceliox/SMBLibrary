@@ -4,8 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Utilities;
 
 namespace SMBLibrary
@@ -21,10 +22,8 @@ namespace SMBLibrary
             {
                 return DateTime.FromFileTimeUtc(span);
             }
-            else
-            {
-                throw new System.IO.InvalidDataException("FILETIME cannot be negative");
-            }
+
+            throw new InvalidDataException("FILETIME cannot be negative");
         }
 
         public static DateTime ReadFileTime(byte[] buffer, ref int offset)
@@ -52,14 +51,13 @@ namespace SMBLibrary
             {
                 return DateTime.FromFileTimeUtc(span);
             }
-            else if (span == 0)
+
+            if (span == 0)
             {
                 return null;
             }
-            else
-            {
-                throw new System.IO.InvalidDataException("FILETIME cannot be negative");
-            }
+
+            throw new InvalidDataException("FILETIME cannot be negative");
         }
 
         public static DateTime? ReadNullableFileTime(byte[] buffer, ref int offset)
@@ -75,6 +73,7 @@ namespace SMBLibrary
             {
                 span = time.Value.ToFileTimeUtc();
             }
+
             LittleEndianWriter.WriteInt64(buffer, offset, span);
         }
 

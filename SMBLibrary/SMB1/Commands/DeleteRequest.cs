@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Utilities;
 
@@ -17,41 +17,39 @@ namespace SMBLibrary.SMB1
     public class DeleteRequest : SMB1Command
     {
         public const int SupportedBufferFormat = 0x04;
+
         public const int ParametersLength = 2;
+
         // Parameters;
         public SMBFileAttributes SearchAttributes;
+
         // Data:
         public byte BufferFormat;
         public string FileName; // SMB_STRING
 
-        public DeleteRequest() : base()
+        public DeleteRequest()
         {
             BufferFormat = SupportedBufferFormat;
         }
 
         public DeleteRequest(byte[] buffer, int offset, bool isUnicode) : base(buffer, offset, isUnicode)
         {
-            SearchAttributes = (SMBFileAttributes)LittleEndianConverter.ToUInt16(this.SMBParameters, 0);
+            SearchAttributes = (SMBFileAttributes)LittleEndianConverter.ToUInt16(SMBParameters, 0);
 
-            BufferFormat = ByteReader.ReadByte(this.SMBData, 0);
+            BufferFormat = ByteReader.ReadByte(SMBData, 0);
             if (BufferFormat != SupportedBufferFormat)
             {
                 throw new InvalidDataException("Unsupported Buffer Format");
             }
-            FileName = SMB1Helper.ReadSMBString(this.SMBData, 1, isUnicode);
+
+            FileName = SMB1Helper.ReadSMBString(SMBData, 1, isUnicode);
         }
+
+        public override CommandName CommandName => CommandName.SMB_COM_DELETE;
 
         public override byte[] GetBytes(bool isUnicode)
         {
             throw new NotImplementedException();
-        }
-
-        public override CommandName CommandName
-        {
-            get
-            {
-                return CommandName.SMB_COM_DELETE;
-            }
         }
     }
 }

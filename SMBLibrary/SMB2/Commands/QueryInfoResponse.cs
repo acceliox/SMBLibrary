@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB2
@@ -18,7 +17,7 @@ namespace SMBLibrary.SMB2
         public const int FixedSize = 8;
         public const int DeclaredSize = 9;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
         private ushort OutputBufferOffset;
         private uint OutputBufferLength;
         public byte[] OutputBuffer = new byte[0];
@@ -37,19 +36,7 @@ namespace SMBLibrary.SMB2
             OutputBuffer = ByteReader.ReadBytes(buffer, offset + OutputBufferOffset, (int)OutputBufferLength);
         }
 
-        public override void WriteCommandBytes(byte[] buffer, int offset)
-        {
-            OutputBufferOffset = 0;
-            OutputBufferLength = (uint)OutputBuffer.Length;
-            if (OutputBuffer.Length > 0)
-            {
-                OutputBufferOffset = SMB2Header.Length + FixedSize;
-            }
-            LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
-            LittleEndianWriter.WriteUInt16(buffer, offset + 2, OutputBufferOffset);
-            LittleEndianWriter.WriteUInt32(buffer, offset + 4, OutputBufferLength);
-            ByteWriter.WriteBytes(buffer, offset + FixedSize, OutputBuffer);
-        }
+        public override int CommandLength => FixedSize + OutputBuffer.Length;
 
         public FileInformation GetFileInformation(FileInformationClass informationClass)
         {
@@ -81,12 +68,19 @@ namespace SMBLibrary.SMB2
             OutputBuffer = securityDescriptor.GetBytes();
         }
 
-        public override int CommandLength
+        public override void WriteCommandBytes(byte[] buffer, int offset)
         {
-            get
+            OutputBufferOffset = 0;
+            OutputBufferLength = (uint)OutputBuffer.Length;
+            if (OutputBuffer.Length > 0)
             {
-                return FixedSize + OutputBuffer.Length;
+                OutputBufferOffset = SMB2Header.Length + FixedSize;
             }
+
+            LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
+            LittleEndianWriter.WriteUInt16(buffer, offset + 2, OutputBufferOffset);
+            LittleEndianWriter.WriteUInt32(buffer, offset + 4, OutputBufferLength);
+            ByteWriter.WriteBytes(buffer, offset + FixedSize, OutputBuffer);
         }
     }
 }

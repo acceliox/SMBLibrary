@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using Utilities;
@@ -17,7 +18,8 @@ namespace SMBLibrary.SMB2
     {
         public const int DeclaredSize = 36;
 
-        private ushort StructureSize;
+        private readonly ushort StructureSize;
+
         // ushort DialectCount;
         public SecurityMode SecurityMode;
         public ushort Reserved;
@@ -48,6 +50,8 @@ namespace SMBLibrary.SMB2
             }
         }
 
+        public override int CommandLength => 36 + Dialects.Count * 2;
+
         public override void WriteCommandBytes(byte[] buffer, int offset)
         {
             LittleEndianWriter.WriteUInt16(buffer, offset + 0, StructureSize);
@@ -57,19 +61,11 @@ namespace SMBLibrary.SMB2
             LittleEndianWriter.WriteUInt32(buffer, offset + 8, (uint)Capabilities);
             LittleEndianWriter.WriteGuid(buffer, offset + 12, ClientGuid);
             LittleEndianWriter.WriteInt64(buffer, offset + 28, ClientStartTime.ToFileTimeUtc());
-            
+
             for (int index = 0; index < Dialects.Count; index++)
             {
                 SMB2Dialect dialect = Dialects[index];
                 LittleEndianWriter.WriteUInt16(buffer, offset + 36 + index * 2, (ushort)dialect);
-            }
-        }
-
-        public override int CommandLength
-        {
-            get
-            {
-                return 36 + Dialects.Count * 2;
             }
         }
     }

@@ -4,12 +4,19 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using SMBLibrary.Authentication.GSSAPI;
 using SMBLibrary.NetBios;
+using SMBLibrary.SMB1;
 using SMBLibrary.SMB2;
 using Utilities;
+using Capabilities = SMBLibrary.SMB2.Capabilities;
+using ErrorResponse = SMBLibrary.SMB2.ErrorResponse;
+using NegotiateRequest = SMBLibrary.SMB2.NegotiateRequest;
+using NegotiateResponse = SMBLibrary.SMB2.NegotiateResponse;
+using SecurityMode = SMBLibrary.SMB2.SecurityMode;
 
 namespace SMBLibrary.Server.SMB2
 {
@@ -46,6 +53,7 @@ namespace SMBLibrary.Server.SMB2
             {
                 throw new ArgumentException("SMB2 dialect is not present");
             }
+
             response.SecurityMode = SecurityMode.SigningEnabled;
             response.ServerGuid = serverGuid;
             if (state.Dialect != SMBDialect.SMB202 && transportType == SMBTransportType.DirectTCPTransport)
@@ -67,6 +75,7 @@ namespace SMBLibrary.Server.SMB2
                 response.MaxReadSize = ServerMaxReadSize;
                 response.MaxWriteSize = ServerMaxWriteSize;
             }
+
             response.SystemTime = DateTime.Now;
             response.ServerStartTime = serverStartTime;
             response.SecurityBuffer = securityProvider.GetSPNEGOTokenInitBytes();
@@ -96,6 +105,7 @@ namespace SMBLibrary.Server.SMB2
                 state.LogToServer(Severity.Verbose, "Negotiate failure: None of the requested SMB2 dialects is supported");
                 return new ErrorResponse(request.CommandName, NTStatus.STATUS_NOT_SUPPORTED);
             }
+
             response.SecurityMode = SecurityMode.SigningEnabled;
             response.ServerGuid = serverGuid;
             if (state.Dialect != SMBDialect.SMB202 && transportType == SMBTransportType.DirectTCPTransport)
@@ -117,19 +127,21 @@ namespace SMBLibrary.Server.SMB2
                 response.MaxReadSize = ServerMaxReadSize;
                 response.MaxWriteSize = ServerMaxWriteSize;
             }
+
             response.SystemTime = DateTime.Now;
             response.ServerStartTime = serverStartTime;
             response.SecurityBuffer = securityProvider.GetSPNEGOTokenInitBytes();
             return response;
         }
 
-        internal static List<string> FindSMB2Dialects(SMBLibrary.SMB1.SMB1Message message)
+        internal static List<string> FindSMB2Dialects(SMB1Message message)
         {
             if (message.Commands.Count > 0 && message.Commands[0] is SMBLibrary.SMB1.NegotiateRequest)
             {
                 SMBLibrary.SMB1.NegotiateRequest request = (SMBLibrary.SMB1.NegotiateRequest)message.Commands[0];
                 return FindSMB2Dialects(request);
             }
+
             return new List<string>();
         }
 
@@ -140,10 +152,12 @@ namespace SMBLibrary.Server.SMB2
             {
                 result.Add(SMB2002Dialect);
             }
+
             if (request.Dialects.Contains(SMB2xxxDialect))
             {
                 result.Add(SMB2xxxDialect);
             }
+
             return result;
         }
     }

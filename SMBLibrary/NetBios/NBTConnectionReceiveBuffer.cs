@@ -4,8 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Utilities;
 
@@ -13,9 +13,8 @@ namespace SMBLibrary.NetBios
 {
     public class NBTConnectionReceiveBuffer
     {
-        private byte[] m_buffer;
-        private int m_readOffset = 0;
-        private int m_bytesInBuffer = 0;
+        private int m_readOffset;
+        private int m_bytesInBuffer;
         private int? m_packetLength;
 
         public NBTConnectionReceiveBuffer() : this(SessionPacket.MaxSessionPacketLength)
@@ -29,18 +28,28 @@ namespace SMBLibrary.NetBios
             {
                 throw new ArgumentException("bufferLength must be large enough to hold the largest possible NBT packet");
             }
-            m_buffer = new byte[bufferLength];
+
+            Buffer = new byte[bufferLength];
         }
+
+        public byte[] Buffer { get; private set; }
+
+        public int WriteOffset => m_readOffset + m_bytesInBuffer;
+
+        public int BytesInBuffer => m_bytesInBuffer;
+
+        public int AvailableLength => Buffer.Length - (m_readOffset + m_bytesInBuffer);
 
         public void IncreaseBufferSize(int bufferLength)
         {
             byte[] buffer = new byte[bufferLength];
             if (m_bytesInBuffer > 0)
             {
-                Array.Copy(m_buffer, m_readOffset, buffer, 0, m_bytesInBuffer);
+                Array.Copy(Buffer, m_readOffset, buffer, 0, m_bytesInBuffer);
                 m_readOffset = 0;
             }
-            m_buffer = buffer;
+
+            Buffer = buffer;
         }
 
         public void SetNumberOfBytesReceived(int numberOfBytesReceived)
@@ -54,10 +63,12 @@ namespace SMBLibrary.NetBios
             {
                 if (!m_packetLength.HasValue)
                 {
-                    m_packetLength = SessionPacket.GetSessionPacketLength(m_buffer, m_readOffset);
+                    m_packetLength = SessionPacket.GetSessionPacketLength(Buffer, m_readOffset);
                 }
+
                 return m_bytesInBuffer >= m_packetLength.Value;
             }
+
             return false;
         }
 
@@ -70,12 +81,13 @@ namespace SMBLibrary.NetBios
             SessionPacket packet;
             try
             {
-                packet = SessionPacket.GetSessionPacket(m_buffer, m_readOffset);
+                packet = SessionPacket.GetSessionPacket(Buffer, m_readOffset);
             }
             catch (IndexOutOfRangeException ex)
             {
                 throw new InvalidDataException("Invalid NetBIOS session packet", ex);
             }
+
             RemovePacketBytes();
             return packet;
         }
@@ -85,7 +97,7 @@ namespace SMBLibrary.NetBios
         /// </summary>
         public byte[] DequeuePacketBytes()
         {
-            byte[] packetBytes = ByteReader.ReadBytes(m_buffer, m_readOffset, m_packetLength.Value);
+            byte[] packetBytes = ByteReader.ReadBytes(Buffer, m_readOffset, m_packetLength.Value);
             RemovePacketBytes();
             return packetBytes;
         }
@@ -104,41 +116,9 @@ namespace SMBLibrary.NetBios
                 m_packetLength = null;
                 if (!HasCompletePacket())
                 {
-                    Array.Copy(m_buffer, m_readOffset, m_buffer, 0, m_bytesInBuffer);
+                    Array.Copy(Buffer, m_readOffset, Buffer, 0, m_bytesInBuffer);
                     m_readOffset = 0;
                 }
-            }
-        }
-
-        public byte[] Buffer
-        {
-            get
-            {
-                return m_buffer;
-            }
-        }
-
-        public int WriteOffset
-        {
-            get
-            {
-                return m_readOffset + m_bytesInBuffer;
-            }
-        }
-
-        public int BytesInBuffer
-        {
-            get
-            {
-                return m_bytesInBuffer;
-            }
-        }
-
-        public int AvailableLength
-        {
-            get
-            {
-                return m_buffer.Length - (m_readOffset + m_bytesInBuffer);
             }
         }
     }

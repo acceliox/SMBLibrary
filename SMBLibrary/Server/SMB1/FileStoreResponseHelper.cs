@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using SMBLibrary.SMB1;
 using Utilities;
 
@@ -58,6 +56,7 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "Delete Directory '{0}{1}' failed. NTStatus: {2}.", share.Name, request.DirectoryName, header.Status);
                 return new ErrorResponse(request.CommandName);
             }
+
             state.LogToServer(Severity.Verbose, "Delete Directory: User '{0}' deleted '{1}{2}'.", session.UserName, share.Name, request.DirectoryName);
             return new DeleteDirectoryResponse();
         }
@@ -82,6 +81,7 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "Delete '{0}{1}' failed. NTStatus: {2}.", share.Name, request.FileName, header.Status);
                 return new ErrorResponse(request.CommandName);
             }
+
             state.LogToServer(Severity.Verbose, "Delete: User '{0}' deleted '{1}{2}'.", session.UserName, share.Name, request.FileName);
             return new DeleteResponse();
         }
@@ -97,6 +97,7 @@ namespace SMBLibrary.Server.SMB1
                     header.Status = NTStatus.STATUS_ACCESS_DENIED;
                     return new ErrorResponse(request.CommandName);
                 }
+
                 if (!((FileSystemShare)share).HasWriteAccess(session.SecurityContext, request.NewFileName))
                 {
                     state.LogToServer(Severity.Verbose, "Rename '{0}{1}' to '{0}{2}' failed. User '{3}' was denied access.", share.Name, request.OldFileName, request.NewFileName, session.UserName);
@@ -111,6 +112,7 @@ namespace SMBLibrary.Server.SMB1
                 state.LogToServer(Severity.Verbose, "Rename '{0}{1}' to '{0}{2}' failed. NTStatus: {3}.", share.Name, request.OldFileName, request.NewFileName, header.Status);
                 return new ErrorResponse(request.CommandName);
             }
+
             state.LogToServer(Severity.Verbose, "Rename: User '{0}' renamed '{1}{2}' to '{1}{3}'.", session.UserName, share.Name, request.OldFileName, request.NewFileName);
             return new RenameResponse();
         }
@@ -172,7 +174,7 @@ namespace SMBLibrary.Server.SMB1
             QueryInformationResponse response = new QueryInformationResponse();
             response.FileAttributes = SMB1FileStoreHelper.GetFileAttributes(fileInfo.FileAttributes);
             response.LastWriteTime = fileInfo.LastWriteTime;
-            response.FileSize = (uint)Math.Min(UInt32.MaxValue, fileInfo.EndOfFile);
+            response.FileSize = (uint)Math.Min(uint.MaxValue, fileInfo.EndOfFile);
             return response;
         }
 

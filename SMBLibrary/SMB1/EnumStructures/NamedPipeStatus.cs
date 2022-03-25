@@ -4,32 +4,31 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
 
 namespace SMBLibrary.SMB1
 {
     public enum ReadMode : byte
     {
         ByteMode = 0x00,
-        MessageMode = 0x01,
+        MessageMode = 0x01
     }
 
     public enum NamedPipeType : byte
     {
         ByteModePipe = 0x00,
-        MessageModePipe = 0x01,
+        MessageModePipe = 0x01
     }
 
     public enum Endpoint : byte
     {
         ClientSideEnd = 0x00,
-        ServerSideEnd = 0x01,
+        ServerSideEnd = 0x01
     }
 
     public enum NonBlocking : byte
     {
         Block = 0x00,
-        DoNotBlock = 0x01,
+        DoNotBlock = 0x01
     }
 
     /// <summary>

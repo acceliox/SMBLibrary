@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.RPC
@@ -20,7 +19,7 @@ namespace SMBLibrary.RPC
         public RejectionReason RejectReason; // provider_reject_reason
         public VersionsSupported Versions; // versions
 
-        public BindNakPDU() : base()
+        public BindNakPDU()
         {
             PacketType = PacketTypeName.BindNak;
         }
@@ -33,17 +32,6 @@ namespace SMBLibrary.RPC
             Versions = new VersionsSupported(buffer, offset);
         }
 
-        public override byte[] GetBytes()
-        {
-            byte[] buffer = new byte[Length];
-            WriteCommonFieldsBytes(buffer);
-            int offset = CommonFieldsLength;
-            LittleEndianWriter.WriteUInt16(buffer, ref offset, (ushort)RejectReason);
-            Versions.WriteBytes(buffer, offset);
-            
-            return buffer;
-        }
-
         public override int Length
         {
             get
@@ -53,8 +41,20 @@ namespace SMBLibrary.RPC
                 {
                     length += Versions.Length;
                 }
+
                 return length;
             }
+        }
+
+        public override byte[] GetBytes()
+        {
+            byte[] buffer = new byte[Length];
+            WriteCommonFieldsBytes(buffer);
+            int offset = CommonFieldsLength;
+            LittleEndianWriter.WriteUInt16(buffer, ref offset, (ushort)RejectReason);
+            Versions.WriteBytes(buffer, offset);
+
+            return buffer;
         }
     }
 }

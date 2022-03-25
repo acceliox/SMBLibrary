@@ -4,22 +4,15 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
 
 namespace SMBLibrary.Client
 {
     public interface ISMBFileStore : INTFileStore
     {
+        uint MaxReadSize { get; }
+
+        uint MaxWriteSize { get; }
+
         NTStatus Disconnect();
-
-        uint MaxReadSize
-        {
-            get;
-        }
-
-        uint MaxWriteSize
-        {
-            get;
-        }
     }
 }

@@ -4,10 +4,8 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Utilities;
@@ -96,6 +94,7 @@ namespace SMBLibrary.Authentication.NTLM
             {
                 throw new ArgumentException("Invalid plain-text length");
             }
+
             byte[] padded = new byte[21];
             Array.Copy(key, padded, key.Length);
 
@@ -128,7 +127,7 @@ namespace SMBLibrary.Authentication.NTLM
         /// </summary>
         public static byte[] LMOWFv1(string password)
         {
-            byte[] plainText = ASCIIEncoding.ASCII.GetBytes("KGS!@#$%");
+            byte[] plainText = Encoding.ASCII.GetBytes("KGS!@#$%");
             byte[] passwordBytes = GetOEMEncoding().GetBytes(password.ToUpper());
             byte[] key = new byte[14];
             Array.Copy(passwordBytes, key, Math.Min(passwordBytes.Length, 14));
@@ -149,7 +148,7 @@ namespace SMBLibrary.Authentication.NTLM
         /// </summary>
         public static byte[] NTOWFv1(string password)
         {
-            byte[] passwordBytes = UnicodeEncoding.Unicode.GetBytes(password);
+            byte[] passwordBytes = Encoding.Unicode.GetBytes(password);
             return new MD4().GetByteHashFromBytes(passwordBytes);
         }
 
@@ -163,12 +162,48 @@ namespace SMBLibrary.Authentication.NTLM
 
         public static byte[] NTOWFv2(string password, string user, string domain)
         {
-            byte[] passwordBytes = UnicodeEncoding.Unicode.GetBytes(password);
+            byte[] passwordBytes = Encoding.Unicode.GetBytes(password);
             byte[] key = new MD4().GetByteHashFromBytes(passwordBytes);
             string text = user.ToUpper() + domain;
-            byte[] bytes = UnicodeEncoding.Unicode.GetBytes(text);
+            byte[] bytes = Encoding.Unicode.GetBytes(text);
             HMACMD5 hmac = new HMACMD5(key);
             return hmac.ComputeHash(bytes, 0, bytes.Length);
+        }
+
+        /// <summary>
+        /// [MS-NLMP] 3.4.5.1 - KXKEY - NTLM v1
+        /// </summary>
+        /// <remarks>
+        /// If NTLM v2 is used, KeyExchangeKey MUST be set to the value of SessionBaseKey.
+        /// </remarks>
+        public static byte[] KXKey(byte[] sessionBaseKey, NegotiateFlags negotiateFlags, byte[] lmChallengeResponse, byte[] serverChallenge, byte[] lmowf)
+        {
+            if ((negotiateFlags & NegotiateFlags.ExtendedSessionSecurity) == 0)
+            {
+                if ((negotiateFlags & NegotiateFlags.LanManagerSessionKey) > 0)
+                {
+                    byte[] k1 = ByteReader.ReadBytes(lmowf, 0, 7);
+                    byte[] k2 = ByteUtils.Concatenate(ByteReader.ReadBytes(lmowf, 7, 1), new byte[] { 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD });
+                    byte[] temp1 = DesEncrypt(ExtendDESKey(k1), ByteReader.ReadBytes(lmChallengeResponse, 0, 8));
+                    byte[] temp2 = DesEncrypt(ExtendDESKey(k2), ByteReader.ReadBytes(lmChallengeResponse, 0, 8));
+                    byte[] keyExchangeKey = ByteUtils.Concatenate(temp1, temp2);
+                    return keyExchangeKey;
+                }
+
+                if ((negotiateFlags & NegotiateFlags.RequestLMSessionKey) > 0)
+                {
+                    byte[] keyExchangeKey = ByteUtils.Concatenate(ByteReader.ReadBytes(lmowf, 0, 8), new byte[8]);
+                    return keyExchangeKey;
+                }
+
+                return sessionBaseKey;
+            }
+
+            {
+                byte[] buffer = ByteUtils.Concatenate(serverChallenge, ByteReader.ReadBytes(lmChallengeResponse, 0, 8));
+                byte[] keyExchangeKey = new HMACMD5(sessionBaseKey).ComputeHash(buffer);
+                return keyExchangeKey;
+            }
         }
 
         /// <summary>
@@ -195,46 +230,6 @@ namespace SMBLibrary.Authentication.NTLM
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// [MS-NLMP] 3.4.5.1 - KXKEY - NTLM v1
-        /// </summary>
-        /// <remarks>
-        /// If NTLM v2 is used, KeyExchangeKey MUST be set to the value of SessionBaseKey.
-        /// </remarks>
-        public static byte[] KXKey(byte[] sessionBaseKey, NegotiateFlags negotiateFlags, byte[] lmChallengeResponse, byte[] serverChallenge, byte[] lmowf)
-        {
-            if ((negotiateFlags & NegotiateFlags.ExtendedSessionSecurity) == 0)
-            {
-                if ((negotiateFlags & NegotiateFlags.LanManagerSessionKey) > 0)
-                {
-                    byte[] k1 = ByteReader.ReadBytes(lmowf, 0, 7);
-                    byte[] k2 = ByteUtils.Concatenate(ByteReader.ReadBytes(lmowf, 7, 1), new byte[] { 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD });
-                    byte[] temp1 = DesEncrypt(ExtendDESKey(k1), ByteReader.ReadBytes(lmChallengeResponse, 0, 8));
-                    byte[] temp2 = DesEncrypt(ExtendDESKey(k2), ByteReader.ReadBytes(lmChallengeResponse, 0, 8));
-                    byte[] keyExchangeKey = ByteUtils.Concatenate(temp1, temp2);
-                    return keyExchangeKey;
-                }
-                else
-                {
-                    if ((negotiateFlags & NegotiateFlags.RequestLMSessionKey) > 0)
-                    {
-                        byte[] keyExchangeKey = ByteUtils.Concatenate(ByteReader.ReadBytes(lmowf, 0, 8), new byte[8]);
-                        return keyExchangeKey;
-                    }
-                    else
-                    {
-                        return sessionBaseKey;
-                    }
-                }
-            }
-            else
-            {
-                byte[] buffer = ByteUtils.Concatenate(serverChallenge, ByteReader.ReadBytes(lmChallengeResponse, 0, 8));
-                byte[] keyExchangeKey = new HMACMD5(sessionBaseKey).ComputeHash(buffer);
-                return keyExchangeKey;
-            }
         }
     }
 }

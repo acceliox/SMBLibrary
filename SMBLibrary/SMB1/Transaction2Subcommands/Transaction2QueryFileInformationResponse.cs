@@ -4,8 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
-using System;
-using System.Collections.Generic;
+
 using Utilities;
 
 namespace SMBLibrary.SMB1
@@ -16,30 +15,24 @@ namespace SMBLibrary.SMB1
     public class Transaction2QueryFileInformationResponse : Transaction2Subcommand
     {
         public const int ParametersLength = 2;
+
         // Parameters:
         public ushort EaErrorOffset; // Meaningful only when request's InformationLevel is SMB_INFO_QUERY_EAS_FROM_LIST
+
         // Data:
         public byte[] InformationBytes = new byte[0];
 
-        public Transaction2QueryFileInformationResponse() : base()
+        public Transaction2QueryFileInformationResponse()
         {
         }
 
-        public Transaction2QueryFileInformationResponse(byte[] parameters, byte[] data, bool isUnicode) : base()
+        public Transaction2QueryFileInformationResponse(byte[] parameters, byte[] data, bool isUnicode)
         {
             EaErrorOffset = LittleEndianConverter.ToUInt16(parameters, 0);
             InformationBytes = data;
         }
 
-        public override byte[] GetParameters(bool isUnicode)
-        {
-            return LittleEndianConverter.GetBytes(EaErrorOffset);
-        }
-
-        public override byte[] GetData(bool isUnicode)
-        {
-            return InformationBytes;
-        }
+        public override Transaction2SubcommandName SubcommandName => Transaction2SubcommandName.TRANS2_QUERY_FILE_INFORMATION;
 
         public QueryInformation GetQueryInformation(QueryInformationLevel queryInformationLevel)
         {
@@ -67,12 +60,14 @@ namespace SMBLibrary.SMB1
             InformationBytes = information.GetBytes();
         }
 
-        public override Transaction2SubcommandName SubcommandName
+        public override byte[] GetParameters(bool isUnicode)
         {
-            get
-            {
-                return Transaction2SubcommandName.TRANS2_QUERY_FILE_INFORMATION;
-            }
+            return LittleEndianConverter.GetBytes(EaErrorOffset);
+        }
+
+        public override byte[] GetData(bool isUnicode)
+        {
+            return InformationBytes;
         }
     }
 }

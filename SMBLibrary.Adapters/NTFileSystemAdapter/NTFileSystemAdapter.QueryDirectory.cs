@@ -4,6 +4,7 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,7 @@ namespace SMBLibrary.Adapters
                 return NTStatus.STATUS_INVALID_PARAMETER;
             }
 
-            if (fileName == String.Empty)
+            if (fileName == string.Empty)
             {
                 return NTStatus.STATUS_INVALID_PARAMETER;
             }
@@ -73,11 +74,10 @@ namespace SMBLibrary.Adapters
                         Log(Severity.Verbose, "QueryDirectory: Error querying '{0}'. {1}.", path, status);
                         return status;
                     }
-                    else
-                    {
-                        throw;
-                    }
+
+                    throw;
                 }
+
                 entries = new List<FileSystemEntry>();
                 entries.Add(entry);
             }
@@ -90,6 +90,7 @@ namespace SMBLibrary.Adapters
             {
                 return NTStatus.STATUS_INVALID_INFO_CLASS;
             }
+
             return NTStatus.STATUS_SUCCESS;
         }
 
@@ -109,12 +110,13 @@ namespace SMBLibrary.Adapters
                     result.Add(entry);
                 }
             }
+
             return result;
         }
 
         private static bool ContainsWildcardCharacters(string expression)
         {
-            return (expression.Contains("?") || expression.Contains("*") || expression.Contains("\"") || expression.Contains(">") || expression.Contains("<"));
+            return expression.Contains("?") || expression.Contains("*") || expression.Contains("\"") || expression.Contains(">") || expression.Contains("<");
         }
 
         // [MS-FSA] 2.1.4.4
@@ -130,7 +132,8 @@ namespace SMBLibrary.Adapters
             {
                 return true;
             }
-            else if (expression.EndsWith("*")) // expression.Length > 1
+
+            if (expression.EndsWith("*")) // expression.Length > 1
             {
                 string desiredFileNameStart = expression.Substring(0, expression.Length - 1);
                 bool findExactNameWithoutExtension = false;
@@ -164,10 +167,11 @@ namespace SMBLibrary.Adapters
                     return true;
                 }
             }
-            else if (String.Equals(fileName, expression, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(fileName, expression, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
+
             return false;
         }
 
@@ -179,6 +183,7 @@ namespace SMBLibrary.Adapters
                 QueryDirectoryFileInformation information = FromFileSystemEntry(entry, informationClass);
                 result.Add(information);
             }
+
             return result;
         }
 
@@ -187,86 +192,86 @@ namespace SMBLibrary.Adapters
             switch (informationClass)
             {
                 case FileInformationClass.FileBothDirectoryInformation:
-                    {
-                        FileBothDirectoryInformation result = new FileBothDirectoryInformation();
-                        result.CreationTime = entry.CreationTime;
-                        result.LastAccessTime = entry.LastAccessTime;
-                        result.LastWriteTime = entry.LastWriteTime;
-                        result.ChangeTime = entry.LastWriteTime;
-                        result.EndOfFile = (long)entry.Size;
-                        result.AllocationSize = (long)GetAllocationSize(entry.Size);
-                        result.FileAttributes = GetFileAttributes(entry);
-                        result.EaSize = 0;
-                        result.FileName = entry.Name;
-                        return result;
-                    }
+                {
+                    FileBothDirectoryInformation result = new FileBothDirectoryInformation();
+                    result.CreationTime = entry.CreationTime;
+                    result.LastAccessTime = entry.LastAccessTime;
+                    result.LastWriteTime = entry.LastWriteTime;
+                    result.ChangeTime = entry.LastWriteTime;
+                    result.EndOfFile = (long)entry.Size;
+                    result.AllocationSize = (long)GetAllocationSize(entry.Size);
+                    result.FileAttributes = GetFileAttributes(entry);
+                    result.EaSize = 0;
+                    result.FileName = entry.Name;
+                    return result;
+                }
                 case FileInformationClass.FileDirectoryInformation:
-                    {
-                        FileDirectoryInformation result = new FileDirectoryInformation();
-                        result.CreationTime = entry.CreationTime;
-                        result.LastAccessTime = entry.LastAccessTime;
-                        result.LastWriteTime = entry.LastWriteTime;
-                        result.ChangeTime = entry.LastWriteTime;
-                        result.EndOfFile = (long)entry.Size;
-                        result.AllocationSize = (long)GetAllocationSize(entry.Size);
-                        result.FileAttributes = GetFileAttributes(entry);
-                        result.FileName = entry.Name;
-                        return result;
-                    }
+                {
+                    FileDirectoryInformation result = new FileDirectoryInformation();
+                    result.CreationTime = entry.CreationTime;
+                    result.LastAccessTime = entry.LastAccessTime;
+                    result.LastWriteTime = entry.LastWriteTime;
+                    result.ChangeTime = entry.LastWriteTime;
+                    result.EndOfFile = (long)entry.Size;
+                    result.AllocationSize = (long)GetAllocationSize(entry.Size);
+                    result.FileAttributes = GetFileAttributes(entry);
+                    result.FileName = entry.Name;
+                    return result;
+                }
                 case FileInformationClass.FileFullDirectoryInformation:
-                    {
-                        FileFullDirectoryInformation result = new FileFullDirectoryInformation();
-                        result.CreationTime = entry.CreationTime;
-                        result.LastAccessTime = entry.LastAccessTime;
-                        result.LastWriteTime = entry.LastWriteTime;
-                        result.ChangeTime = entry.LastWriteTime;
-                        result.EndOfFile = (long)entry.Size;
-                        result.AllocationSize = (long)GetAllocationSize(entry.Size);
-                        result.FileAttributes = GetFileAttributes(entry);
-                        result.EaSize = 0;
-                        result.FileName = entry.Name;
-                        return result;
-                    }
+                {
+                    FileFullDirectoryInformation result = new FileFullDirectoryInformation();
+                    result.CreationTime = entry.CreationTime;
+                    result.LastAccessTime = entry.LastAccessTime;
+                    result.LastWriteTime = entry.LastWriteTime;
+                    result.ChangeTime = entry.LastWriteTime;
+                    result.EndOfFile = (long)entry.Size;
+                    result.AllocationSize = (long)GetAllocationSize(entry.Size);
+                    result.FileAttributes = GetFileAttributes(entry);
+                    result.EaSize = 0;
+                    result.FileName = entry.Name;
+                    return result;
+                }
                 case FileInformationClass.FileIdBothDirectoryInformation:
-                    {
-                        FileIdBothDirectoryInformation result = new FileIdBothDirectoryInformation();
-                        result.CreationTime = entry.CreationTime;
-                        result.LastAccessTime = entry.LastAccessTime;
-                        result.LastWriteTime = entry.LastWriteTime;
-                        result.ChangeTime = entry.LastWriteTime;
-                        result.EndOfFile = (long)entry.Size;
-                        result.AllocationSize = (long)GetAllocationSize(entry.Size);
-                        result.FileAttributes = GetFileAttributes(entry);
-                        result.EaSize = 0;
-                        result.FileId = 0;
-                        result.FileName = entry.Name;
-                        return result;
-                    }
+                {
+                    FileIdBothDirectoryInformation result = new FileIdBothDirectoryInformation();
+                    result.CreationTime = entry.CreationTime;
+                    result.LastAccessTime = entry.LastAccessTime;
+                    result.LastWriteTime = entry.LastWriteTime;
+                    result.ChangeTime = entry.LastWriteTime;
+                    result.EndOfFile = (long)entry.Size;
+                    result.AllocationSize = (long)GetAllocationSize(entry.Size);
+                    result.FileAttributes = GetFileAttributes(entry);
+                    result.EaSize = 0;
+                    result.FileId = 0;
+                    result.FileName = entry.Name;
+                    return result;
+                }
                 case FileInformationClass.FileIdFullDirectoryInformation:
-                    {
-                        FileIdFullDirectoryInformation result = new FileIdFullDirectoryInformation();
-                        result.CreationTime = entry.CreationTime;
-                        result.LastAccessTime = entry.LastAccessTime;
-                        result.LastWriteTime = entry.LastWriteTime;
-                        result.ChangeTime = entry.LastWriteTime;
-                        result.EndOfFile = (long)entry.Size;
-                        result.AllocationSize = (long)GetAllocationSize(entry.Size);
-                        result.FileAttributes = GetFileAttributes(entry);
-                        result.EaSize = 0;
-                        result.FileId = 0;
-                        result.FileName = entry.Name;
-                        return result;
-                    }
+                {
+                    FileIdFullDirectoryInformation result = new FileIdFullDirectoryInformation();
+                    result.CreationTime = entry.CreationTime;
+                    result.LastAccessTime = entry.LastAccessTime;
+                    result.LastWriteTime = entry.LastWriteTime;
+                    result.ChangeTime = entry.LastWriteTime;
+                    result.EndOfFile = (long)entry.Size;
+                    result.AllocationSize = (long)GetAllocationSize(entry.Size);
+                    result.FileAttributes = GetFileAttributes(entry);
+                    result.EaSize = 0;
+                    result.FileId = 0;
+                    result.FileName = entry.Name;
+                    return result;
+                }
                 case FileInformationClass.FileNamesInformation:
-                    {
-                        FileNamesInformation result = new FileNamesInformation();
-                        result.FileName = entry.Name;
-                        return result;
-                    }
+                {
+                    FileNamesInformation result = new FileNamesInformation();
+                    result.FileName = entry.Name;
+                    return result;
+                }
                 default:
-                    {
-                        throw new UnsupportedInformationLevelException();
-                    }
+                {
+                    throw new UnsupportedInformationLevelException();
+                }
             }
         }
     }

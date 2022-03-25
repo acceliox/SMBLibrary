@@ -4,9 +4,9 @@
  * the GNU Lesser Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Utilities
 {
@@ -14,7 +14,7 @@ namespace Utilities
     {
         public static string Quote(string str)
         {
-            return String.Format("\"{0}\"", str);
+            return string.Format("\"{0}\"", str);
         }
 
         public static string Unquote(string str)
@@ -24,10 +24,8 @@ namespace Utilities
             {
                 return str.Substring(1, str.Length - 2);
             }
-            else
-            {
-                return str;
-            }
+
+            return str;
         }
 
         public static bool IsQuoted(string str)
@@ -37,10 +35,8 @@ namespace Utilities
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         public static int IndexOfUnquotedChar(string str, char charToFind)
@@ -67,8 +63,10 @@ namespace Utilities
                 {
                     return index;
                 }
+
                 index++;
             }
+
             return -1;
         }
 
@@ -96,8 +94,10 @@ namespace Utilities
                 {
                     return index;
                 }
+
                 index++;
             }
+
             return -1;
         }
 
@@ -114,18 +114,21 @@ namespace Utilities
             while (separatorIndex >= nextEntryIndex)
             {
                 string entry = str.Substring(nextEntryIndex, separatorIndex - nextEntryIndex);
-                if (options != StringSplitOptions.RemoveEmptyEntries || entry != String.Empty)
+                if (options != StringSplitOptions.RemoveEmptyEntries || entry != string.Empty)
                 {
                     result.Add(entry);
                 }
+
                 nextEntryIndex = separatorIndex + 1;
                 separatorIndex = IndexOfUnquotedChar(str, separator, nextEntryIndex);
             }
+
             string lastEntry = str.Substring(nextEntryIndex);
-            if (options != StringSplitOptions.RemoveEmptyEntries || lastEntry != String.Empty)
+            if (options != StringSplitOptions.RemoveEmptyEntries || lastEntry != string.Empty)
             {
                 result.Add(lastEntry);
             }
+
             return result;
         }
     }
