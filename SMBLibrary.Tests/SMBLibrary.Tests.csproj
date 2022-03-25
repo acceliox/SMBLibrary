@@ -5,13 +5,11 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SMBLibrary.Tests</AssemblyName>
     <RootNamespace>SMBLibrary.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SMBLibrary\SMBLibrary.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(Configuration)' != 'Release'">
     <ProjectReference Include="..\Utilities\Utilities.csproj" />
   </ItemGroup>
 
