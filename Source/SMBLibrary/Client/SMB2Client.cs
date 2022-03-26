@@ -35,12 +35,12 @@ namespace SMBLibrary.Client
         private bool m_isLoggedIn;
         private Socket m_clientSocket;
 
-        private readonly object m_incomingQueueLock = new object();
-        private readonly List<SMB2Command> m_incomingQueue = new List<SMB2Command>();
-        private readonly EventWaitHandle m_incomingQueueEventHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly object m_incomingQueueLock = new();
+        private readonly List<SMB2Command> m_incomingQueue = new();
+        private readonly EventWaitHandle m_incomingQueueEventHandle = new(false, EventResetMode.AutoReset);
 
         private SessionPacket m_sessionResponsePacket;
-        private readonly EventWaitHandle m_sessionResponseEventHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly EventWaitHandle m_sessionResponseEventHandle = new(false, EventResetMode.AutoReset);
 
         private uint m_messageID;
         private SMB2Dialect m_dialect;
@@ -198,6 +198,73 @@ namespace SMBLibrary.Client
             {
                 m_messageID += request.Header.CreditCharge;
             }
+        }
+
+        public bool Connect(IPAddress serverAddress, SMBTransportType transport, int port)
+        {
+            if (string.IsNullOrEmpty(m_serverName))
+            {
+                m_serverName = serverAddress.ToString();
+            }
+
+            m_transport = transport;
+            if (m_isConnected)
+            {
+                return m_isConnected;
+            }
+
+            if (!ConnectSocket(serverAddress, port))
+            {
+                return false;
+            }
+
+            if (transport == SMBTransportType.NetBiosOverTCP)
+            {
+                SessionRequestPacket sessionRequest = new()
+                {
+                    CalledName = NetBiosUtils.GetMSNetBiosName("*SMBSERVER", NetBiosSuffix.FileServiceService),
+                    CallingName = NetBiosUtils.GetMSNetBiosName(Environment.MachineName, NetBiosSuffix.WorkstationService)
+                };
+                TrySendPacket(m_clientSocket, sessionRequest);
+
+                SessionPacket sessionResponsePacket = WaitForSessionResponsePacket();
+                if (sessionResponsePacket is not PositiveSessionResponsePacket)
+                {
+                    m_clientSocket.Disconnect(false);
+                    if (!ConnectSocket(serverAddress, port))
+                    {
+                        return false;
+                    }
+
+                    NameServiceClient nameServiceClient = new NameServiceClient(serverAddress);
+                    string serverName = nameServiceClient.GetServerName();
+                    if (string.IsNullOrEmpty(serverName))
+                    {
+                        return false;
+                    }
+
+                    sessionRequest.CalledName = serverName;
+                    TrySendPacket(m_clientSocket, sessionRequest);
+
+                    sessionResponsePacket = WaitForSessionResponsePacket();
+                    if (sessionResponsePacket is not PositiveSessionResponsePacket)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            bool supportsDialect = NegotiateDialect();
+            if (!supportsDialect)
+            {
+                m_clientSocket.Close();
+            }
+            else
+            {
+                m_isConnected = true;
+            }
+
+            return m_isConnected;
         }
 
         /// <param name="serverName">
@@ -367,69 +434,6 @@ namespace SMBLibrary.Client
         public uint MaxReadSize { get; private set; }
 
         public uint MaxWriteSize { get; private set; }
-
-        private bool Connect(IPAddress serverAddress, SMBTransportType transport, int port)
-        {
-            if (m_serverName == null)
-            {
-                m_serverName = serverAddress.ToString();
-            }
-
-            m_transport = transport;
-            if (!m_isConnected)
-            {
-                if (!ConnectSocket(serverAddress, port))
-                {
-                    return false;
-                }
-
-                if (transport == SMBTransportType.NetBiosOverTCP)
-                {
-                    SessionRequestPacket sessionRequest = new SessionRequestPacket();
-                    sessionRequest.CalledName = NetBiosUtils.GetMSNetBiosName("*SMBSERVER", NetBiosSuffix.FileServiceService);
-                    sessionRequest.CallingName = NetBiosUtils.GetMSNetBiosName(Environment.MachineName, NetBiosSuffix.WorkstationService);
-                    TrySendPacket(m_clientSocket, sessionRequest);
-
-                    SessionPacket sessionResponsePacket = WaitForSessionResponsePacket();
-                    if (!(sessionResponsePacket is PositiveSessionResponsePacket))
-                    {
-                        m_clientSocket.Disconnect(false);
-                        if (!ConnectSocket(serverAddress, port))
-                        {
-                            return false;
-                        }
-
-                        NameServiceClient nameServiceClient = new NameServiceClient(serverAddress);
-                        string serverName = nameServiceClient.GetServerName();
-                        if (serverName == null)
-                        {
-                            return false;
-                        }
-
-                        sessionRequest.CalledName = serverName;
-                        TrySendPacket(m_clientSocket, sessionRequest);
-
-                        sessionResponsePacket = WaitForSessionResponsePacket();
-                        if (!(sessionResponsePacket is PositiveSessionResponsePacket))
-                        {
-                            return false;
-                        }
-                    }
-                }
-
-                bool supportsDialect = NegotiateDialect();
-                if (!supportsDialect)
-                {
-                    m_clientSocket.Close();
-                }
-                else
-                {
-                    m_isConnected = true;
-                }
-            }
-
-            return m_isConnected;
-        }
 
         private bool ConnectSocket(IPAddress serverAddress, int port)
         {

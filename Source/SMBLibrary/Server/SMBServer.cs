@@ -106,43 +106,49 @@ namespace SMBLibrary.Server
             m_connectionManager.ReleaseConnection(clientEndPoint);
         }
 
-        private void Start(IPAddress serverAddress, SMBTransportType transport, int port, bool enableSMB1, bool enableSMB2, bool enableSMB3, TimeSpan? connectionInactivityTimeout)
+        public void Start(IPAddress serverAddress, SMBTransportType transport, int port, bool enableSMB1, bool enableSMB2, bool enableSMB3, TimeSpan? connectionInactivityTimeout)
         {
-            if (!m_listening)
+            if (m_listening)
             {
-                if (enableSMB3 && !enableSMB2)
-                {
-                    throw new ArgumentException("SMB2 must be enabled for SMB3 to be enabled");
-                }
-
-                Log(Severity.Information, "Starting server");
-                m_serverAddress = serverAddress;
-                m_transport = transport;
-                m_enableSMB1 = enableSMB1;
-                m_enableSMB2 = enableSMB2;
-                m_enableSMB3 = enableSMB3;
-                m_listening = true;
-                m_serverStartTime = DateTime.Now;
-
-                m_listenerSocket = new Socket(m_serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                m_listenerSocket.Bind(new IPEndPoint(m_serverAddress, port));
-                m_listenerSocket.Listen((int)SocketOptionName.MaxConnections);
-                m_listenerSocket.BeginAccept(ConnectRequestCallback, m_listenerSocket);
-
-                if (connectionInactivityTimeout.HasValue)
-                {
-                    m_sendSMBKeepAliveThread = new Thread(delegate()
-                    {
-                        while (m_listening)
-                        {
-                            Thread.Sleep(InactivityMonitoringInterval);
-                            m_connectionManager.SendSMBKeepAlive(connectionInactivityTimeout.Value);
-                        }
-                    });
-                    m_sendSMBKeepAliveThread.IsBackground = true;
-                    m_sendSMBKeepAliveThread.Start();
-                }
+                return;
             }
+
+            if (enableSMB3 && !enableSMB2)
+            {
+                throw new ArgumentException("SMB2 must be enabled for SMB3 to be enabled");
+            }
+
+            Log(Severity.Information, "Starting server");
+            m_serverAddress = serverAddress;
+            m_transport = transport;
+            m_enableSMB1 = enableSMB1;
+            m_enableSMB2 = enableSMB2;
+            m_enableSMB3 = enableSMB3;
+            m_listening = true;
+            m_serverStartTime = DateTime.Now;
+
+            m_listenerSocket = new Socket(m_serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            m_listenerSocket.Bind(new IPEndPoint(m_serverAddress, port));
+            m_listenerSocket.Listen((int)SocketOptionName.MaxConnections);
+            m_listenerSocket.BeginAccept(ConnectRequestCallback, m_listenerSocket);
+
+            if (!connectionInactivityTimeout.HasValue)
+            {
+                return;
+            }
+
+            m_sendSMBKeepAliveThread = new Thread(delegate()
+            {
+                while (m_listening)
+                {
+                    Thread.Sleep(InactivityMonitoringInterval);
+                    m_connectionManager.SendSMBKeepAlive(connectionInactivityTimeout.Value);
+                }
+            })
+            {
+                IsBackground = true
+            };
+            m_sendSMBKeepAliveThread.Start();
         }
 
         // This method accepts new connections
