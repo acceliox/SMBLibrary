@@ -20,6 +20,8 @@ namespace SMBLibrary.Client
 
         bool Connect(IPAddress serverAddress, SMBTransportType transport);
 
+        bool Connect(IPAddress serverAddress, SMBTransportType transport, int port);
+
         void Disconnect();
 
         NTStatus Login(string domainName, string userName, string password);
