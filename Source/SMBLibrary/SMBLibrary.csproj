@@ -14,6 +14,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Server\**" />
+    <EmbeddedResource Remove="Server\**" />
+    <None Remove="Server\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Client\SMB1Client.cs" />
+    <Compile Remove="Client\SMB1FileStore.cs" />
+    <Compile Remove="NTFileStore\NamedPipeStore.cs" />
+    <Compile Remove="NTFileStore\NTFileStoreHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
   </ItemGroup>
 
@@ -25,5 +38,9 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>SMBLibrary.Tests</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Client\Helpers\" />
   </ItemGroup>
 </Project>

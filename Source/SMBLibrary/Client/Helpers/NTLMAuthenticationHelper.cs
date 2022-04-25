@@ -16,7 +16,7 @@ namespace SMBLibrary.Client
 {
     public class NTLMAuthenticationHelper
     {
-        public static byte[] GetNegotiateMessage(byte[] securityBlob, string domainName, AuthenticationMethod authenticationMethod)
+        public static byte[]? GetNegotiateMessage(byte[] securityBlob, string domainName, AuthenticationMethod authenticationMethod)
         {
             bool useGSSAPI = false;
             if (securityBlob.Length > 0)
@@ -75,7 +75,7 @@ namespace SMBLibrary.Client
             return negotiateMessage.GetBytes();
         }
 
-        public static byte[] GetAuthenticateMessage(byte[] securityBlob, string domainName, string userName, string password, AuthenticationMethod authenticationMethod, out byte[] sessionKey)
+        public static byte[]? GetAuthenticateMessage(byte[] securityBlob, string domainName, string userName, string password, AuthenticationMethod authenticationMethod, out byte[] sessionKey)
         {
             sessionKey = null;
             bool useGSSAPI = false;

@@ -6,6 +6,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using SMBLibrary.RPC;
 using SMBLibrary.Services;
 using Utilities;
@@ -14,23 +15,25 @@ namespace SMBLibrary.Client
 {
     public class ServerServiceHelper
     {
-        public static List<string> ListShares(INTFileStore namedPipeShare, ShareType? shareType, out NTStatus status)
+        public static Task<StatusResult<List<string>?>> ListShares(INTFileStore namedPipeShare, ShareType? shareType)
         {
-            return ListShares(namedPipeShare, "*", shareType, out status);
+            return ListShares(namedPipeShare, "*", shareType);
         }
 
         /// <param name="serverName">
         /// When a Windows Server host is using Failover Cluster and Cluster Shared Volumes, each of those CSV file shares is associated
         /// with a specific host name associated with the cluster and is not accessible using the node IP address or node host name.
         /// </param>
-        public static List<string> ListShares(INTFileStore namedPipeShare, string serverName, ShareType? shareType, out NTStatus status)
+        public static async Task<StatusResult<List<string>?>> ListShares(INTFileStore namedPipeShare, string serverName, ShareType? shareType)
         {
-            object pipeHandle;
-            int maxTransmitFragmentSize;
-            status = NamedPipeHelper.BindPipe(namedPipeShare, ServerService.ServicePipeName, ServerService.ServiceInterfaceGuid, ServerService.ServiceVersion, out pipeHandle, out maxTransmitFragmentSize);
+            var bindPipeResult = await NamedPipeHelper.BindPipe(namedPipeShare, ServerService.ServicePipeName, ServerService.ServiceInterfaceGuid, ServerService.ServiceVersion);
+            object? pipeHandle = bindPipeResult.Result1;
+            int maxTransmitFragmentSize = bindPipeResult.Result2;
+
+            var status = bindPipeResult.Status;
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return null;
+                return new StatusResult<List<string>?>(null, status);
             }
 
             NetrShareEnumRequest shareEnumRequest = new NetrShareEnumRequest();
@@ -48,41 +51,46 @@ namespace SMBLibrary.Client
             requestPDU.Data = shareEnumRequest.GetBytes();
             requestPDU.AllocationHint = (uint)requestPDU.Data.Length;
             byte[] input = requestPDU.GetBytes();
-            byte[] output;
             int maxOutputLength = maxTransmitFragmentSize;
-            status = namedPipeShare.DeviceIOControl(pipeHandle, (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE, input, out output, maxOutputLength);
+
+            var deviceIoCtrl = await namedPipeShare.DeviceIOControl(pipeHandle, (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE, input, maxOutputLength);
+            byte[]? output = deviceIoCtrl.Result;
+            status = deviceIoCtrl.Status;
+
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return null;
+                return new StatusResult<List<string>?>(null, status);
             }
 
-            ResponsePDU responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
+            var responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
             if (responsePDU == null)
             {
                 status = NTStatus.STATUS_NOT_SUPPORTED;
-                return null;
+                return new StatusResult<List<string>?>(null, status);
             }
 
             byte[] responseData = responsePDU.Data;
             while ((responsePDU.Flags & PacketFlags.LastFragment) == 0)
             {
-                status = namedPipeShare.ReadFile(out output, pipeHandle, 0, maxOutputLength);
+                var readFileResult = await namedPipeShare.ReadFile(pipeHandle, 0, maxOutputLength);
+                output = readFileResult.Result;
+                status = readFileResult.Status;
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
-                    return null;
+                    return new StatusResult<List<string>?>(null, status);
                 }
 
                 responsePDU = RPCPDU.GetPDU(output, 0) as ResponsePDU;
                 if (responsePDU == null)
                 {
                     status = NTStatus.STATUS_NOT_SUPPORTED;
-                    return null;
+                    return new StatusResult<List<string>?>(null, status);
                 }
 
                 responseData = ByteUtils.Concatenate(responseData, responsePDU.Data);
             }
 
-            namedPipeShare.CloseFile(pipeHandle);
+            await namedPipeShare.CloseFile(pipeHandle);
             NetrShareEnumResponse shareEnumResponse = new NetrShareEnumResponse(responseData);
             ShareInfo1Container shareInfo1 = shareEnumResponse.InfoStruct.Info as ShareInfo1Container;
             if (shareInfo1 == null || shareInfo1.Entries == null)
@@ -96,7 +104,7 @@ namespace SMBLibrary.Client
                     status = NTStatus.STATUS_NOT_SUPPORTED;
                 }
 
-                return null;
+                return new StatusResult<List<string>?>(null, status);
             }
 
             List<string> result = new List<string>();
@@ -108,7 +116,7 @@ namespace SMBLibrary.Client
                 }
             }
 
-            return result;
+            return new StatusResult<List<string>?>(result, status);
         }
     }
 }

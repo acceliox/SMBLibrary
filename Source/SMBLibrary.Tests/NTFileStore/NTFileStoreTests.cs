@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace SMBLibrary.Tests
@@ -14,39 +15,34 @@ namespace SMBLibrary.Tests
         {
             m_fileStore = fileStore;
 
-            object handle;
-            FileStatus fileStatus;
-            NTStatus status = m_fileStore.CreateFile(out handle, out fileStatus, TestDirName, AccessMask.GENERIC_ALL, FileAttributes.Directory, ShareAccess.Read, CreateDisposition.FILE_OPEN_IF, CreateOptions.FILE_DIRECTORY_FILE, null);
+            var createFileResult = m_fileStore.CreateFile(TestDirName, AccessMask.GENERIC_ALL, FileAttributes.Directory, ShareAccess.Read, CreateDisposition.FILE_OPEN_IF, CreateOptions.FILE_DIRECTORY_FILE, null).Result;
+            object? handle = createFileResult.Result1;
+
+            NTStatus status = createFileResult.Status;
             Assert.True(status == NTStatus.STATUS_SUCCESS);
-            status = m_fileStore.CloseFile(handle);
+            status = m_fileStore.CloseFile(handle).Result;
             Assert.True(status == NTStatus.STATUS_SUCCESS);
         }
 
         [Fact]
-        public void TestCancel()
+        public async Task TestCancel()
         {
-            object handle;
-            FileStatus fileStatus;
-            m_fileStore.CreateFile(out handle, out fileStatus, TestDirName, AccessMask.GENERIC_ALL, FileAttributes.Directory, ShareAccess.Read, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+            var createFileResult = await m_fileStore.CreateFile(TestDirName, AccessMask.GENERIC_ALL, FileAttributes.Directory, ShareAccess.Read, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+            var handle = createFileResult.Result1;
 
-            object ioRequest = null;
+            object? ioRequest = null;
             NTStatus status = m_fileStore.NotifyChange(out ioRequest, handle, NotifyChangeFilter.FileName | NotifyChangeFilter.LastWrite | NotifyChangeFilter.DirName, false, 8192, OnNotifyChangeCompleted, null);
             Assert.True(status == NTStatus.STATUS_PENDING);
 
             Thread.Sleep(1);
             m_fileStore.Cancel(ioRequest);
-            m_fileStore.CloseFile(handle);
+            await m_fileStore.CloseFile(handle);
             while (m_notifyChangeStatus == null)
             {
                 Thread.Sleep(1);
             }
 
             Assert.True(m_notifyChangeStatus.Value == NTStatus.STATUS_CANCELLED);
-        }
-
-        public void TestAll()
-        {
-            TestCancel();
         }
 
         private void OnNotifyChangeCompleted(NTStatus status, byte[] buffer, object context)

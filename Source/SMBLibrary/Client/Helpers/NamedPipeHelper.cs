@@ -6,6 +6,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 using SMBLibrary.RPC;
 using SMBLibrary.Services;
 
@@ -13,14 +14,18 @@ namespace SMBLibrary.Client
 {
     public class NamedPipeHelper
     {
-        public static NTStatus BindPipe(INTFileStore namedPipeShare, string pipeName, Guid interfaceGuid, uint interfaceVersion, out object pipeHandle, out int maxTransmitFragmentSize)
+        public static async Task<StatusResult<object?, int>> BindPipe(INTFileStore namedPipeShare, string pipeName, Guid interfaceGuid, uint interfaceVersion)
         {
-            maxTransmitFragmentSize = 0;
-            FileStatus fileStatus;
-            NTStatus status = namedPipeShare.CreateFile(out pipeHandle, out fileStatus, pipeName, (AccessMask)(FileAccessMask.FILE_READ_DATA | FileAccessMask.FILE_WRITE_DATA), 0, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, 0, null);
+            var maxTransmitFragmentSize = 0;
+
+            var createFileResult = await namedPipeShare.CreateFile(pipeName, (AccessMask)(FileAccessMask.FILE_READ_DATA | FileAccessMask.FILE_WRITE_DATA), 0, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, 0, null);
+            var pipeHandle = createFileResult.Result1;
+            FileStatus fileStatus = createFileResult.Result2;
+            NTStatus status = createFileResult.Status;
+
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return status;
+                return new StatusResult<object?, int>(pipeHandle, maxTransmitFragmentSize, status);
             }
 
             BindPDU bindPDU = new BindPDU();
@@ -38,21 +43,23 @@ namespace SMBLibrary.Client
             bindPDU.ContextList.Add(serviceContext);
 
             byte[] input = bindPDU.GetBytes();
-            byte[] output;
-            status = namedPipeShare.DeviceIOControl(pipeHandle, (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE, input, out output, 4096);
+            var ioCtrlResult = await namedPipeShare.DeviceIOControl(pipeHandle, (uint)IoControlCode.FSCTL_PIPE_TRANSCEIVE, input, 4096);
+            var output = ioCtrlResult.Result;
+
+            status = ioCtrlResult.Status;
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return status;
+                return new StatusResult<object?, int>(pipeHandle, maxTransmitFragmentSize, status);
             }
 
-            BindAckPDU bindAckPDU = RPCPDU.GetPDU(output, 0) as BindAckPDU;
+            var bindAckPDU = RPCPDU.GetPDU(output, 0) as BindAckPDU;
             if (bindAckPDU == null)
             {
-                return NTStatus.STATUS_NOT_SUPPORTED;
+                return new StatusResult<object?, int>(pipeHandle, maxTransmitFragmentSize, NTStatus.STATUS_NOT_SUPPORTED);
             }
 
             maxTransmitFragmentSize = bindAckPDU.MaxTransmitFragmentSize;
-            return NTStatus.STATUS_SUCCESS;
+            return new StatusResult<object?, int>(pipeHandle, maxTransmitFragmentSize, NTStatus.STATUS_SUCCESS);
         }
     }
 }

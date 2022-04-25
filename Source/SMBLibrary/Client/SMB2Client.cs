@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using SMBLibrary.NetBios;
 using SMBLibrary.SMB2;
 using Utilities;
@@ -18,6 +19,7 @@ using ShareType = SMBLibrary.Services.ShareType;
 
 namespace SMBLibrary.Client
 {
+    // ReSharper disable once InconsistentNaming
     public class SMB2Client : ISMBClient
     {
         public static readonly int NetBiosOverTCPPort = 139;
@@ -29,36 +31,36 @@ namespace SMBLibrary.Client
         private static readonly ushort DesiredCredits = 16;
         public static readonly int ResponseTimeoutInMilliseconds = 5000;
 
-        private string m_serverName;
-        private SMBTransportType m_transport;
-        private bool m_isConnected;
-        private bool m_isLoggedIn;
-        private Socket m_clientSocket;
+        private string _serverName;
+        private SMBTransportType _transport;
+        private bool _isConnected;
+        private bool _isLoggedIn;
+        private Socket _clientSocket;
 
-        private readonly object m_incomingQueueLock = new();
-        private readonly List<SMB2Command> m_incomingQueue = new();
-        private readonly EventWaitHandle m_incomingQueueEventHandle = new(false, EventResetMode.AutoReset);
+        private readonly object _incomingQueueLock = new();
+        private readonly List<SMB2Command> _incomingQueue = new();
+        private readonly EventWaitHandle _incomingQueueEventHandle = new(false, EventResetMode.AutoReset);
 
-        private SessionPacket m_sessionResponsePacket;
-        private readonly EventWaitHandle m_sessionResponseEventHandle = new(false, EventResetMode.AutoReset);
+        private SessionPacket? _sessionResponsePacket;
+        private readonly EventWaitHandle _sessionResponseEventHandle = new(false, EventResetMode.AutoReset);
 
-        private uint m_messageID;
-        private SMB2Dialect m_dialect;
-        private bool m_signingRequired;
-        private byte[] m_signingKey;
-        private bool m_encryptSessionData;
-        private byte[] m_encryptionKey;
-        private byte[] m_decryptionKey;
-        private ulong m_sessionID;
-        private byte[] m_securityBlob;
-        private byte[] m_sessionKey;
-        private ushort m_availableCredits = 1;
+        private uint _messageId;
+        private SMB2Dialect _dialect;
+        private bool _signingRequired;
+        private byte[] _signingKey;
+        private bool _encryptSessionData;
+        private byte[] _encryptionKey;
+        private byte[] _decryptionKey;
+        private ulong _sessionId;
+        private byte[] _securityBlob;
+        private byte[] _sessionKey;
+        private ushort _availableCredits = 1;
 
         public uint MaxTransactSize { get; private set; }
 
-        public static void TrySendCommand(Socket socket, SMB2Command request, byte[] encryptionKey)
+        public static void TrySendCommand(Socket socket, SMB2Command request, byte[]? encryptionKey)
         {
-            SessionMessagePacket packet = new SessionMessagePacket();
+            var packet = new SessionMessagePacket();
             if (encryptionKey != null)
             {
                 byte[] requestBytes = request.GetBytes();
@@ -87,21 +89,21 @@ namespace SMBLibrary.Client
             }
         }
 
-        internal SMB2Command WaitForCommand(ulong messageID)
+        internal async Task<SMB2Command?> WaitForCommand(ulong messageId)
         {
-            Stopwatch stopwatch = new Stopwatch();
+            var stopwatch = new Stopwatch();
             stopwatch.Start();
             while (stopwatch.ElapsedMilliseconds < ResponseTimeoutInMilliseconds)
             {
-                lock (m_incomingQueueLock)
+                lock (_incomingQueueLock)
                 {
-                    for (int index = 0; index < m_incomingQueue.Count; index++)
+                    for (int index = 0; index < _incomingQueue.Count; index++)
                     {
-                        SMB2Command command = m_incomingQueue[index];
+                        var command = _incomingQueue[index];
 
-                        if (command.Header.MessageID == messageID)
+                        if (command.Header.MessageID == messageId)
                         {
-                            m_incomingQueue.RemoveAt(index);
+                            _incomingQueue.RemoveAt(index);
                             if (command.Header.IsAsync && command.Header.Status == NTStatus.STATUS_PENDING)
                             {
                                 index--;
@@ -113,44 +115,20 @@ namespace SMBLibrary.Client
                     }
                 }
 
-                m_incomingQueueEventHandle.WaitOne(100);
+                await Task.Delay(100);
+                _incomingQueueEventHandle.WaitOne(0);
             }
 
             return null;
-        }
-
-        internal SessionPacket WaitForSessionResponsePacket()
-        {
-            const int TimeOut = 5000;
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            while (stopwatch.ElapsedMilliseconds < TimeOut)
-            {
-                if (m_sessionResponsePacket != null)
-                {
-                    SessionPacket result = m_sessionResponsePacket;
-                    m_sessionResponsePacket = null;
-                    return result;
-                }
-
-                m_sessionResponseEventHandle.WaitOne(100);
-            }
-
-            return null;
-        }
-
-        internal void TrySendCommand(SMB2Command request)
-        {
-            TrySendCommand(request, m_encryptSessionData);
         }
 
         internal void TrySendCommand(SMB2Command request, bool encryptData)
         {
-            if (m_dialect == SMB2Dialect.SMB202 || m_transport == SMBTransportType.NetBiosOverTCP)
+            if (_dialect == SMB2Dialect.SMB202 || _transport == SMBTransportType.NetBiosOverTCP)
             {
                 request.Header.CreditCharge = 0;
                 request.Header.Credits = 1;
-                m_availableCredits -= 1;
+                _availableCredits -= 1;
             }
             else
             {
@@ -159,58 +137,58 @@ namespace SMBLibrary.Client
                     request.Header.CreditCharge = 1;
                 }
 
-                if (m_availableCredits < request.Header.CreditCharge)
+                if (_availableCredits < request.Header.CreditCharge)
                 {
                     throw new Exception("Not enough credits");
                 }
 
-                m_availableCredits -= request.Header.CreditCharge;
+                _availableCredits -= request.Header.CreditCharge;
 
-                if (m_availableCredits < DesiredCredits)
+                if (_availableCredits < DesiredCredits)
                 {
-                    request.Header.Credits += (ushort)(DesiredCredits - m_availableCredits);
+                    request.Header.Credits += (ushort)(DesiredCredits - _availableCredits);
                 }
             }
 
-            request.Header.MessageID = m_messageID;
-            request.Header.SessionID = m_sessionID;
+            request.Header.MessageID = _messageId;
+            request.Header.SessionID = _sessionId;
             // [MS-SMB2] If the client encrypts the message [..] then the client MUST set the Signature field of the SMB2 header to zero
-            if (m_signingRequired && !encryptData)
+            if (_signingRequired && !encryptData)
             {
-                request.Header.IsSigned = m_sessionID != 0 && (request.CommandName == SMB2CommandName.TreeConnect || request.Header.TreeID != 0 ||
-                                                               m_dialect == SMB2Dialect.SMB300 && request.CommandName == SMB2CommandName.Logoff);
+                request.Header.IsSigned = _sessionId != 0 && (request.CommandName == SMB2CommandName.TreeConnect || request.Header.TreeID != 0 ||
+                                                              _dialect == SMB2Dialect.SMB300 && request.CommandName == SMB2CommandName.Logoff);
                 if (request.Header.IsSigned)
                 {
                     request.Header.Signature = new byte[16]; // Request could be reused
                     byte[] buffer = request.GetBytes();
-                    byte[] signature = SMB2Cryptography.CalculateSignature(m_signingKey, m_dialect, buffer, 0, buffer.Length);
+                    byte[] signature = SMB2Cryptography.CalculateSignature(_signingKey, _dialect, buffer, 0, buffer.Length);
                     // [MS-SMB2] The first 16 bytes of the hash MUST be copied into the 16-byte signature field of the SMB2 Header.
                     request.Header.Signature = ByteReader.ReadBytes(signature, 0, 16);
                 }
             }
 
-            TrySendCommand(m_clientSocket, request, encryptData ? m_encryptionKey : null);
-            if (m_dialect == SMB2Dialect.SMB202 || m_transport == SMBTransportType.NetBiosOverTCP)
+            TrySendCommand(_clientSocket, request, encryptData ? _encryptionKey : null);
+            if (_dialect == SMB2Dialect.SMB202 || _transport == SMBTransportType.NetBiosOverTCP)
             {
-                m_messageID++;
+                _messageId++;
             }
             else
             {
-                m_messageID += request.Header.CreditCharge;
+                _messageId += request.Header.CreditCharge;
             }
         }
 
-        public bool Connect(IPAddress serverAddress, SMBTransportType transport, int port)
+        public async Task<bool> Connect(IPAddress serverAddress, SMBTransportType transport, int port)
         {
-            if (string.IsNullOrEmpty(m_serverName))
+            if (string.IsNullOrEmpty(_serverName))
             {
-                m_serverName = serverAddress.ToString();
+                _serverName = serverAddress.ToString();
             }
 
-            m_transport = transport;
-            if (m_isConnected)
+            _transport = transport;
+            if (_isConnected)
             {
-                return m_isConnected;
+                return _isConnected;
             }
 
             if (!ConnectSocket(serverAddress, port))
@@ -225,12 +203,12 @@ namespace SMBLibrary.Client
                     CalledName = NetBiosUtils.GetMSNetBiosName("*SMBSERVER", NetBiosSuffix.FileServiceService),
                     CallingName = NetBiosUtils.GetMSNetBiosName(Environment.MachineName, NetBiosSuffix.WorkstationService)
                 };
-                TrySendPacket(m_clientSocket, sessionRequest);
+                TrySendPacket(_clientSocket, sessionRequest);
 
                 SessionPacket sessionResponsePacket = WaitForSessionResponsePacket();
                 if (sessionResponsePacket is not PositiveSessionResponsePacket)
                 {
-                    m_clientSocket.Disconnect(false);
+                    _clientSocket.Disconnect(false);
                     if (!ConnectSocket(serverAddress, port))
                     {
                         return false;
@@ -244,7 +222,7 @@ namespace SMBLibrary.Client
                     }
 
                     sessionRequest.CalledName = serverName;
-                    TrySendPacket(m_clientSocket, sessionRequest);
+                    TrySendPacket(_clientSocket, sessionRequest);
 
                     sessionResponsePacket = WaitForSessionResponsePacket();
                     if (sessionResponsePacket is not PositiveSessionResponsePacket)
@@ -254,37 +232,37 @@ namespace SMBLibrary.Client
                 }
             }
 
-            bool supportsDialect = NegotiateDialect();
+            bool supportsDialect = await NegotiateDialect();
             if (!supportsDialect)
             {
-                m_clientSocket.Close();
+                _clientSocket.Close();
             }
             else
             {
-                m_isConnected = true;
+                _isConnected = true;
             }
 
-            return m_isConnected;
+            return _isConnected;
         }
 
         /// <param name="serverName">
         /// When a Windows Server host is using Failover Cluster and Cluster Shared Volumes, each of those CSV file shares is associated
         /// with a specific host name associated with the cluster and is not accessible using the node IP address or node host name.
         /// </param>
-        public bool Connect(string serverName, SMBTransportType transport)
+        public Task<bool> Connect(string serverName, SMBTransportType transport)
         {
-            m_serverName = serverName;
+            _serverName = serverName;
             IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
             if (hostEntry.AddressList.Length == 0)
             {
-                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
+                throw new Exception($"Cannot resolve host name {serverName} to an IP address");
             }
 
             IPAddress serverAddress = hostEntry.AddressList[0];
             return Connect(serverAddress, transport);
         }
 
-        public bool Connect(IPAddress serverAddress, SMBTransportType transport)
+        public Task<bool> Connect(IPAddress serverAddress, SMBTransportType transport)
         {
             int port = transport == SMBTransportType.DirectTCPTransport ? DirectTCPPort : NetBiosOverTCPPort;
             return Connect(serverAddress, transport, port);
@@ -292,63 +270,67 @@ namespace SMBLibrary.Client
 
         public void Disconnect()
         {
-            if (m_isConnected)
+            if (_isConnected)
             {
-                m_clientSocket.Disconnect(false);
-                m_isConnected = false;
+                _clientSocket.Disconnect(false);
+                _isConnected = false;
             }
         }
 
-        public NTStatus Login(string domainName, string userName, string password)
+        public Task<NTStatus> Login(string domainName, string userName, string password)
         {
             return Login(domainName, userName, password, AuthenticationMethod.NTLMv2);
         }
 
-        public NTStatus Login(string domainName, string userName, string password, AuthenticationMethod authenticationMethod)
+        public async Task<NTStatus> Login(string domainName, string userName, string password, AuthenticationMethod authenticationMethod)
         {
-            if (!m_isConnected)
+            if (!_isConnected)
             {
                 throw new InvalidOperationException("A connection must be successfully established before attempting login");
             }
 
-            byte[] negotiateMessage = NTLMAuthenticationHelper.GetNegotiateMessage(m_securityBlob, domainName, authenticationMethod);
+            byte[] negotiateMessage = NTLMAuthenticationHelper.GetNegotiateMessage(_securityBlob, domainName, authenticationMethod);
             if (negotiateMessage == null)
             {
                 return NTStatus.SEC_E_INVALID_TOKEN;
             }
 
-            SessionSetupRequest request = new SessionSetupRequest();
-            request.SecurityMode = SecurityMode.SigningEnabled;
-            request.SecurityBuffer = negotiateMessage;
+            SessionSetupRequest request = new SessionSetupRequest
+            {
+                SecurityMode = SecurityMode.SigningEnabled,
+                SecurityBuffer = negotiateMessage
+            };
             TrySendCommand(request);
-            SMB2Command response = WaitForCommand(request.MessageID);
+            var response = await WaitForCommand(request.MessageID);
             if (response != null)
             {
                 if (response.Header.Status == NTStatus.STATUS_MORE_PROCESSING_REQUIRED && response is SessionSetupResponse)
                 {
-                    byte[] authenticateMessage = NTLMAuthenticationHelper.GetAuthenticateMessage(((SessionSetupResponse)response).SecurityBuffer, domainName, userName, password, authenticationMethod, out m_sessionKey);
+                    byte[] authenticateMessage = NTLMAuthenticationHelper.GetAuthenticateMessage(((SessionSetupResponse)response).SecurityBuffer, domainName, userName, password, authenticationMethod, out _sessionKey);
                     if (authenticateMessage == null)
                     {
                         return NTStatus.SEC_E_INVALID_TOKEN;
                     }
 
-                    m_sessionID = response.Header.SessionID;
-                    request = new SessionSetupRequest();
-                    request.SecurityMode = SecurityMode.SigningEnabled;
-                    request.SecurityBuffer = authenticateMessage;
+                    _sessionId = response.Header.SessionID;
+                    request = new SessionSetupRequest
+                    {
+                        SecurityMode = SecurityMode.SigningEnabled,
+                        SecurityBuffer = authenticateMessage
+                    };
                     TrySendCommand(request);
-                    response = WaitForCommand(request.MessageID);
+                    response = await WaitForCommand(request.MessageID);
                     if (response != null)
                     {
-                        m_isLoggedIn = response.Header.Status == NTStatus.STATUS_SUCCESS;
-                        if (m_isLoggedIn)
+                        _isLoggedIn = response.Header.Status == NTStatus.STATUS_SUCCESS;
+                        if (_isLoggedIn)
                         {
-                            m_signingKey = SMB2Cryptography.GenerateSigningKey(m_sessionKey, m_dialect, null);
-                            if (m_dialect == SMB2Dialect.SMB300)
+                            _signingKey = SMB2Cryptography.GenerateSigningKey(_sessionKey, _dialect, null);
+                            if (_dialect == SMB2Dialect.SMB300)
                             {
-                                m_encryptSessionData = (((SessionSetupResponse)response).SessionFlags & SessionFlags.EncryptData) > 0;
-                                m_encryptionKey = SMB2Cryptography.GenerateClientEncryptionKey(m_sessionKey, SMB2Dialect.SMB300, null);
-                                m_decryptionKey = SMB2Cryptography.GenerateClientDecryptionKey(m_sessionKey, SMB2Dialect.SMB300, null);
+                                _encryptSessionData = (((SessionSetupResponse)response).SessionFlags & SessionFlags.EncryptData) > 0;
+                                _encryptionKey = SMB2Cryptography.GenerateClientEncryptionKey(_sessionKey, SMB2Dialect.SMB300, null);
+                                _decryptionKey = SMB2Cryptography.GenerateClientDecryptionKey(_sessionKey, SMB2Dialect.SMB300, null);
                             }
                         }
 
@@ -364,9 +346,9 @@ namespace SMBLibrary.Client
             return NTStatus.STATUS_INVALID_SMB;
         }
 
-        public NTStatus Logoff()
+        public async Task<NTStatus> Logoff()
         {
-            if (!m_isConnected)
+            if (!_isConnected)
             {
                 throw new InvalidOperationException("A login session must be successfully established before attempting logoff");
             }
@@ -374,53 +356,61 @@ namespace SMBLibrary.Client
             LogoffRequest request = new LogoffRequest();
             TrySendCommand(request);
 
-            SMB2Command response = WaitForCommand(request.MessageID);
+            var response = await WaitForCommand(request.MessageID);
             if (response != null)
             {
-                m_isLoggedIn = response.Header.Status != NTStatus.STATUS_SUCCESS;
+                _isLoggedIn = response.Header.Status != NTStatus.STATUS_SUCCESS;
                 return response.Header.Status;
             }
 
             return NTStatus.STATUS_INVALID_SMB;
         }
 
-        public List<string> ListShares(out NTStatus status)
+        public async Task<StatusResult<List<string>?>> ListShares()
         {
-            if (!m_isConnected || !m_isLoggedIn)
+            if (!_isConnected || !_isLoggedIn)
             {
                 throw new InvalidOperationException("A login session must be successfully established before retrieving share list");
             }
 
-            ISMBFileStore namedPipeShare = TreeConnect("IPC$", out status);
+            var treeConnectResult = await TreeConnect("IPC$");
+            var namedPipeShare = treeConnectResult.Result;
             if (namedPipeShare == null)
             {
-                return null;
+                return new StatusResult<List<string>?>(null, treeConnectResult.Status);
             }
 
-            List<string> shares = ServerServiceHelper.ListShares(namedPipeShare, m_serverName, ShareType.DiskDrive, out status);
-            namedPipeShare.Disconnect();
-            return shares;
+            var listSharesResult = await ServerServiceHelper.ListShares(namedPipeShare, _serverName, ShareType.DiskDrive);
+            var shares = listSharesResult.Result;
+            var status = listSharesResult.Status;
+
+            await namedPipeShare.Disconnect();
+            return new StatusResult<List<string>?>(shares, status);
         }
 
-        public ISMBFileStore TreeConnect(string shareName, out NTStatus status)
+        public async Task<StatusResult<ISMBFileStore?>> TreeConnect(string shareName)
         {
-            if (!m_isConnected || !m_isLoggedIn)
+            if (!_isConnected || !_isLoggedIn)
             {
                 throw new InvalidOperationException("A login session must be successfully established before connecting to a share");
             }
 
-            string sharePath = string.Format(@"\\{0}\{1}", m_serverName, shareName);
-            TreeConnectRequest request = new TreeConnectRequest();
-            request.Path = sharePath;
+            NTStatus status;
+            string sharePath = $@"\\{_serverName}\{shareName}";
+            var request = new TreeConnectRequest
+            {
+                Path = sharePath
+            };
             TrySendCommand(request);
-            SMB2Command response = WaitForCommand(request.MessageID);
+            var response = await WaitForCommand(request.MessageID);
             if (response != null)
             {
                 status = response.Header.Status;
                 if (response.Header.Status == NTStatus.STATUS_SUCCESS && response is TreeConnectResponse)
                 {
                     bool encryptShareData = (((TreeConnectResponse)response).ShareFlags & ShareFlags.EncryptData) > 0;
-                    return new SMB2FileStore(this, response.Header.TreeID, m_encryptSessionData || encryptShareData);
+                    var store = new SMB2FileStore(this, response.Header.TreeID, _encryptSessionData || encryptShareData);
+                    return new StatusResult<ISMBFileStore?>(store, status);
                 }
             }
             else
@@ -428,53 +418,80 @@ namespace SMBLibrary.Client
                 status = NTStatus.STATUS_INVALID_SMB;
             }
 
-            return null;
+            return new StatusResult<ISMBFileStore?>(null, status);
         }
 
         public uint MaxReadSize { get; private set; }
 
         public uint MaxWriteSize { get; private set; }
 
+        private SessionPacket WaitForSessionResponsePacket()
+        {
+            const int timeOut = 5000;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            while (stopwatch.ElapsedMilliseconds < timeOut)
+            {
+                if (_sessionResponsePacket != null)
+                {
+                    SessionPacket result = _sessionResponsePacket;
+                    _sessionResponsePacket = null;
+                    return result;
+                }
+
+                _sessionResponseEventHandle.WaitOne(100);
+            }
+
+            return null;
+        }
+
+        private void TrySendCommand(SMB2Command request)
+        {
+            TrySendCommand(request, _encryptSessionData);
+        }
+
         private bool ConnectSocket(IPAddress serverAddress, int port)
         {
-            m_clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             try
             {
-                m_clientSocket.Connect(serverAddress, port);
+                _clientSocket.Connect(serverAddress, port);
             }
             catch (SocketException)
             {
                 return false;
             }
 
-            ConnectionState state = new ConnectionState(m_clientSocket);
+            ConnectionState state = new ConnectionState(_clientSocket);
             NBTConnectionReceiveBuffer buffer = state.ReceiveBuffer;
-            m_clientSocket.BeginReceive(buffer.Buffer, buffer.WriteOffset, buffer.AvailableLength, SocketFlags.None, OnClientSocketReceive, state);
+            _clientSocket.BeginReceive(buffer.Buffer, buffer.WriteOffset, buffer.AvailableLength, SocketFlags.None, OnClientSocketReceive, state);
             return true;
         }
 
-        private bool NegotiateDialect()
+        private async Task<bool> NegotiateDialect()
         {
-            NegotiateRequest request = new NegotiateRequest();
-            request.SecurityMode = SecurityMode.SigningEnabled;
-            request.Capabilities = Capabilities.Encryption;
-            request.ClientGuid = Guid.NewGuid();
-            request.ClientStartTime = DateTime.Now;
+            NegotiateRequest request = new NegotiateRequest
+            {
+                SecurityMode = SecurityMode.SigningEnabled,
+                Capabilities = Capabilities.Encryption,
+                ClientGuid = Guid.NewGuid(),
+                ClientStartTime = DateTime.Now
+            };
             request.Dialects.Add(SMB2Dialect.SMB202);
             request.Dialects.Add(SMB2Dialect.SMB210);
             request.Dialects.Add(SMB2Dialect.SMB300);
 
             TrySendCommand(request);
-            NegotiateResponse response = WaitForCommand(request.MessageID) as NegotiateResponse;
+            var response = await WaitForCommand(request.MessageID) as NegotiateResponse;
             if (response != null && response.Header.Status == NTStatus.STATUS_SUCCESS)
             {
-                m_dialect = response.DialectRevision;
-                m_signingRequired = (response.SecurityMode & SecurityMode.SigningRequired) > 0;
+                _dialect = response.DialectRevision;
+                _signingRequired = (response.SecurityMode & SecurityMode.SigningRequired) > 0;
                 MaxTransactSize = Math.Min(response.MaxTransactSize, ClientMaxTransactSize);
                 MaxReadSize = Math.Min(response.MaxReadSize, ClientMaxReadSize);
                 MaxWriteSize = Math.Min(response.MaxWriteSize, ClientMaxWriteSize);
-                m_securityBlob = response.SecurityBuffer;
+                _securityBlob = response.SecurityBuffer;
                 return true;
             }
 
@@ -513,7 +530,7 @@ namespace SMBLibrary.Client
 
             if (numberOfBytesReceived == 0)
             {
-                m_isConnected = false;
+                _isConnected = false;
             }
             else
             {
@@ -527,12 +544,12 @@ namespace SMBLibrary.Client
                 }
                 catch (ObjectDisposedException)
                 {
-                    m_isConnected = false;
+                    _isConnected = false;
                     Log("[ReceiveCallback] BeginReceive ObjectDisposedException");
                 }
                 catch (SocketException ex)
                 {
-                    m_isConnected = false;
+                    _isConnected = false;
                     Log("[ReceiveCallback] BeginReceive SocketException: " + ex.Message);
                 }
             }
@@ -543,7 +560,7 @@ namespace SMBLibrary.Client
             NBTConnectionReceiveBuffer receiveBuffer = state.ReceiveBuffer;
             while (receiveBuffer.HasCompletePacket())
             {
-                SessionPacket packet = null;
+                SessionPacket? packet = null;
                 try
                 {
                     packet = receiveBuffer.DequeuePacket();
@@ -566,11 +583,11 @@ namespace SMBLibrary.Client
             if (packet is SessionMessagePacket)
             {
                 byte[] messageBytes;
-                if (m_dialect == SMB2Dialect.SMB300 && SMB2TransformHeader.IsTransformHeader(packet.Trailer, 0))
+                if (_dialect == SMB2Dialect.SMB300 && SMB2TransformHeader.IsTransformHeader(packet.Trailer, 0))
                 {
                     SMB2TransformHeader transformHeader = new SMB2TransformHeader(packet.Trailer, 0);
                     byte[] encryptedMessage = ByteReader.ReadBytes(packet.Trailer, SMB2TransformHeader.Length, (int)transformHeader.OriginalMessageSize);
-                    messageBytes = SMB2Cryptography.DecryptMessage(m_decryptionKey, transformHeader, encryptedMessage);
+                    messageBytes = SMB2Cryptography.DecryptMessage(_decryptionKey, transformHeader, encryptedMessage);
                 }
                 else
                 {
@@ -586,13 +603,13 @@ namespace SMBLibrary.Client
                 {
                     Log("Invalid SMB2 response: " + ex.Message);
                     state.ClientSocket.Close();
-                    m_isConnected = false;
+                    _isConnected = false;
                     return;
                 }
 
-                m_availableCredits += command.Header.Credits;
+                _availableCredits += command.Header.Credits;
 
-                if (m_transport == SMBTransportType.DirectTCPTransport && command is NegotiateResponse)
+                if (_transport == SMBTransportType.DirectTCPTransport && command is NegotiateResponse)
                 {
                     NegotiateResponse negotiateResponse = (NegotiateResponse)command;
                     if ((negotiateResponse.Capabilities & Capabilities.LargeMTU) > 0)
@@ -613,19 +630,19 @@ namespace SMBLibrary.Client
                 // Otherwise, the response MUST be discarded as invalid.
                 if (command.Header.MessageID != 0xFFFFFFFFFFFFFFFF || command.Header.Command == SMB2CommandName.OplockBreak)
                 {
-                    lock (m_incomingQueueLock)
+                    lock (_incomingQueueLock)
                     {
-                        m_incomingQueue.Add(command);
-                        m_incomingQueueEventHandle.Set();
+                        _incomingQueue.Add(command);
+                        _incomingQueueEventHandle.Set();
                     }
                 }
             }
-            else if ((packet is PositiveSessionResponsePacket || packet is NegativeSessionResponsePacket) && m_transport == SMBTransportType.NetBiosOverTCP)
+            else if ((packet is PositiveSessionResponsePacket || packet is NegativeSessionResponsePacket) && _transport == SMBTransportType.NetBiosOverTCP)
             {
-                m_sessionResponsePacket = packet;
-                m_sessionResponseEventHandle.Set();
+                _sessionResponsePacket = packet;
+                _sessionResponseEventHandle.Set();
             }
-            else if (packet is SessionKeepAlivePacket && m_transport == SMBTransportType.NetBiosOverTCP)
+            else if (packet is SessionKeepAlivePacket && _transport == SMBTransportType.NetBiosOverTCP)
             {
                 // [RFC 1001] NetBIOS session keep alives do not require a response from the NetBIOS peer
             }
@@ -636,7 +653,7 @@ namespace SMBLibrary.Client
             }
         }
 
-        private void Log(string message)
+        private static void Log(string message)
         {
             Debug.Print(message);
         }
