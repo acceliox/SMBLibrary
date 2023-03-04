@@ -4,8 +4,8 @@
     <Product>$(Company) $(SolutionName)</Product>
     <Owner>$(Company)</Owner>
     <Company>acceliox GmbH</Company>
-    <Copyright>Copyright © $(Company) 2021</Copyright>
-    <VersionPrefix>2.0.1</VersionPrefix>
+    <Copyright>Copyright © $(Company) 2023</Copyright>
+    <VersionPrefix>2.0.2</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
