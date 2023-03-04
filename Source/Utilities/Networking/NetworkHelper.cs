@@ -7,8 +7,13 @@ namespace Utilities.Networking
 {
     public static class NetworkHelper
     {
-        public static IPAddress GetIpv4FromDomain(string serverName)
+        public static IPAddress GetIpv4(string serverName)
         {
+            if (IPAddress.TryParse(serverName, out var ipAddress))
+            {
+                return ipAddress;
+            }
+
             IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
             if (hostEntry.AddressList.Length == 0)
             {
