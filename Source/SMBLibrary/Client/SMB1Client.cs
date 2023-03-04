@@ -259,6 +259,18 @@ namespace SMBLibrary.Client
             return Connect(serverAddress, transport);
         }
 
+        public bool Connect(string serverName, SMBTransportType transport, int port)
+        {
+            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
+            if (hostEntry.AddressList.Length == 0)
+            {
+                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
+            }
+
+            IPAddress serverAddress = hostEntry.AddressList[0];
+            return Connect(serverAddress, transport, port);
+        }
+
         public bool Connect(IPAddress serverAddress, SMBTransportType transport)
         {
             return Connect(serverAddress, transport, true);
@@ -623,8 +635,8 @@ namespace SMBLibrary.Client
                 // [MS-CIFS] 3.2.5.1 - If the MID value is the reserved value 0xFFFF, the message can be an OpLock break
                 // sent by the server. Otherwise, if the PID and MID values of the received message are not found in the
                 // Client.Connection.PIDMIDList, the message MUST be discarded.
-                if (message.Header.MID == 0xFFFF && message.Header.Command == CommandName.SMB_COM_LOCKING_ANDX ||
-                    message.Header.PID == 0 && message.Header.MID == 0)
+                if ((message.Header.MID == 0xFFFF && message.Header.Command == CommandName.SMB_COM_LOCKING_ANDX) ||
+                    (message.Header.PID == 0 && message.Header.MID == 0))
                 {
                     lock (m_incomingQueueLock)
                     {

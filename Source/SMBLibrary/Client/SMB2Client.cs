@@ -178,7 +178,7 @@ namespace SMBLibrary.Client
             if (m_signingRequired && !encryptData)
             {
                 request.Header.IsSigned = m_sessionID != 0 && (request.CommandName == SMB2CommandName.TreeConnect || request.Header.TreeID != 0 ||
-                                                               m_dialect == SMB2Dialect.SMB300 && request.CommandName == SMB2CommandName.Logoff);
+                                                               (m_dialect == SMB2Dialect.SMB300 && request.CommandName == SMB2CommandName.Logoff));
                 if (request.Header.IsSigned)
                 {
                     request.Header.Signature = new byte[16]; // Request could be reused
@@ -282,6 +282,19 @@ namespace SMBLibrary.Client
 
             IPAddress serverAddress = hostEntry.AddressList[0];
             return Connect(serverAddress, transport);
+        }
+
+        public bool Connect(string serverName, SMBTransportType transport, int port)
+        {
+            m_serverName = serverName;
+            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
+            if (hostEntry.AddressList.Length == 0)
+            {
+                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
+            }
+
+            IPAddress serverAddress = hostEntry.AddressList[0];
+            return Connect(serverAddress, transport, port);
         }
 
         public bool Connect(IPAddress serverAddress, SMBTransportType transport)
