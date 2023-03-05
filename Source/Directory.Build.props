@@ -5,7 +5,7 @@
     <Owner>$(Company)</Owner>
     <Company>acceliox GmbH</Company>
     <Copyright>Copyright © $(Company) 2023</Copyright>
-    <VersionPrefix>2.0.2</VersionPrefix>
+    <VersionPrefix>2.0.3</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
