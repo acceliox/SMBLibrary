@@ -14,6 +14,7 @@ using System.Threading;
 using SMBLibrary.NetBios;
 using SMBLibrary.SMB2;
 using Utilities;
+using Utilities.Networking;
 using ShareType = SMBLibrary.Services.ShareType;
 
 namespace SMBLibrary.Client
@@ -274,26 +275,14 @@ namespace SMBLibrary.Client
         public bool Connect(string serverName, SMBTransportType transport)
         {
             m_serverName = serverName;
-            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
-            if (hostEntry.AddressList.Length == 0)
-            {
-                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
-            }
-
-            IPAddress serverAddress = hostEntry.AddressList[0];
+            var serverAddress = NetworkHelper.GetIpv4(serverName);
             return Connect(serverAddress, transport);
         }
 
         public bool Connect(string serverName, SMBTransportType transport, int port)
         {
             m_serverName = serverName;
-            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
-            if (hostEntry.AddressList.Length == 0)
-            {
-                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
-            }
-
-            IPAddress serverAddress = hostEntry.AddressList[0];
+            var serverAddress = NetworkHelper.GetIpv4(serverName);
             return Connect(serverAddress, transport, port);
         }
 

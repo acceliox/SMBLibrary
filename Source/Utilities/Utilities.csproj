@@ -6,4 +6,8 @@
     <RootNamespace>Utilities</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Networking\" />
+  </ItemGroup>
+
 </Project>

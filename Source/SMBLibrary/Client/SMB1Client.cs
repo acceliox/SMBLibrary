@@ -16,6 +16,7 @@ using SMBLibrary.NetBios;
 using SMBLibrary.Services;
 using SMBLibrary.SMB1;
 using Utilities;
+using Utilities.Networking;
 
 namespace SMBLibrary.Client
 {
@@ -249,25 +250,13 @@ namespace SMBLibrary.Client
 
         public bool Connect(string serverName, SMBTransportType transport)
         {
-            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
-            if (hostEntry.AddressList.Length == 0)
-            {
-                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
-            }
-
-            IPAddress serverAddress = hostEntry.AddressList[0];
+            var serverAddress = NetworkHelper.GetIpv4(serverName);
             return Connect(serverAddress, transport);
         }
 
         public bool Connect(string serverName, SMBTransportType transport, int port)
         {
-            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
-            if (hostEntry.AddressList.Length == 0)
-            {
-                throw new Exception(string.Format("Cannot resolve host name {0} to an IP address", serverName));
-            }
-
-            IPAddress serverAddress = hostEntry.AddressList[0];
+            var serverAddress = NetworkHelper.GetIpv4(serverName);
             return Connect(serverAddress, transport, port);
         }
 
